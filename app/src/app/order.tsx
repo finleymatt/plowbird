@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Switch, View, useWindowDimensions } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddressSearch, type Place } from '@/components/address-search';
 import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
 import { LiveMap } from '@/components/live-map';
 import { PaymentMethodCard } from '@/components/payment-method';
-import { Badge, Button, Card, Chip, ChipGroup, ErrorText, Icon, Input, PasswordInput, Row, Screen, T } from '@/components/ui';
+import { Badge, Button, Card, Chip, ChipGroup, elevation, ErrorText, Icon, Input, PasswordInput, Row, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api, ApiError } from '@/lib/api';
@@ -44,6 +45,7 @@ export default function Order() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const wide = width >= 900;
+  const insets = useSafeAreaInsets();
   const { user, signUp, signIn } = useAuth();
 
   const [place, setPlace] = useState<Place | null>(
@@ -152,15 +154,15 @@ export default function Order() {
     <View style={{ gap: Spacing.four, flex: wide ? 1.3 : undefined }}>
       <Step n={1} title="Where">
         {place ? (
-          <Card style={{ gap: Spacing.three }}>
+          <View style={{ gap: Spacing.three }}>
+            <LiveMap pins={[{ id: 'home', kind: 'home', lat: place.lat, lng: place.lng, title: 'Your driveway' }]} height={180} />
             <Row>
-              <Icon name="home" color="primary" />
+              <Icon name="location-sharp" color="primary" />
               <T variant="heading" style={{ flex: 1 }}>{place.address}</T>
-              <Button title="Change" size="sm" kind="ghost" onPress={() => setPlace(null)} />
+              <Button title="Change" size="sm" kind="secondary" onPress={() => setPlace(null)} />
             </Row>
-            <LiveMap pins={[{ id: 'home', kind: 'home', lat: place.lat, lng: place.lng, title: 'Your driveway' }]} height={150} />
             {wx.data && forecastIn > 0 && <Badge label={`${forecastIn}" of snow forecast in the next 24 hrs`} tone="primary" icon="snow" />}
-          </Card>
+          </View>
         ) : (
           <AddressSearch onPick={setPlace} autoFocus />
         )}
@@ -220,30 +222,32 @@ export default function Order() {
     </View>
   );
 
-  const checkout = place && (
-    <View style={{ gap: Spacing.four, flex: wide ? 1 : undefined }}>
-      <Card style={{ gap: Spacing.three }}>
-        <T variant="heading">Price</T>
-        {quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}
-        <T variant="label" color="textSecondary">Tip your driver (100% goes to them)</T>
-        <TipPicker value={tip} onChange={setTip} base={quote?.total ?? 4500} />
-      </Card>
+  const summary = place && (
+    <Card raised style={{ gap: Spacing.three, padding: Spacing.four }}>
+      <T variant="heading">Order summary</T>
+      {quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}
+      <T variant="label" color="textSecondary">Tip your driver · 100% goes to them</T>
+      <TipPicker value={tip} onChange={setTip} base={quote?.total ?? 4500} />
+    </Card>
+  );
 
+  const account = place && (
+    <View style={{ gap: Spacing.three }}>
       {user ? (
         user.role === 'customer' && (
-          <Card style={{ gap: Spacing.two }}>
+          <>
             <Row>
-              <Icon name="person-circle" color="accent" />
+              <Icon name="person-circle" />
               <T variant="label" style={{ flex: 1 }}>Booking as {user.name}</T>
             </Row>
             <PaymentMethodCard methods={payments.data} onChange={payments.setData} />
-          </Card>
+          </>
         )
       ) : (
-        <Card style={{ gap: Spacing.three }}>
+        <>
           <Row style={{ justifyContent: 'space-between' }}>
-            <T variant="heading">{hasAccount ? 'Sign in' : 'Your details'}</T>
-            <Button title={hasAccount ? 'New here?' : 'I have an account'} size="sm" kind="ghost" onPress={() => setHasAccount((v) => !v)} />
+            <T variant="heading">{hasAccount ? 'Sign in to book' : 'Your details'}</T>
+            <Button title={hasAccount ? 'New here?' : 'I have an account'} size="sm" kind="secondary" onPress={() => setHasAccount((v) => !v)} />
           </Row>
           {!hasAccount && (
             <>
@@ -259,32 +263,62 @@ export default function Order() {
             placeholder={hasAccount ? undefined : 'At least 8 characters'} onSubmitEditing={submit}
             invalid={touched && (hasAccount ? !password : password.length < 8)}
             hint={hasAccount ? null : password ? (password.length >= 8 ? '✓ Looks good' : `${8 - password.length} more character${password.length === 7 ? '' : 's'}`) : null} />
-          <T variant="caption" color="textSecondary">
-            {payments.data?.mode === 'stripe' ? 'You’ll add a card next. ' : ''}You’re only charged once your driveway is clear. Cancel free until your driver heads out.
-          </T>
-        </Card>
+          <Row gap={Spacing.two} style={{ alignItems: 'flex-start' }}>
+            <Icon name="shield-checkmark" size={18} color="success" />
+            <T variant="caption" color="textSecondary" style={{ flex: 1 }}>
+              {payments.data?.mode === 'stripe' ? 'You’ll add a card next. ' : ''}You’re only charged once your driveway is clear. Cancel free until your driver heads out.
+            </T>
+          </Row>
+        </>
       )}
-
       <ErrorText>{error ?? (touched ? accountProblem : null)}</ErrorText>
-      <Button title={cta} onPress={submit} loading={busy} disabled={!quote || (!!user && (user.role !== 'customer' || needsCard))} />
     </View>
   );
 
+  const ctaButton = (
+    <Button title={cta} onPress={submit} loading={busy} disabled={!quote || (!!user && (user.role !== 'customer' || needsCard))} />
+  );
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen contentStyle={{ maxWidth: wide ? 1080 : 640, gap: Spacing.four }}>
-        <Row style={{ justifyContent: 'space-between', paddingTop: Spacing.two }}>
-          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel="Back to home">
-            <Brand />
-          </Pressable>
-          {!user && <Button title="Sign in" size="sm" kind="ghost" onPress={() => router.push('/sign-in')} />}
-        </Row>
-        <T variant="title">{place ? 'Get your driveway plowed' : 'Where should we plow?'}</T>
-        <View style={{ flexDirection: wide ? 'row' : 'column', gap: Spacing.five, alignItems: wide ? 'flex-start' : 'stretch' }}>
-          {details}
-          {checkout}
-        </View>
-      </Screen>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: Spacing.six }}>
+          <View style={{ width: '100%', maxWidth: wide ? 1120 : 640, alignSelf: 'center', paddingHorizontal: wide ? Spacing.five : Spacing.three, gap: Spacing.four }}>
+            <Row style={{ justifyContent: 'space-between', paddingTop: Spacing.three }}>
+              <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityLabel="Back to home">
+                <Brand />
+              </Pressable>
+              {!user && <Button title="Sign in" size="sm" kind="secondary" onPress={() => router.push('/sign-in')} />}
+            </Row>
+            <T variant="title" style={{ fontSize: wide ? 40 : 30, lineHeight: wide ? 44 : 34, letterSpacing: -1.2 }}>
+              {place ? 'Get your driveway plowed' : 'Where should we plow?'}
+            </T>
+            {wide ? (
+              <View style={{ flexDirection: 'row', gap: Spacing.six, alignItems: 'flex-start' }}>
+                {details}
+                {place && (
+                  <View style={{ flex: 1, gap: Spacing.four }}>
+                    {summary}
+                    {account}
+                    {ctaButton}
+                  </View>
+                )}
+              </View>
+            ) : (
+              <>
+                {details}
+                {summary}
+                {account}
+              </>
+            )}
+          </View>
+        </ScrollView>
+        {!wide && place && (
+          <View style={[{ paddingHorizontal: Spacing.three, paddingTop: Spacing.three, paddingBottom: Math.max(insets.bottom, Spacing.three), backgroundColor: theme.background }, elevation(2)]}>
+            {ctaButton}
+          </View>
+        )}
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

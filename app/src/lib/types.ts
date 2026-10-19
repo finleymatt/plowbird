@@ -154,3 +154,6 @@ export type PayoutStatus =
     };
 
 export type AppNotification = { id: number; title: string; body: string; jobId: number | null; createdAt: string };
+
+/** Road route from the driver to the driveway. `coords` are [lat, lng] pairs. */
+export type JobRoute = { coords: [number, number][]; miles: number; minutes: number; arriveAt: string };

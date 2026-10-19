@@ -2,55 +2,65 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-// Winter palette: deep navy + ice, with safety orange as the action color
-// (the same orange as a plow truck's beacon).
+// Clean, high-contrast palette in the spirit of Uber / DoorDash: white (or true black) canvas,
+// near-black type, gray fills instead of outlines, and one vivid orange for the brand and CTAs.
 export const Colors = {
   light: {
-    text: '#0B1B2B',
-    textSecondary: '#5B6B7C',
-    background: '#F3F7FB',
+    text: '#0A0A0A',
+    textSecondary: '#5E5E5E',
+    background: '#FFFFFF',
     card: '#FFFFFF',
-    border: '#DCE5EE',
-    backgroundElement: '#E8EFF6',
-    backgroundSelected: '#D5E2EE',
-    primary: '#F26B1D',
+    border: '#E8E8E8',
+    backgroundElement: '#F3F3F3',
+    backgroundSelected: '#E4E4E4',
+    primary: '#FF4F12',
     primaryText: '#FFFFFF',
-    accent: '#1E5AA8',
-    success: '#13824B',
+    inverse: '#0A0A0A',
+    inverseText: '#FFFFFF',
+    accent: '#276EF1',
+    success: '#05944F',
     warning: '#B45309',
-    danger: '#C62828',
-    stormBg: '#FFF1E8',
-    stormBorder: '#F7B58C',
+    danger: '#E11900',
+    stormBg: '#FFF1EB',
+    stormBorder: '#FFC7B2',
     tabBar: '#FFFFFF',
   },
   dark: {
-    text: '#EAF1F8',
-    textSecondary: '#93A4B6',
-    background: '#08111C',
-    card: '#111D2C',
-    border: '#1F2F43',
-    backgroundElement: '#172638',
-    backgroundSelected: '#22364D',
-    primary: '#FF7A2E',
+    text: '#FFFFFF',
+    textSecondary: '#A3A3A3',
+    background: '#000000',
+    card: '#141414',
+    border: '#262626',
+    backgroundElement: '#242424',
+    backgroundSelected: '#333333',
+    primary: '#FF5A1F',
     primaryText: '#FFFFFF',
-    accent: '#6AA7F0',
-    success: '#3CCB7F',
+    inverse: '#FFFFFF',
+    inverseText: '#0A0A0A',
+    accent: '#5B97FF',
+    success: '#2BB673',
     warning: '#F5A524',
-    danger: '#FF6B6B',
-    stormBg: '#2A1A10',
-    stormBorder: '#7A3E18',
-    tabBar: '#0D1826',
+    danger: '#FF5A4F',
+    stormBg: '#26140C',
+    stormBorder: '#5C2A15',
+    tabBar: '#0A0A0A',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 export type Palette = (typeof Colors)['light'] | (typeof Colors)['dark'];
 
-export const Fonts = Platform.select({
-  ios: { sans: 'system-ui', rounded: 'ui-rounded', mono: 'ui-monospace' },
-  default: { sans: 'normal', rounded: 'normal', mono: 'monospace' },
-  web: { sans: 'var(--font-display)', rounded: 'var(--font-rounded)', mono: 'var(--font-mono)' },
-});
+export const Fonts = { sans: 'Inter_500Medium', mono: Platform.select({ ios: 'ui-monospace', default: 'monospace' }) };
+
+const INTER = {
+  '400': 'Inter_400Regular',
+  '500': 'Inter_500Medium',
+  '600': 'Inter_600SemiBold',
+  '700': 'Inter_700Bold',
+  '800': 'Inter_800ExtraBold',
+} as const;
+// Inter at a given weight. Native platforms need a family per weight, so use this instead of fontWeight.
+export const font = (weight: keyof typeof INTER) => ({ fontFamily: INTER[weight] });
 
 export const Spacing = {
   half: 2,
@@ -62,6 +72,6 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const Radius = { sm: 8, md: 14, lg: 20, pill: 999 } as const;
+export const Radius = { sm: 8, md: 12, lg: 18, xl: 24, pill: 999 } as const;
 
 export const MaxContentWidth = 760;

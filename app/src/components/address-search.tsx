@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Platform, Pressable, TextInput, View } from 'react-native';
 
-import { Fonts, Radius, Spacing } from '@/constants/theme';
+import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 
-import { Button, Icon, Row, T } from './ui';
+import { Button, elevation, Icon, Row, T } from './ui';
 
 export type Place = { address: string; lat: number; lng: number };
 type Suggestion = { line1: string; line2: string; text: string; lat: number; lng: number; needsNumber: boolean };
@@ -17,12 +17,16 @@ export function AddressSearch({
   placeholder = 'Enter your address',
   autoFocus,
   large,
+  cta,
   near,
 }: {
   onPick: (place: Place) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Big white search bar (for hero sections), always light so it pops on any background. */
   large?: boolean;
+  /** Button inside the bar, e.g. "Find a plow"; picks the highlighted suggestion. */
+  cta?: string;
   near?: { lat: number; lng: number } | null;
 }) {
   const theme = useTheme();
@@ -94,20 +98,19 @@ export function AddressSearch({
     }
   };
 
-  const height = large ? 60 : 50;
+  const height = large ? 64 : 52;
+  // The hero bar stays white with dark text in both color schemes.
+  const fg = large ? '#0A0A0A' : theme.text;
+  const muted = large ? '#6B6B6B' : theme.textSecondary;
   return (
     <View style={{ gap: Spacing.two }}>
       <Row
         gap={Spacing.two}
-        style={{
-          height,
-          paddingHorizontal: Spacing.three,
-          borderRadius: large ? Radius.pill : Radius.md,
-          borderWidth: large ? 2 : 1,
-          borderColor: large ? theme.text : theme.border,
-          backgroundColor: theme.card,
-        }}>
-        <Icon name="location" color="primary" size={large ? 24 : 20} />
+        style={[
+          { height, paddingLeft: Spacing.three, paddingRight: cta ? 6 : Spacing.three, borderRadius: large ? Radius.pill : Radius.md },
+          large ? [{ backgroundColor: '#FFFFFF' }, elevation(2)] : { backgroundColor: theme.backgroundElement },
+        ]}>
+        <Icon name="location-sharp" color={large ? 'primary' : 'text'} size={large ? 24 : 20} />
         <TextInput
           ref={input}
           value={query}
@@ -120,7 +123,7 @@ export function AddressSearch({
           onKeyPress={onKeyPress}
           onSubmitEditing={() => list[highlight] && pick(list[highlight])}
           placeholder={placeholder}
-          placeholderTextColor={theme.textSecondary}
+          placeholderTextColor={muted}
           autoFocus={autoFocus}
           autoCorrect={false}
           autoComplete="street-address"
@@ -128,7 +131,8 @@ export function AddressSearch({
           returnKeyType="search"
           accessibilityLabel="Address"
           style={[
-            { flex: 1, height: '100%', color: theme.text, fontFamily: Fonts.sans, fontSize: large ? 18 : 16, fontWeight: '600' },
+            { flex: 1, height: '100%', color: fg, fontSize: large ? 18 : 16 },
+            font('600'),
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as object),
           ]}
         />
@@ -138,10 +142,19 @@ export function AddressSearch({
             <Icon name="close-circle" color="textSecondary" />
           </Pressable>
         )}
+        {cta && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={cta}
+            onPress={() => (list[highlight] ? pick(list[highlight]) : input.current?.focus())}
+            style={({ pressed }) => ({ height: height - 12, paddingHorizontal: 22, borderRadius: Radius.pill, backgroundColor: '#0A0A0A', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
+            <T style={[{ color: '#fff', fontSize: 16 }, font('700')]}>{cta}</T>
+          </Pressable>
+        )}
       </Row>
 
       {list.length > 0 && (
-        <View style={{ borderRadius: Radius.md, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card, overflow: 'hidden' }}>
+        <View style={[{ borderRadius: Radius.lg, backgroundColor: theme.card, overflow: 'hidden' }, elevation(2)]}>
           {list.map((s, i) => (
             <Pressable
               key={s.text}
