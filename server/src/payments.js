@@ -101,7 +101,9 @@ export async function createCardSetup(userId) {
     stripe.setupIntents.create({
       customer,
       usage: 'off_session',
-      payment_method_types: ['card', 'link'],
+      // Stripe now picks the methods from the Dashboard (cards, Apple Pay, Google Pay, Link).
+      // No redirects: everything we save has to be chargeable later without the customer there.
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
       metadata: { plowbird_user_id: String(userId) },
     }),
     stripe.customerSessions.create({
@@ -141,7 +143,7 @@ async function chargeSavedCard(job, amount, { capture, kind }) {
       currency: 'usd',
       customer,
       payment_method: pm.id,
-      payment_method_types: ['card', 'link'],
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
       capture_method: capture ? 'automatic' : 'manual',
       confirm: true,
       off_session: true,
