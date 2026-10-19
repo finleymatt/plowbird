@@ -157,3 +157,10 @@ export type AppNotification = { id: number; title: string; body: string; jobId: 
 
 /** Road route from the driver to the driveway. `coords` are [lat, lng] pairs. */
 export type JobRoute = { coords: [number, number][]; miles: number; minutes: number; arriveAt: string };
+
+/** GET /config: server features the app adapts to. A null auth provider isn't set up. */
+export type AppConfig = {
+  demo: boolean;
+  payments: 'stripe' | 'demo';
+  auth?: { google: { webClientId: string } | null; apple: { servicesId: string | null } | null };
+};

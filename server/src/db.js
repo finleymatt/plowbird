@@ -124,6 +124,8 @@ function addColumn(table, column, type) {
 }
 addColumn('users', 'stripe_customer_id', 'TEXT');
 addColumn('users', 'stripe_account_id', 'TEXT');
+addColumn('users', 'google_sub', 'TEXT');
+addColumn('users', 'apple_sub', 'TEXT');
 addColumn('jobs', 'card_label', 'TEXT');
 
 export const nowIso = () => new Date().toISOString();
