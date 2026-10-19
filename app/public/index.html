@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE%</title>
+    <meta name="description" content="Snowed in? Order a snow plow to your driveway in minutes. Minnesota and South Dakota." />
+    <!-- Inter as small, cached web fonts; text shows in the system font until they arrive (display=swap). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        background: #e8f2fc;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+      /* Shown until the app's JavaScript draws its first screen (React replaces it). */
+      #splash {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: linear-gradient(#cfe4fa, #e8f2fc 60%, #ffffff);
+        font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: #0b1b2e;
+      }
+      #splash .mark {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: #ff5a1f;
+        color: #fff;
+        font-size: 36px;
+        line-height: 64px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(255, 90, 31, 0.3);
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      #splash .name {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+      }
+      #splash .tag {
+        font-size: 15px;
+        color: #4a5d73;
+      }
+      @keyframes pulse {
+        50% {
+          transform: scale(0.92);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="root">
+      <div id="splash">
+        <div class="mark">❄</div>
+        <div class="name">plowbird</div>
+        <div class="tag">Snowed in? We'll plow you out.</div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -54,7 +54,14 @@ export const Colors = {
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 export type Palette = (typeof Colors)['light'] | (typeof Colors)['dark'];
 
-export const Fonts = { sans: 'Inter_500Medium', mono: Platform.select({ ios: 'ui-monospace', default: 'monospace' }) };
+// On the web Inter is one family from Google Fonts with real weights, and a system-font fallback
+// while it loads (see public/index.html).
+const WEB_SANS = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+
+export const Fonts = {
+  sans: Platform.OS === 'web' ? WEB_SANS : 'Inter_500Medium',
+  mono: Platform.select({ ios: 'ui-monospace', default: 'monospace' }),
+};
 
 const INTER = {
   '400': 'Inter_400Regular',
@@ -64,7 +71,8 @@ const INTER = {
   '800': 'Inter_800ExtraBold',
 } as const;
 // Inter at a given weight. Native platforms need a family per weight, so use this instead of fontWeight.
-export const font = (weight: keyof typeof INTER) => ({ fontFamily: INTER[weight] });
+export const font = (weight: keyof typeof INTER) =>
+  Platform.OS === 'web' ? { fontFamily: WEB_SANS, fontWeight: weight } : { fontFamily: INTER[weight] };
 
 export const Spacing = {
   half: 2,
