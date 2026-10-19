@@ -9,6 +9,7 @@ import { attachIo, updateDriverLocation } from './jobs.js';
 import { PaymentError } from './payments.js';
 import { startScheduler } from './scheduler.js';
 import { startTicker } from './ticker.js';
+import { buildAddressIndex } from './address-index.js';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -55,4 +56,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`Plowbird API listening on http://localhost:${PORT}`);
   startScheduler();
   startTicker();
+  buildAddressIndex(); // first boot only; runs in the background
 });

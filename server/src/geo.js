@@ -4,6 +4,8 @@
 // so suggestions are "the house number you typed + streets Photon matched". Picking one runs it
 // through the US Census geocoder, which knows house-number ranges and returns the exact spot.
 
+import { searchAddressIndex } from './address-index.js';
+
 const PHOTON = 'https://photon.komoot.io/api/';
 const CENSUS = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
 const UA = process.env.NWS_USER_AGENT ?? 'Plowbird/1.0 (dev)';
@@ -58,6 +60,10 @@ export function prettyAddress(census) {
 }
 
 export async function suggestAddresses(raw, near = DEFAULT_NEAR) {
+  // Our own MN/SD address index answers in milliseconds; Photon is the fallback while it builds
+  // or for the rare street it doesn't have.
+  const local = searchAddressIndex(raw, near);
+  if (local?.length) return local;
   const q = String(raw).trim().replace(/\s+/g, ' ');
   const m = q.match(/^(\d+[a-z]?)\s+(.+)$/i);
   const number = m?.[1] ?? null;

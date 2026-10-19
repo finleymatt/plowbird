@@ -123,6 +123,13 @@ The buttons appear once the API knows your client IDs. On Render, add them under
 
 On iPhone, the native Apple button works in Expo Go. Native Google sign-in needs a development build with `@react-native-google-signin`; until then, Google sign-in is website-only.
 
+### Address search
+
+Suggestions come from a local index of every addressable street segment in Minnesota and South Dakota: 1.2 million house-number ranges from the US Census TIGER/Line address features, with ZIP-to-city names from [GeoNames](https://www.geonames.org/) (CC BY 4.0).
+- **First boot:** the API downloads about 78 MB and builds `addresses.db` next to the main database in about a minute. Until then, and for any street the index lacks, search falls back to Photon (OpenStreetMap).
+- **Speed:** lookups take a few milliseconds.
+- **Location:** set `ADDRESS_DB_PATH` to keep the index somewhere else.
+
 ### Live tracking and demo drives
 
 Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. In demo mode, new ASAP orders are also **auto-accepted** by the demo driver (`DEMO_DRIVER_EMAIL`, default `driver@plowbird.test`) about 6 seconds after they're placed. That driver then drives the route automatically, so a customer can watch the whole flow alone. Remove `DEMO_MODE` once real drivers are online, or the demo driver will take every order.
@@ -136,7 +143,8 @@ app/      Expo (React Native) app: iOS, Android, web
   src/lib/         API client, auth + realtime socket, types
 server/   Node API: Express + Socket.IO + SQLite
   src/routes.js    REST endpoints
-  src/geo.js       address type-ahead (Photon + US Census)
+  src/address-index.js  instant MN/SD address search (US Census TIGER, built on first boot)
+  src/geo.js       address search entry point (index first, Photon fallback)
   src/routing.js   driving routes + ETA (OSRM)
   src/social.js    Google / Apple sign-in token checks
   src/payments.js  Stripe: card holds, capture, tips, Connect payouts (simulated without keys)
