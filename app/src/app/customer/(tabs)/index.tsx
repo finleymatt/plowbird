@@ -4,6 +4,7 @@ import { Switch, View } from 'react-native';
 
 import { AddressSearch } from '@/components/address-search';
 import { JobRow } from '@/components/job-parts';
+import { StormPassCard } from '@/components/storm-pass-card';
 import { Brand } from '@/components/landing';
 import { Button, Card, Chip, ChipGroup, ErrorText, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { ConditionsCard, StormBanner } from '@/components/weather';
@@ -12,7 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useAuth, useSocketEvent } from '@/lib/auth';
 import { isOpen, SIZE_LABEL } from '@/lib/format';
-import type { Conditions, Job, Property, StormPlan } from '@/lib/types';
+import type { Conditions, Job, Property, StormPass, StormPlan } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
 const THRESHOLDS = [1, 2, 3, 4, 6];
@@ -32,6 +33,7 @@ export default function CustomerHome() {
   const wx = useApi<Conditions>(property ? `/weather?lat=${property.lat}&lng=${property.lng}` : null);
   const jobs = useApi<Job[]>('/jobs');
   const plans = useApi<StormPlan[]>('/storm-plans');
+  const passes = useApi<StormPass[]>('/storm-pass');
 
   useSocketEvent('job', () => {
     jobs.reload();
@@ -43,6 +45,8 @@ export default function CustomerHome() {
 
   const active = (jobs.data ?? []).filter((j) => isOpen(j.status));
   const plan = plans.data?.find((p) => p.property_id === property?.id);
+  // Storm Pass already books (and covers) storm plows here, so the pay-per-storm option is moot.
+  const hasPass = !!passes.data?.some((p) => p.propertyId === property?.id && p.status !== 'cancelled');
 
   const savePlan = async (next: { active: boolean; thresholdIn: number }) => {
     if (!property) return;
@@ -120,7 +124,10 @@ export default function CustomerHome() {
           <SectionTitle>Current conditions</SectionTitle>
           {wx.data ? <ConditionsCard wx={wx.data} /> : wx.error ? <ErrorText>{wx.error}</ErrorText> : <Card><T color="textSecondary">Loading conditions…</T></Card>}
 
-          <SectionTitle>Storm auto-plow</SectionTitle>
+          <StormPassCard propertyId={property.id} passes={passes.data} />
+
+          {!hasPass && <SectionTitle>Or pay per storm</SectionTitle>}
+          {!hasPass && (
           <Card style={{ gap: Spacing.three }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <View style={{ flex: 1, paddingRight: Spacing.three }}>
@@ -152,6 +159,7 @@ export default function CustomerHome() {
               </>
             )}
           </Card>
+          )}
         </>
       )}
     </Screen>

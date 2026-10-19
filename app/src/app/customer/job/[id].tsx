@@ -20,6 +20,7 @@ const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '
 // Simulated payments leave cardLabel empty, so those jobs keep the "(demo)" wording.
 function paymentNote(job: Job) {
   const card = job.cardLabel;
+  if (job.covered) return 'Covered by your Storm Pass. No charge for this plow.';
   switch (job.paymentStatus) {
     case 'captured':
       return card ? `Charged to ${card} after completion` : 'Charged after completion (demo)';
@@ -222,7 +223,17 @@ export default function CustomerJob() {
           </View>
         </Row>
         <Divider />
-        <QuoteLines quote={job.quote} tipCents={job.tipCents} />
+        {job.covered ? (
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Row gap={6}>
+              <Icon name="snow" color="accent" />
+              <T variant="heading">Covered by Storm Pass</T>
+            </Row>
+            <T variant="heading">{job.tipCents ? `${money(job.tipCents)} tip` : '$0'}</T>
+          </Row>
+        ) : (
+          <QuoteLines quote={job.quote} tipCents={job.tipCents} />
+        )}
         <T variant="caption" color="textSecondary" style={{ marginTop: Spacing.two }}>{paymentNote(job)}</T>
       </View>
 

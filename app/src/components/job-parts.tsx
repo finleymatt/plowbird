@@ -86,6 +86,7 @@ function Line({ label, value, bold }: { label: string; value: string; bold?: boo
 }
 
 export function KindBadge({ job }: { job: Job }) {
+  if (job.covered) return <Badge label="Storm Pass" tone="accent" icon="snow" />;
   if (job.kind === 'storm_auto') return <Badge label="Storm auto-plow" tone="primary" icon="flash" />;
   if (job.kind === 'scheduled') return <Badge label={when(job.scheduledFor)} tone="accent" icon="calendar" />;
   return <Badge label="ASAP" tone="warning" icon="flash" />;
@@ -101,7 +102,7 @@ export function JobRow({ job, onPress, driverView }: { job: Job; onPress: () => 
     <Card onPress={onPress} style={{ gap: Spacing.two }}>
       <Row style={{ justifyContent: 'space-between' }}>
         <StatusBadge status={job.status} />
-        <T variant="heading">{driverView ? money(job.quote.driverPayout + job.tipCents) : money(job.priceCents + job.tipCents)}</T>
+        <T variant="heading">{driverView ? money(job.quote.driverPayout + job.tipCents) : job.covered ? 'Storm Pass' : money(job.priceCents + job.tipCents)}</T>
       </Row>
       <T variant="label" numberOfLines={1}>
         {job.property.label} · {job.property.address}

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { font, Spacing } from '@/constants/theme';
+import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { AddressSearch, type Place } from './address-search';
@@ -109,6 +109,25 @@ export function Landing({ compact }: { compact?: boolean }) {
             </Row>
           ))}
         </View>
+      </Section>
+
+      <Section>
+        <Pressable onPress={() => router.push('/storm-pass')} accessibilityRole="link">
+          <View style={{ flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'flex-start', gap: Spacing.four, padding: wide ? Spacing.five : Spacing.four, marginBottom: Spacing.five, borderRadius: 28, backgroundColor: theme.inverse }}>
+            <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: theme.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="snow" size={28} color="primaryText" />
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <T style={[{ color: theme.inverseText, fontSize: wide ? 30 : 24, letterSpacing: -0.8 }, font('800')]}>Storm Pass: never shovel again.</T>
+              <T style={{ color: theme.inverseText, opacity: 0.8, fontSize: 16, lineHeight: 23 }}>
+                We plow automatically every time a storm hits your address. One flat price, from $79/month.
+              </T>
+            </View>
+            <View style={{ backgroundColor: theme.primary, borderRadius: Radius.pill, paddingHorizontal: 22, paddingVertical: 14 }}>
+              <T style={[{ color: theme.primaryText, fontSize: 16 }, font('700')]}>See Storm Pass</T>
+            </View>
+          </View>
+        </Pressable>
       </Section>
 
       <View style={{ width: '100%', alignItems: 'center', borderTopWidth: 1, borderColor: theme.border }}>

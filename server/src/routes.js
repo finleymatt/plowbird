@@ -22,6 +22,7 @@ import {
   updateDriverLocation,
 } from './jobs.js';
 import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
+import { activePassFor, checkStormPasses, ELIGIBILITY, markEnding, passPrice, STORM_PASS, subscriptionRow } from './storm-pass.js';
 import {
   authorizeJob,
   chargeExtraTip,
@@ -33,6 +34,8 @@ import {
   payoutStatus,
   savedCard,
   settleJob,
+  startStormPassBilling,
+  stopStormPassBilling,
   voidJob,
 } from './payments.js';
 
@@ -349,7 +352,8 @@ api.post('/jobs/:id/tip', requireAuth, requireRole('customer'), wrap(async (req,
   if (!Number.isFinite(cents) || cents < 0 || cents > 50000) return bad(res, 'Tip must be between $0 and $500');
   if (job.paymentStatus === 'failed') return bad(res, "We couldn't charge your card for this job, so tips are paused. Contact support.");
   if (job.status === 'completed' && job.paymentStatus === 'authorized') return bad(res, 'Finishing your payment. Try again in a moment.', 409);
-  const charged = job.paymentStatus === 'captured';
+  // Storm Pass plows have nothing to capture; once done, a raised tip is charged right away like any other.
+  const charged = job.paymentStatus === 'captured' || (job.covered && job.status === 'completed');
   if (charged && cents < job.tipCents) return bad(res, "Your card was already charged for this tip, so it can't be lowered");
   // Conditional so two taps can't both charge the same increase.
   if (!db.prepare('UPDATE jobs SET tip_cents = ? WHERE id = ? AND tip_cents = ?').run(cents, job.id, job.tipCents).changes)
@@ -558,6 +562,47 @@ api.get('/payouts/return', (req, res) => {
   res.redirect(to.toString());
 });
 
+/* ---------------- Storm Pass ---------------- */
+
+// Public: plans, prices and the exact eligibility rules the scheduler applies.
+api.get('/storm-pass/plans', (req, res) => {
+  res.json({ name: STORM_PASS.name, prices: STORM_PASS.prices, sidewalkCents: STORM_PASS.sidewalkCents, triggerInches: STORM_PASS.triggerInches, eligibility: ELIGIBILITY });
+});
+
+const passRows = (userId) =>
+  db
+    .prepare(
+      `SELECT s.*, p.address, p.label, p.size, p.sidewalk FROM subscriptions s JOIN properties p ON p.id = s.property_id
+       WHERE s.user_id = ? ORDER BY s.id DESC`,
+    )
+    .all(userId);
+
+api.get('/storm-pass', requireAuth, requireRole('customer'), (req, res) => {
+  res.json(passRows(req.user.id).map(subscriptionRow).filter((s) => s.status !== 'cancelled'));
+});
+
+api.post('/storm-pass', requireAuth, requireRole('customer'), wrap(async (req, res) => {
+  const p = db.prepare('SELECT * FROM properties WHERE id = ? AND user_id = ?').get(req.body?.propertyId, req.user.id);
+  if (!p) return bad(res, 'Pick one of your driveways', 404);
+  if (activePassFor(p.id)) return bad(res, `${p.label} already has a Storm Pass`, 409);
+  const price = passPrice(p);
+  const billing = await startStormPassBilling(req.user.id, p, price);
+  const info = db
+    .prepare('INSERT INTO subscriptions (user_id, property_id, price_cents, stripe_subscription_id, renews_at) VALUES (?, ?, ?, ?, ?)')
+    .run(req.user.id, p.id, price, billing.stripeSubscriptionId, billing.renewsAt);
+  notify(req.user.id, 'Storm Pass is on ❄️', `${p.label} will be plowed automatically whenever a storm qualifies. We’ll text you when a plow is booked.`);
+  const row = passRows(req.user.id).find((s) => s.id === Number(info.lastInsertRowid));
+  res.json(subscriptionRow(row));
+}));
+
+api.post('/storm-pass/:id/cancel', requireAuth, requireRole('customer'), wrap(async (req, res) => {
+  const sub = passRows(req.user.id).find((s) => String(s.id) === req.params.id);
+  if (!sub || sub.status !== 'active') return bad(res, 'Storm Pass not found', 404);
+  if (sub.ends_at) return res.json(subscriptionRow(sub));
+  markEnding(sub.id, await stopStormPassBilling(sub));
+  res.json(subscriptionRow(passRows(req.user.id).find((s) => s.id === sub.id)));
+}));
+
 /* ---------------- demo drive ---------------- */
 
 api.get('/config', (req, res) => res.json({ demo: DEMO, payments: paymentsMode, auth: socialConfig() }));
@@ -578,7 +623,10 @@ if (process.env.NODE_ENV !== 'production') {
   api.post('/dev/demo-storm', (req, res) => {
     setDemoStorm(req.body?.on);
     getIo()?.emit('weather:changed');
-    if (isDemoStorm()) checkStormPlans().catch(() => {});
+    if (isDemoStorm()) {
+      checkStormPasses().catch(() => {});
+      checkStormPlans().catch(() => {});
+    }
     res.json({ on: isDemoStorm() });
   });
 }

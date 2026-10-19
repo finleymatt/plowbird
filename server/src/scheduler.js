@@ -1,6 +1,7 @@
 import { db, nowIso } from './db.js';
 import { broadcastJob, DISPATCH_LEAD_MIN, getIo, marketPressure, notify } from './jobs.js';
 import { autoAcceptForDemo } from './demo.js';
+import { activePassFor, checkStormPasses } from './storm-pass.js';
 import { authorizeJob, PaymentError } from './payments.js';
 import { quote, surgeMultiplier } from './pricing.js';
 import { getConditions } from './weather.js';
@@ -47,6 +48,7 @@ export async function checkStormPlans() {
     }
     const snow = wx.snowfall.next24h;
     if (snow.inches < plan.threshold_in) continue;
+    if (activePassFor(plan.property_id)) continue; // Storm Pass books (and covers) these
     const open = db
       .prepare("SELECT 1 FROM jobs WHERE property_id = ? AND status NOT IN ('completed','cancelled')")
       .get(plan.property_id);
@@ -89,9 +91,13 @@ export async function checkStormPlans() {
 
 export function startScheduler() {
   setInterval(releaseScheduledJobs, 30_000);
-  setInterval(() => checkStormPlans().catch((e) => console.error('storm check failed', e)), 15 * 60_000);
+  setInterval(() => {
+    checkStormPasses().catch((e) => console.error('storm pass check failed', e));
+    checkStormPlans().catch((e) => console.error('storm check failed', e));
+  }, 15 * 60_000);
   setTimeout(() => {
     releaseScheduledJobs();
+    checkStormPasses().catch(() => {});
     checkStormPlans().catch(() => {});
   }, 2000);
 }
