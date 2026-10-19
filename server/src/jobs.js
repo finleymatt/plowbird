@@ -113,3 +113,12 @@ export function marketPressure() {
   const onlineDrivers = db.prepare("SELECT COUNT(*) n FROM users WHERE role = 'driver' AND online = 1").get().n;
   return { openJobs, onlineDrivers };
 }
+
+// A driver's GPS fix: store it and push the update to everyone watching their active jobs.
+export function updateDriverLocation(driverId, lat, lng) {
+  db.prepare('UPDATE users SET lat = ?, lng = ?, location_at = ? WHERE id = ?').run(lat, lng, nowIso(), driverId);
+  const active = db
+    .prepare(`SELECT id FROM jobs WHERE driver_id = ? AND status IN (${ACTIVE_STATUSES.map(() => '?').join(',')})`)
+    .all(driverId, ...ACTIVE_STATUSES);
+  for (const { id } of active) broadcastJob(id);
+}

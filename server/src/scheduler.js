@@ -1,5 +1,6 @@
 import { db, nowIso } from './db.js';
 import { broadcastJob, DISPATCH_LEAD_MIN, getIo, marketPressure, notify } from './jobs.js';
+import { autoAcceptForDemo } from './demo.js';
 import { authorizeJob, PaymentError } from './payments.js';
 import { quote, surgeMultiplier } from './pricing.js';
 import { getConditions } from './weather.js';
@@ -18,6 +19,7 @@ export function releaseScheduledJobs() {
     } else {
       db.prepare("UPDATE jobs SET status = 'requested' WHERE id = ?").run(j.id);
       getIo()?.to('drivers').emit('jobs:new', { id: j.id });
+      autoAcceptForDemo(j.id);
     }
     broadcastJob(j.id);
   }
