@@ -125,7 +125,7 @@ On iPhone, the native Apple button works in Expo Go. Native Google sign-in needs
 
 ### Live tracking and demo drives
 
-Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. Remove `DEMO_MODE` once real drivers are online.
+Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. In demo mode, new ASAP orders are also **auto-accepted** by the demo driver (`DEMO_DRIVER_EMAIL`, default `driver@plowbird.test`) about 6 seconds after they're placed. That driver then drives the route automatically, so a customer can watch the whole flow alone. Remove `DEMO_MODE` once real drivers are online, or the demo driver will take every order.
 
 ## Layout
 

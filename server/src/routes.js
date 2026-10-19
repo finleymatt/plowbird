@@ -19,7 +19,9 @@ import {
   marketPressure,
   milesBetween,
   notify,
+  updateDriverLocation,
 } from './jobs.js';
+import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
 import {
   authorizeJob,
   chargeExtraTip,
@@ -281,7 +283,10 @@ api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) =>
     throw e;
   }
   const job = broadcastJob(jobId);
-  if (status === 'requested') getIo()?.to('drivers').emit('jobs:new', { id: job.id, address: p.address });
+  if (status === 'requested') {
+    getIo()?.to('drivers').emit('jobs:new', { id: job.id, address: p.address });
+    autoAcceptForDemo(job.id);
+  }
   res.json(job);
 }));
 
@@ -421,13 +426,6 @@ api.post('/driver/location', requireAuth, requireRole('driver'), (req, res) => {
   res.json({ ok: true });
 });
 
-export function updateDriverLocation(driverId, lat, lng) {
-  db.prepare('UPDATE users SET lat = ?, lng = ?, location_at = ? WHERE id = ?').run(lat, lng, nowIso(), driverId);
-  const active = db
-    .prepare(`SELECT id FROM jobs WHERE driver_id = ? AND status IN (${ACTIVE_STATUSES.map(() => '?').join(',')})`)
-    .all(driverId, ...ACTIVE_STATUSES);
-  for (const { id } of active) broadcastJob(id);
-}
 
 api.get('/driver/available', requireAuth, requireRole('driver'), (req, res) => {
   const me = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
@@ -562,43 +560,15 @@ api.get('/payouts/return', (req, res) => {
 
 /* ---------------- demo drive ---------------- */
 
-// Moves the assigned driver along the real road route to the driveway, so live tracking can be
-// shown without a truck on the road. On in development; set DEMO_MODE=1 to allow it in production.
-const DEMO = process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE === '1';
-const demoDrives = new Map();
-
 api.get('/config', (req, res) => res.json({ demo: DEMO, payments: paymentsMode, auth: socialConfig() }));
 
+// Demo: drive the assigned truck along the real road route (see demo.js).
 api.post('/jobs/:id/demo-drive', requireAuth, requireRole('driver'), wrap(async (req, res) => {
   if (!DEMO) return bad(res, 'Demo drives are off on this server', 404);
   const job = getJob(req.params.id);
   if (!job || job.driver?.id !== req.user.id) return bad(res, 'Job not found', 404);
   if (!['accepted', 'en_route'].includes(job.status)) return bad(res, 'Accept the job first');
-  // Start from the truck's real position if it's a sensible distance away, else ~2.5 mi out.
-  const here = job.driver.lat != null ? { lat: job.driver.lat, lng: job.driver.lng } : null;
-  const miles = here ? milesBetween(here, job.property) : null;
-  const start = here && miles > 0.5 && miles < 15 ? here : { lat: job.property.lat + 0.025, lng: job.property.lng - 0.03 };
-  const { coords } = await drivingRoute(start, job.property);
-  if (job.status === 'accepted') {
-    db.prepare("UPDATE jobs SET status = 'en_route' WHERE id = ? AND status = 'accepted'").run(job.id);
-    const updated = broadcastJob(job.id);
-    const [title, body] = STATUS_COPY.en_route(updated);
-    notify(job.customer.id, title, body, job.id);
-  }
-  clearInterval(demoDrives.get(job.id));
-  const TICKS = 45; // ~70 seconds of driving
-  let tick = 0;
-  const timer = setInterval(() => {
-    tick++;
-    const [lat, lng] = coords[Math.min(coords.length - 1, Math.round((tick / TICKS) * (coords.length - 1)))];
-    updateDriverLocation(req.user.id, lat, lng);
-    if (tick >= TICKS) {
-      clearInterval(timer);
-      demoDrives.delete(job.id);
-    }
-  }, 1500);
-  demoDrives.set(job.id, timer);
-  res.json({ ok: true, seconds: Math.round(TICKS * 1.5) });
+  res.json({ ok: true, seconds: await startDemoDrive(job.id) });
 }));
 
 /* ---------------- dev helpers ---------------- */
