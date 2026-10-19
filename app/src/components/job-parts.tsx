@@ -1,6 +1,6 @@
 import { Pressable, View } from 'react-native';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { money, moneyExact, STATUS_LABEL, when } from '@/lib/format';
 import type { Job, JobStatus, Quote } from '@/lib/types';
@@ -65,22 +65,26 @@ export function QuoteLines({ quote, tipCents = 0, driverView = false }: { quote:
   }
   return (
     <View style={{ gap: 6 }}>
-      {quote.lines.map((l) => (
-        <Line key={l.label} label={l.label} value={moneyExact(l.cents)} />
-      ))}
+      {quote.lines.map((l) =>
+        l.cents < 0 ? (
+          <Line key={l.label} label={l.label} value={`−${moneyExact(-l.cents)}`} color="success" />
+        ) : (
+          <Line key={l.label} label={l.label} value={moneyExact(l.cents)} />
+        ),
+      )}
       {tipCents > 0 && <Line label="Driver tip" value={moneyExact(tipCents)} />}
       <Line label="Total" value={moneyExact(quote.total + tipCents)} bold />
     </View>
   );
 }
 
-function Line({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function Line({ label, value, bold, color }: { label: string; value: string; bold?: boolean; color?: ThemeColor }) {
   return (
     <Row style={{ justifyContent: 'space-between' }}>
-      <T variant={bold ? 'heading' : 'body'} color={bold ? 'text' : 'textSecondary'}>
+      <T variant={bold ? 'heading' : 'body'} color={color ?? (bold ? 'text' : 'textSecondary')}>
         {label}
       </T>
-      <T variant={bold ? 'heading' : 'body'}>{value}</T>
+      <T variant={bold ? 'heading' : 'body'} color={color}>{value}</T>
     </Row>
   );
 }

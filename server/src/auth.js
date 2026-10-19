@@ -34,5 +34,16 @@ export function requireAuth(req, res, next) {
   }
 }
 
+// Sets req.user when a valid token is sent, but lets signed-out visitors through too.
+export function optionalAuth(req, res, next) {
+  const header = req.headers.authorization ?? '';
+  try {
+    if (header.startsWith('Bearer ')) req.user = verifyToken(header.slice(7));
+  } catch {
+    // Expired or bad token: treat as signed out.
+  }
+  next();
+}
+
 export const requireRole = (role) => (req, res, next) =>
   req.user.role === role ? next() : res.status(403).json({ error: `Only ${role}s can do that` });

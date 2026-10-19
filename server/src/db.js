@@ -145,5 +145,7 @@ addColumn('users', 'google_sub', 'TEXT');
 addColumn('users', 'apple_sub', 'TEXT');
 addColumn('jobs', 'covered', 'INTEGER NOT NULL DEFAULT 0'); // Storm Pass: no charge to the customer
 addColumn('jobs', 'card_label', 'TEXT');
+addColumn('jobs', 'promo_code', 'TEXT'); // see promos.js
+addColumn('jobs', 'discount_cents', 'INTEGER NOT NULL DEFAULT 0'); // already taken off price_cents
 
 export const nowIso = () => new Date().toISOString();

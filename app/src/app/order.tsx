@@ -8,6 +8,7 @@ import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
 import { LiveMap } from '@/components/live-map';
 import { PaymentMethodCard } from '@/components/payment-method';
+import { PromoField } from '@/components/promo-field';
 import { SocialSignIn } from '@/components/social-sign-in';
 import { Button, Card, elevation, ErrorText, Icon, Input, PasswordInput, Row, T, type IconName } from '@/components/ui';
 import { WeatherTicker } from '@/components/weather-ticker';
@@ -17,6 +18,7 @@ import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { confirmPlace, type Place } from '@/lib/places';
+import { clearPendingPromo, usePromoCode } from '@/lib/promo';
 import type { Conditions, DrivewaySize, Job, PaymentMethods, Property, Quote } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
@@ -33,7 +35,7 @@ const SIZES: { key: DrivewaySize; title: string; sub: string; icon: IconName; ca
 // Checkout, DoorDash-style: address, driveway size, price, request. Everything else is defaulted
 // (ASAP, standard length, snow depth from the forecast) or tucked behind a link.
 export default function Order() {
-  const params = useLocalSearchParams<{ address?: string; lat?: string; lng?: string; c?: string }>();
+  const params = useLocalSearchParams<{ address?: string; lat?: string; lng?: string; c?: string; promo?: string }>();
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const wide = width >= 900;
@@ -67,6 +69,13 @@ export default function Order() {
   const [tip, setTip] = useState(500);
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
+  // From the flyer QR link (?promo=FIRSTPLOW), kept across sign-in; the server checks it.
+  const [promo, setPromoCode] = usePromoCode(params.promo);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const setPromo = (code: string) => {
+    setPromoError(null);
+    setPromoCode(code);
+  };
 
   // Account, only when signed out.
   const [hasAccount, setHasAccount] = useState(false);
@@ -88,13 +97,15 @@ export default function Order() {
   useEffect(() => {
     if (!place) return;
     let stale = false;
-    api<Quote>(`/quote/preview?lat=${place.lat}&lng=${place.lng}&size=${size}&length=standard&sidewalk=${sidewalk ? 1 : 0}&depth=${depth}`)
+    const withPromo = promo ? `&promo=${encodeURIComponent(promo)}&address=${encodeURIComponent(place.address)}` : '';
+    api<Quote>(`/quote/preview?lat=${place.lat}&lng=${place.lng}&size=${size}&length=standard&sidewalk=${sidewalk ? 1 : 0}&depth=${depth}${withPromo}`)
       .then((q) => !stale && setQuote(q))
       .catch((e) => !stale && setError(e.message));
     return () => {
       stale = true;
     };
-  }, [place, size, sidewalk, depth]);
+    // user: a signed-in customer's own eligibility for the promo is checked too.
+  }, [place, size, sidewalk, depth, promo, user?.id]);
 
   const needsCard = payments.data?.mode === 'stripe' && !payments.data.card && !payments.data.demo;
   const accountProblem = user
@@ -141,10 +152,14 @@ export default function Order() {
         : await api<Property>('/properties', {
             body: { address: place.address, lat: place.lat, lng: place.lng, label: saved.length ? `Driveway ${saved.length + 1}` : 'Home', ...details },
           });
-      const job = await api<Job>('/jobs', { body: { propertyId: property.id, depthIn: depth, tipCents: tip, notes: notes.trim() || undefined } });
+      const job = await api<Job>('/jobs', {
+        body: { propertyId: property.id, depthIn: depth, tipCents: tip, notes: notes.trim() || undefined, promoCode: quote.promo?.code },
+      });
+      if (job.promoCode) clearPendingPromo();
       router.replace({ pathname: '/customer/job/[id]', params: { id: String(job.id) } });
     } catch (e: any) {
-      setError(e.message);
+      if (e instanceof ApiError && e.code === 'promo_invalid') setPromoError(e.message);
+      setError(e instanceof ApiError && e.code === 'promo_invalid' ? `${e.message}. Remove the code to book without it.` : e.message);
       setBusy(false);
     }
   };
@@ -221,8 +236,9 @@ export default function Order() {
           </Row>
         </Row>
         {quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}
+        <PromoField code={promo} quote={quote} error={promoError} onChange={setPromo} />
         <T variant="caption" color="textSecondary">Tip your driver (100% goes to them)</T>
-        <TipPicker value={tip} onChange={setTip} base={quote?.total ?? 4500} />
+        <TipPicker value={tip} onChange={setTip} base={quote?.totalBeforeDiscount ?? quote?.total ?? 4500} />
       </Card>
 
       {user ? (

@@ -19,8 +19,13 @@ const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '
 
 // Simulated payments leave cardLabel empty, so those jobs keep the "(demo)" wording.
 function paymentNote(job: Job) {
-  const card = job.cardLabel;
   if (job.covered) return 'Covered by your Storm Pass. No charge for this plow.';
+  const note = chargeNote(job);
+  return job.promoCode && job.discountCents ? `${job.promoCode} saved you ${money(job.discountCents)}. ${note}` : note;
+}
+
+function chargeNote(job: Job) {
+  const card = job.cardLabel;
   switch (job.paymentStatus) {
     case 'demo':
       return 'Demo order. Nothing is charged.';

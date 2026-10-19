@@ -12,8 +12,11 @@ import { Snowfall } from './snowfall';
 import { Icon, Row, T, type IconName } from './ui';
 import { WeatherTicker } from './weather-ticker';
 
-const startOrder = (p: Place) =>
-  router.push({ pathname: '/order', params: { address: p.address, lat: String(p.lat), lng: String(p.lng), c: p.confirmed ? '1' : '0' } });
+const startOrder = (p: Place, promo?: string) =>
+  router.push({
+    pathname: '/order',
+    params: { address: p.address, lat: String(p.lat), lng: String(p.lng), c: p.confirmed ? '1' : '0', ...(promo ? { promo } : {}) },
+  });
 const driverSignUp = () => router.push({ pathname: '/sign-up', params: { role: 'driver' } });
 
 // Icy sky fading to snow white, behind the hero.
@@ -37,7 +40,7 @@ const STEPS: { icon: IconName; title: string; body: string }[] = [
   { icon: 'navigate', title: 'Watch it arrive', body: 'Live map and countdown to your door.' },
 ];
 
-export function Landing({ compact }: { compact?: boolean }) {
+export function Landing({ compact, promo }: { compact?: boolean; promo?: string }) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const wide = !compact && width >= 900;
@@ -53,7 +56,7 @@ export function Landing({ compact }: { compact?: boolean }) {
         A local plow truck at your driveway in minutes. Minnesota & South Dakota.
       </T>
       <View style={{ maxWidth: 580 }}>
-        <AddressSearch large cta={wide ? 'Get a plow' : undefined} onPick={startOrder} placeholder="Enter your home address" />
+        <AddressSearch large cta={wide ? 'Get a plow' : undefined} onPick={(p) => startOrder(p, promo)} placeholder="Enter your home address" />
       </View>
       <Row gap={Spacing.four} style={{ flexWrap: 'wrap' }}>
         {['From $35', 'Pay after it’s plowed', 'Cancel free'].map((t) => (
