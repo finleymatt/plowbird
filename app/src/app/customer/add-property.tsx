@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Switch, View } from 'react-native';
 
+import { AddressSearch, type Place } from '@/components/address-search';
 import { Button, Card, Chip, ChipGroup, ErrorText, Icon, Input, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -9,14 +10,11 @@ import { api } from '@/lib/api';
 import { LENGTH_LABEL, SIZE_LABEL } from '@/lib/format';
 import type { DrivewayLength, DrivewaySize } from '@/lib/types';
 
-type Match = { address: string; lat: number; lng: number };
 const LABELS = ['Home', 'Cabin', 'Rental', 'Work', "Parents'"];
 
 export default function AddProperty() {
   const theme = useTheme();
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState<{ q: string; matches: Match[] }>({ q: '', matches: [] });
-  const [picked, setPicked] = useState<Match | null>(null);
+  const [picked, setPicked] = useState<Place | null>(null);
   const [label, setLabel] = useState('Home');
   const [size, setSize] = useState<DrivewaySize>('double');
   const [length, setLength] = useState<DrivewayLength>('standard');
@@ -24,21 +22,6 @@ export default function AddProperty() {
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Debounced US Census address lookup. Results are tagged with the query that
-  // produced them, so "searching" is just "the latest results are for an older query".
-  const eligible = !picked && query.trim().length >= 8;
-  useEffect(() => {
-    if (!eligible) return;
-    const t = setTimeout(() => {
-      api<Match[]>(`/geocode?q=${encodeURIComponent(query)}`)
-        .then((matches) => setResult({ q: query, matches }))
-        .catch(() => setResult({ q: query, matches: [] }));
-    }, 500);
-    return () => clearTimeout(t);
-  }, [query, eligible]);
-  const searching = eligible && result.q !== query;
-  const matches = eligible && !searching ? result.matches : [];
 
   const save = async () => {
     if (!picked) return;
@@ -66,21 +49,7 @@ export default function AddProperty() {
           <Button title="Change" kind="ghost" size="sm" onPress={() => setPicked(null)} />
         </Card>
       ) : (
-        <View style={{ gap: Spacing.two }}>
-          <Input value={query} onChangeText={setQuery} placeholder="Street address, city, state" autoComplete="street-address" autoFocus />
-          {searching && <T variant="caption" color="textSecondary">Searching…</T>}
-          {matches.map((m) => (
-            <Card key={m.address} onPress={() => setPicked(m)} style={{ paddingVertical: Spacing.two }}>
-              <Row>
-                <Icon name="location-outline" color="accent" size={18} />
-                <T variant="label" style={{ flex: 1 }}>{m.address}</T>
-              </Row>
-            </Card>
-          ))}
-          {!searching && query.length >= 8 && !matches.length && (
-            <T variant="caption" color="textSecondary">No match yet. Include the house number, street, city, and state (e.g. 1200 Main St, Sioux Falls, SD).</T>
-          )}
-        </View>
+        <AddressSearch onPick={setPicked} autoFocus />
       )}
 
       <SectionTitle>Name</SectionTitle>

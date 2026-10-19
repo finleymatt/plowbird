@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword, signToken, requireAuth, requireRole } fro
 import { quote, surgeMultiplier } from './pricing.js';
 import { getConditions, getAlertsSafe, geocode, setDemoStorm, isDemoStorm } from './weather.js';
 import { checkStormPlans } from './scheduler.js';
+import { resolveAddress, suggestAddresses } from './geo.js';
 import {
   ACTIVE_STATUSES,
   DISPATCH_LEAD_MIN,
@@ -114,6 +115,39 @@ api.get('/weather', wrap(async (req, res) => {
   } catch (e) {
     bad(res, `Weather is unavailable right now (${e.message})`, 502);
   }
+}));
+
+// Address type-ahead for the order form. Public, so visitors can price a plow before signing up.
+const nearFrom = (q) => (Number.isFinite(Number(q.lat)) && Number.isFinite(Number(q.lng)) && q.lat !== '' ? { lat: Number(q.lat), lng: Number(q.lng) } : undefined);
+
+api.get('/places/suggest', wrap(async (req, res) => {
+  const q = String(req.query.q ?? '').trim();
+  if (q.length < 3) return res.json([]);
+  try {
+    res.json(await suggestAddresses(q, nearFrom(req.query)));
+  } catch (e) {
+    bad(res, `Address search is unavailable right now (${e.message})`, 502);
+  }
+}));
+
+// Pin down a picked suggestion. `verified: false` means the Census doesn't know that house
+// number, so the app asks the customer to double-check before using the street location.
+api.post('/places/resolve', wrap(async (req, res) => {
+  const { text, lat, lng } = req.body ?? {};
+  if (!text?.trim()) return bad(res, 'Pick an address');
+  const hit = await resolveAddress(text.trim()).catch(() => null);
+  if (hit) return res.json({ ...hit, verified: true });
+  if (lat == null || lng == null) return bad(res, "We couldn't find that address", 404);
+  res.json({ address: text.trim(), lat: Number(lat), lng: Number(lng), verified: false });
+}));
+
+// Upfront price for any address, before an account or saved driveway exists.
+api.get('/quote/preview', wrap(async (req, res) => {
+  const { lat, lng, size = 'double', length = 'standard', sidewalk, depth = 4 } = req.query;
+  if (lat == null || lng == null) return bad(res, 'lat and lng are required');
+  if (!SIZES.includes(size) || !LENGTHS.includes(length)) return bad(res, 'Invalid driveway size');
+  const property = { lat: Number(lat), lng: Number(lng), size, length, sidewalk: sidewalk === '1' || sidewalk === 'true' };
+  res.json(await priceFor(property, Number(depth)));
 }));
 
 api.get('/geocode', wrap(async (req, res) => {
