@@ -30,7 +30,7 @@ export default function RequestPlow() {
   const property = props.data?.find((p) => String(p.id) === params.propertyId) ?? props.data?.[0];
   const wx = useApi<Conditions>(property ? `/weather?lat=${property.lat}&lng=${property.lng}` : null);
   const payment = useApi<PaymentMethods>('/payments/methods');
-  const needsCard = payment.data?.mode === 'stripe' && !payment.data.card;
+  const needsCard = payment.data?.mode === 'stripe' && !payment.data.card && !payment.data.demo;
 
   // Captured once so slot math is stable across renders.
   const [now] = useState(() => Date.now());

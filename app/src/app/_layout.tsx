@@ -1,4 +1,3 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from '@expo-google-fonts/inter';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -10,13 +9,14 @@ import { Toast } from '@/components/toast';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { useAppFonts } from '@/lib/fonts';
 
 SplashScreen.preventAutoHideAsync();
 
 function Root() {
   const { loading } = useAuth();
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold });
-  const ready = !loading && (fontsLoaded || !!fontError);
+  const fontsReady = useAppFonts();
+  const ready = !loading && fontsReady;
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
