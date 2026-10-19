@@ -25,19 +25,23 @@ export class PaymentError extends Error {
 
 const BRANDS = { amex: 'Amex', diners: 'Diners Club', discover: 'Discover', jcb: 'JCB', mastercard: 'Mastercard', unionpay: 'UnionPay', visa: 'Visa' };
 const WALLETS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay', link: 'Link' };
-const cardSummary = (pm) =>
-  pm?.card
-    ? {
-        id: pm.id,
-        brand: pm.card.brand,
-        last4: pm.card.last4,
-        expMonth: pm.card.exp_month,
-        expYear: pm.card.exp_year,
-        wallet: pm.card.wallet?.type ?? null,
-        // Apple Pay / Google Pay show as such ("Apple Pay · Visa •••• 1234"), like in other apps.
-        label: `${WALLETS[pm.card.wallet?.type] ? `${WALLETS[pm.card.wallet.type]} · ` : ''}${BRANDS[pm.card.brand] ?? 'Card'} •••• ${pm.card.last4}`,
-      }
-    : null;
+// What we show for a saved payment method: a card (maybe inside Apple Pay / Google Pay), or Link,
+// Stripe's saved-checkout where the customer confirms with a code texted to their phone.
+const cardSummary = (pm) => {
+  if (pm?.type === 'link')
+    return { id: pm.id, brand: 'link', last4: '', expMonth: null, expYear: null, wallet: 'link', label: `Link · ${pm.link?.email ?? 'saved checkout'}` };
+  if (!pm?.card) return null;
+  return {
+    id: pm.id,
+    brand: pm.card.brand,
+    last4: pm.card.last4,
+    expMonth: pm.card.exp_month,
+    expYear: pm.card.exp_year,
+    wallet: pm.card.wallet?.type ?? null,
+    // Apple Pay / Google Pay show as such ("Apple Pay · Visa •••• 1234"), like in other apps.
+    label: `${WALLETS[pm.card.wallet?.type] ? `${WALLETS[pm.card.wallet.type]} · ` : ''}${BRANDS[pm.card.brand] ?? 'Card'} •••• ${pm.card.last4}`,
+  };
+};
 
 // Stripe card errors (declines, expired cards, authentication required) become PaymentErrors.
 async function cardCall(fn) {
@@ -78,9 +82,10 @@ async function defaultPaymentMethod(customerId) {
   const customer = await stripe.customers.retrieve(customerId, { expand: ['invoice_settings.default_payment_method'] });
   if (customer.deleted) return null;
   const pm = customer.invoice_settings?.default_payment_method;
-  if (pm && typeof pm === 'object' && pm.card) return pm;
-  const { data } = await stripe.paymentMethods.list({ customer: customerId, type: 'card', limit: 1 });
-  return data[0] ?? null;
+  if (pm && typeof pm === 'object' && (pm.card || pm.type === 'link')) return pm;
+  // Most recently saved card or Link.
+  const { data } = await stripe.customers.listPaymentMethods(customerId, { limit: 10 });
+  return data.find((m) => m.type === 'card' || m.type === 'link') ?? null;
 }
 
 export async function savedCard(userId) {
@@ -96,7 +101,7 @@ export async function createCardSetup(userId) {
     stripe.setupIntents.create({
       customer,
       usage: 'off_session',
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'link'],
       metadata: { plowbird_user_id: String(userId) },
     }),
     stripe.customerSessions.create({
@@ -136,7 +141,7 @@ async function chargeSavedCard(job, amount, { capture, kind }) {
       currency: 'usd',
       customer,
       payment_method: pm.id,
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'link'],
       capture_method: capture ? 'automatic' : 'manual',
       confirm: true,
       off_session: true,

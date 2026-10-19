@@ -30,16 +30,18 @@ export function PaymentMethodCard({ methods, onChange }: { methods: PaymentMetho
     <Card style={{ gap: Spacing.three }}>
       {card ? (
         <Row>
-          <Icon name="card" color="accent" />
+          <Icon name={card.brand === 'link' ? 'link' : card.wallet === 'apple_pay' ? 'logo-apple' : 'card'} color="accent" />
           <View style={{ flex: 1 }}>
             <T variant="label">{card.label}</T>
             <T variant="caption" color="textSecondary">
-              Expires {String(card.expMonth).padStart(2, '0')}/{String(card.expYear).slice(-2)}
+              {card.expMonth && card.expYear
+                ? `Expires ${String(card.expMonth).padStart(2, '0')}/${String(card.expYear).slice(-2)}`
+                : 'Confirmed with a code texted to your phone'}
             </T>
           </View>
         </Row>
       ) : (
-        <T color="textSecondary">Pay with Apple Pay, Google Pay or a card. We place a hold when you book and only charge it once your driveway is clear.</T>
+        <T color="textSecondary">Pay with Apple Pay, Google Pay, Link or a card. We place a hold when you book and only charge it once your driveway is clear.</T>
       )}
       <CardSetup title={card ? 'Use a different card' : 'Add a card'} autoOpen={!card} onSaved={(saved) => onChange({ ...methods, card: saved })} />
     </Card>

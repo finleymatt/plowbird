@@ -138,7 +138,8 @@ export type Earnings = {
 
 export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed' | 'covered';
 
-export type SavedCard = { id: string; brand: string; last4: string; expMonth: number; expYear: number; label: string };
+/** A saved card, Apple Pay / Google Pay card, or Link (brand 'link': no number or expiry). */
+export type SavedCard = { id: string; brand: string; last4: string; expMonth: number | null; expYear: number | null; wallet?: string | null; label: string };
 
 /** 'demo' means the API has no STRIPE_SECRET_KEY and payments are status fields only. */
 export type PaymentMethods = { mode: 'stripe' | 'demo'; card: SavedCard | null };
