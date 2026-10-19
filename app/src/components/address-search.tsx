@@ -136,8 +136,8 @@ export function AddressSearch({
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as object),
           ]}
         />
-        {searching && <ActivityIndicator color={theme.accent} />}
-        {!!query && !searching && (
+        {searching && !list.length && <ActivityIndicator color={theme.accent} />}
+        {!!query && !(searching && !list.length) && (
           <Pressable accessibilityLabel="Clear address" hitSlop={10} onPress={() => setQuery('')}>
             <Icon name="close-circle" color="textSecondary" />
           </Pressable>

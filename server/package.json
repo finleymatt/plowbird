@@ -12,6 +12,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "fflate": "^0.8.3",
     "jose": "^6.2.12",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1",
