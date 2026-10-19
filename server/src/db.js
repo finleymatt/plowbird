@@ -88,6 +88,42 @@ CREATE TABLE IF NOT EXISTS notifications (
   read       INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+
+-- Stripe charges against a job: the authorized job charge, plus any extra tip charges.
+CREATE TABLE IF NOT EXISTS payments (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id            INTEGER NOT NULL REFERENCES jobs(id),
+  kind              TEXT NOT NULL CHECK (kind IN ('job','tip')),
+  payment_intent_id TEXT NOT NULL,
+  charge_id         TEXT,
+  amount_cents      INTEGER NOT NULL,
+  status            TEXT NOT NULL CHECK (status IN ('authorized','captured','voided','failed')),
+  created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE INDEX IF NOT EXISTS payments_job ON payments(job_id);
+
+-- Stripe Connect transfers owed to drivers. 'pending' until the driver finishes payout setup.
+CREATE TABLE IF NOT EXISTS payouts (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id       INTEGER NOT NULL REFERENCES jobs(id),
+  driver_id    INTEGER NOT NULL REFERENCES users(id),
+  amount_cents INTEGER NOT NULL,
+  charge_id    TEXT NOT NULL,
+  transfer_id  TEXT,
+  status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','paid','failed')),
+  error        TEXT,
+  created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE INDEX IF NOT EXISTS payouts_driver ON payouts(driver_id, status);
 `);
+
+// Columns added after the first release. SQLite has no ADD COLUMN IF NOT EXISTS.
+function addColumn(table, column, type) {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column))
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+}
+addColumn('users', 'stripe_customer_id', 'TEXT');
+addColumn('users', 'stripe_account_id', 'TEXT');
+addColumn('jobs', 'card_label', 'TEXT');
 
 export const nowIso = () => new Date().toISOString();

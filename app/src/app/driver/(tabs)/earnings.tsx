@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { PayoutsCard } from '@/components/payouts-card';
 import { Card, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useSocketEvent } from '@/lib/auth';
@@ -26,9 +27,7 @@ export default function EarningsScreen() {
         <Stat label="Last 7 days" cents={data.week.cents} jobs={data.week.jobs} />
         <Stat label="All time" cents={data.allTime.cents} jobs={data.allTime.jobs} />
       </Row>
-      <T variant="caption" color="textSecondary" style={{ marginTop: Spacing.two }}>
-        You keep 80% of every job and 100% of tips. Payouts are simulated in this build.
-      </T>
+      <PayoutsCard />
 
       <SectionTitle>Recent jobs</SectionTitle>
       {!data.recent.length && (

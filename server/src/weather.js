@@ -1,7 +1,7 @@
 // National Weather Service (api.weather.gov) client. Free, no key, great
 // coverage for MN/SD. NWS asks for a descriptive User-Agent with contact info.
 
-const UA = process.env.NWS_USER_AGENT ?? 'PlowNow/1.0 (dev; contact: admin@plownow.local)';
+const UA = process.env.NWS_USER_AGENT ?? 'Drift/1.0 (dev; contact: admin@drift.local)';
 const cache = new Map();
 
 async function nws(url, ttlMs = 10 * 60_000) {

@@ -69,6 +69,7 @@ export function serializeJob(r) {
     priceCents: r.price_cents,
     tipCents: r.tip_cents,
     paymentStatus: r.payment_status,
+    cardLabel: r.card_label,
     rating: r.rating,
     review: r.review,
     notes: r.notes,

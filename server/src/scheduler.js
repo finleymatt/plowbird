@@ -1,5 +1,6 @@
 import { db, nowIso } from './db.js';
 import { broadcastJob, DISPATCH_LEAD_MIN, getIo, marketPressure, notify } from './jobs.js';
+import { authorizeJob, PaymentError } from './payments.js';
 import { quote, surgeMultiplier } from './pricing.js';
 import { getConditions } from './weather.js';
 
@@ -57,8 +58,21 @@ export async function checkStormPlans() {
         "INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents) VALUES (?, ?, 'scheduled', 'storm_auto', ?, ?, ?, ?)",
       )
       .run(plan.user_id, plan.property_id, when, depthIn, JSON.stringify(q), q.total);
-    db.prepare('UPDATE storm_plans SET last_triggered_at = ? WHERE id = ?').run(nowIso(), plan.id);
     const jobId = Number(info.lastInsertRowid);
+    try {
+      await authorizeJob(jobId);
+    } catch (e) {
+      db.prepare('DELETE FROM jobs WHERE id = ?').run(jobId);
+      // Stripe outage: try again on the next check. Card problem: tell the customer once per storm.
+      if (!(e instanceof PaymentError)) {
+        console.error(`storm auto-plow hold for property ${plan.property_id} failed`, e.message);
+        continue;
+      }
+      db.prepare('UPDATE storm_plans SET last_triggered_at = ? WHERE id = ?').run(nowIso(), plan.id);
+      notify(plan.user_id, 'Storm auto-plow needs a card', `${snow.inches}" is forecast at ${plan.label}, but we couldn't book a plow: ${e.message}`);
+      continue;
+    }
+    db.prepare('UPDATE storm_plans SET last_triggered_at = ? WHERE id = ?').run(nowIso(), plan.id);
     notify(
       plan.user_id,
       'Storm auto-plow booked ❄️',

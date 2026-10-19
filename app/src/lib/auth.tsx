@@ -5,7 +5,7 @@ import { api, API_URL, setApiToken } from './api';
 import { storage } from './storage';
 import type { AppNotification, Role, User } from './types';
 
-const TOKEN_KEY = 'plownow.token';
+const TOKEN_KEY = 'drift.token';
 
 type SignUpInput = { role: Role; name: string; email: string; password: string; phone?: string; vehicle?: string };
 

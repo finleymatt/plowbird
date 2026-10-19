@@ -38,7 +38,7 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
   } catch {
-    throw new ApiError("Can't reach PlowNow. Check your connection.", 0);
+    throw new ApiError("Can't reach Drift. Check your connection.", 0);
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(data.error ?? `Request failed (${res.status})`, res.status);

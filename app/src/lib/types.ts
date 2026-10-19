@@ -50,7 +50,9 @@ export type Job = {
   quote: Quote;
   priceCents: number;
   tipCents: number;
-  paymentStatus: string;
+  paymentStatus: PaymentStatus;
+  /** Card the job was charged to, e.g. "Visa •••• 4242". Null when payments are simulated. */
+  cardLabel: string | null;
   rating: number | null;
   review: string | null;
   notes: string | null;
@@ -131,5 +133,24 @@ export type Earnings = {
   allTime: { cents: number; tips: number; jobs: number };
   recent: { id: number; address: string; completedAt: string; payoutCents: number; tipCents: number; rating: number | null }[];
 };
+
+export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed';
+
+export type SavedCard = { id: string; brand: string; last4: string; expMonth: number; expYear: number; label: string };
+
+/** 'demo' means the API has no STRIPE_SECRET_KEY and payments are status fields only. */
+export type PaymentMethods = { mode: 'stripe' | 'demo'; card: SavedCard | null };
+
+export type CardSetupParams = { customerId: string; setupIntentClientSecret: string; customerSessionClientSecret: string };
+
+export type PayoutStatus =
+  | { mode: 'demo' }
+  | {
+      mode: 'stripe';
+      status: 'not_started' | 'incomplete' | 'pending' | 'active';
+      pendingCents: number;
+      paidCents: number;
+      failedCents: number;
+    };
 
 export type AppNotification = { id: number; title: string; body: string; jobId: number | null; createdAt: string };

@@ -1,4 +1,4 @@
-# PlowNow
+# Drift
 
 On-demand snow plowing for driveways, like DoorDash for plow trucks. Built for Minnesota and South Dakota winters.
 
@@ -55,17 +55,52 @@ On a phone, the app reaches the API through the same computer that serves the bu
 
 ### Demo accounts (password `plowdemo123`)
 
-| Role     | Email                   |
-| -------- | ----------------------- |
-| Customer | `customer@plownow.test` |
-| Driver   | `driver@plownow.test`   |
-| Driver   | `driver2@plownow.test`  |
+| Role     | Email                 |
+| -------- | --------------------- |
+| Customer | `customer@drift.test` |
+| Driver   | `driver@drift.test`   |
+| Driver   | `driver2@drift.test`  |
+
+These were `@plownow.test` before the rename to Drift. If your database predates that, run the seed command again to add them.
 
 To test both sides at once in one browser, sign in as the customer at `http://localhost:8081` and as the driver at `http://127.0.0.1:8081`. They're separate origins, so each keeps its own login.
 
 ### Testing storms in the off-season
 
 In development, **Account → Developer → Simulate a winter storm** overlays a Winter Storm Warning and a 9.5" forecast on the live NWS data, and runs the storm auto-plow check. Every screen that uses simulated data shows a "Simulated" badge. On the driver job screen, **Simulate drive to driveway (dev)** moves the truck toward the house so you can watch tracking from a desk.
+
+### Turning on Stripe
+
+Without Stripe keys, payments are simulated: jobs only record `authorized`, `captured` or `voided`, and nothing is charged. To use real Stripe **test mode** instead:
+
+1. In the [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys), switch to test mode and copy both API keys. Turn on **Connect** (Settings → Connect) so drivers can onboard with Express accounts.
+2. Put the secret key in `server/.env` (copy `server/.env.example`):
+
+   ```
+   STRIPE_SECRET_KEY=sk_test_...
+   ```
+
+3. Put the publishable key from the same account in `app/.env.local` (copy `app/.env.example`):
+
+   ```
+   EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   ```
+
+4. Restart the API and `npm start --prefix app`. Expo reads `EXPO_PUBLIC_` variables when the bundle starts.
+
+Both files are gitignored. Keep the secret key out of the app: only the `pk_test_` key goes in `app/`.
+
+How the money moves:
+
+- **Request:** the customer saves a card (Account → Payment, or on the request screen). Booking places a hold for price + tip, using a PaymentIntent with manual capture.
+- **Completed:** the hold is captured. A tip that grew past the hold is charged separately.
+- **Cancelled:** the hold is released.
+- **After the job:** a raised tip is charged right away. Tips can't be lowered once they're charged.
+- **Drivers:** each driver taps **Set up payouts** on the Earnings tab to onboard with Stripe Express. They get 80% of the subtotal plus 100% of tips as a Connect transfer. Earnings made before setup wait until it's finished.
+
+Test with card `4242 4242 4242 4242`, any future expiry, any CVC and any ZIP. For a decline, use `4000 0000 0000 9995`. In Express onboarding (test mode), use the test values Stripe pre-fills, such as SSN `000-00-0000` and routing number `110000000`.
+
+Card entry uses Stripe's PaymentSheet on iOS and Android, and the Payment Element on web. Stripe's React Native SDK ships in Expo Go, so card setup works there. Apple Pay and Google Pay need a development build.
 
 ## Layout
 
@@ -76,6 +111,7 @@ app/      Expo (React Native) app: iOS, Android, web
   src/lib/         API client, auth + realtime socket, types
 server/   Node API: Express + Socket.IO + SQLite
   src/routes.js    REST endpoints
+  src/payments.js  Stripe: card holds, capture, tips, Connect payouts (simulated without keys)
   src/weather.js   NWS client + US Census geocoder
   src/pricing.js   pricing and storm surge
   src/scheduler.js scheduled-job release + storm auto-plow
@@ -83,7 +119,10 @@ server/   Node API: Express + Socket.IO + SQLite
 
 ## Not production-ready yet
 
-- **Payments are simulated.** Card authorization, capture and driver payouts are status fields only. Next step: Stripe (PaymentIntents for customers, Connect Express for driver payouts).
+- **Payments** use Stripe test mode when keys are set (see [Turning on Stripe](#turning-on-stripe)). Before going live, the API still needs:
+  - Stripe webhooks: `payment_intent.*` for out-of-band failures, `account.updated` to pay drivers without waiting for them to open Earnings
+  - a way for customers to retry a failed charge
+  - refunds for disputes
 - **Notifications are in-app only** (live banners over the socket). Push notifications need `expo-notifications` plus an EAS project.
 - **Database** is a single SQLite file. Move to Postgres before real traffic.
 - **Driver onboarding**: no identity, insurance or vehicle verification yet.
