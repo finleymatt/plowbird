@@ -139,6 +139,23 @@ Suggestions come from a local index of every addressable street segment in Minne
 - **Speed:** lookups take a few milliseconds.
 - **Location:** set `ADDRESS_DB_PATH` to keep the index somewhere else.
 
+### Apple Pay and Google Pay
+
+Customers can pay with Apple Pay or Google Pay instead of typing a card. The wallet is saved the same way as a card and charged after the plow.
+
+**Website:**
+1. Turn on Stripe (see above).
+   - Put `STRIPE_SECRET_KEY` on **plowbird-api**.
+   - Put `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` on **plowbird-web**, then redeploy it. The web build bakes the key in.
+2. In the Stripe Dashboard, under **Settings → Payment methods**, make sure Apple Pay and Google Pay are on.
+3. That's it. On boot the API registers `plowbird.app` with Stripe (`APP_DOMAINS` to change it), and Stripe handles Apple's merchant validation, so no Apple Merchant ID is needed for the web.
+   - Apple Pay shows in Safari on Apple devices, and Google Pay in Chrome.
+
+**iPhone and Android app** (needs a development build; wallets don't run in Expo Go):
+1. In your Apple Developer account, create the Merchant ID `merchant.app.plowbird`, or set `EXPO_PUBLIC_APPLE_MERCHANT_ID` and update `app.json` to match.
+2. In the Stripe Dashboard, under **Settings → Payment methods → Apple Pay**, add an iOS certificate. Stripe gives you a CSR to upload to Apple.
+3. Build with `npx eas-cli@latest build --profile development`. Google Pay is enabled in `app.json`.
+
 ### Live tracking and demo drives
 
 Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. In demo mode, new ASAP orders are also **auto-accepted** by the demo driver (`DEMO_DRIVER_EMAIL`, default `driver@plowbird.test`) about 6 seconds after they're placed. That driver then drives the route automatically, so a customer can watch the whole flow alone. Remove `DEMO_MODE` once real drivers are online, or the demo driver will take every order.

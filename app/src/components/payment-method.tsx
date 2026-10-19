@@ -39,9 +39,9 @@ export function PaymentMethodCard({ methods, onChange }: { methods: PaymentMetho
           </View>
         </Row>
       ) : (
-        <T color="textSecondary">Add a card to request a plow. We place a hold when you book and only charge it once your driveway is clear.</T>
+        <T color="textSecondary">Pay with Apple Pay, Google Pay or a card. We place a hold when you book and only charge it once your driveway is clear.</T>
       )}
-      <CardSetup title={card ? 'Use a different card' : 'Add a card'} onSaved={(saved) => onChange({ ...methods, card: saved })} />
+      <CardSetup title={card ? 'Use a different card' : 'Add a card'} autoOpen={!card} onSaved={(saved) => onChange({ ...methods, card: saved })} />
     </Card>
   );
 }
