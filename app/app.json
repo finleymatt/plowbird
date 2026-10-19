@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "Drift",
-    "slug": "drift",
+    "name": "Plowbird",
+    "slug": "plowbird",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "drift",
+    "scheme": "plowbird",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.driftplow.app",
+      "bundleIdentifier": "com.plowbird.app",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.driftplow.app",
+      "package": "com.plowbird.app",
       "adaptiveIcon": {
         "backgroundColor": "#F26B1D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -25,7 +25,7 @@
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "Drift — Snow plowing on demand",
+      "name": "Plowbird — Snow plowing on demand",
       "themeColor": "#F26B1D"
     },
     "plugins": [
@@ -34,7 +34,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Drift uses your location while you're online so customers can track their plow and you can see nearby jobs."
+          "locationWhenInUsePermission": "Plowbird uses your location while you're online so customers can track their plow and you can see nearby jobs."
         }
       ],
       [

@@ -10,7 +10,7 @@ import Stripe from 'stripe';
 import { db } from './db.js';
 
 const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
-export const stripe = secretKey ? new Stripe(secretKey, { maxNetworkRetries: 2, appInfo: { name: 'Drift' } }) : null;
+export const stripe = secretKey ? new Stripe(secretKey, { maxNetworkRetries: 2, appInfo: { name: 'Plowbird' } }) : null;
 export const paymentsMode = stripe ? 'stripe' : 'demo';
 if (stripe && !secretKey.startsWith('sk_test_') && !secretKey.startsWith('rk_test_') && process.env.NODE_ENV !== 'production')
   console.warn('STRIPE_SECRET_KEY is not a test-mode key. Real cards will be charged.');
@@ -63,7 +63,7 @@ async function customerIdFor(userId) {
     name: user.name,
     email: user.email,
     phone: user.phone ?? undefined,
-    metadata: { drift_user_id: String(user.id) },
+    metadata: { plowbird_user_id: String(user.id) },
   });
   // Conditional so two concurrent first requests don't leave an orphaned customer id behind.
   db.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ? AND stripe_customer_id IS NULL').run(customer.id, user.id);
@@ -94,7 +94,7 @@ export async function createCardSetup(userId) {
       customer,
       usage: 'off_session',
       payment_method_types: ['card'],
-      metadata: { drift_user_id: String(userId) },
+      metadata: { plowbird_user_id: String(userId) },
     }),
     stripe.customerSessions.create({
       customer,
@@ -137,9 +137,9 @@ async function chargeSavedCard(job, amount, { capture, kind }) {
       capture_method: capture ? 'automatic' : 'manual',
       confirm: true,
       off_session: true,
-      description: `Drift ${kind === 'tip' ? 'tip' : 'plow'} · job #${job.id} · ${job.address}`,
+      description: `Plowbird ${kind === 'tip' ? 'tip' : 'plow'} · job #${job.id} · ${job.address}`,
       transfer_group: `job_${job.id}`,
-      metadata: { drift_job_id: String(job.id), kind },
+      metadata: { plowbird_job_id: String(job.id), kind },
     }),
   );
   const ok = capture ? pi.status === 'succeeded' : pi.status === 'requires_capture';
@@ -272,10 +272,10 @@ async function flushPayouts(driverId, account) {
           destination: stripe_account_id,
           source_transaction: p.charge_id,
           transfer_group: `job_${p.job_id}`,
-          description: `Drift job #${p.job_id}`,
-          metadata: { drift_job_id: String(p.job_id), drift_payout_id: String(p.id) },
+          description: `Plowbird job #${p.job_id}`,
+          metadata: { plowbird_job_id: String(p.job_id), plowbird_payout_id: String(p.id) },
         },
-        { idempotencyKey: `drift-payout-${p.id}-${p.charge_id}` },
+        { idempotencyKey: `plowbird-payout-${p.id}-${p.charge_id}` },
       );
       db.prepare('UPDATE payouts SET transfer_id = ?, error = NULL WHERE id = ?').run(transfer.id, p.id);
     } catch (e) {
@@ -315,8 +315,8 @@ export async function payoutOnboardingLink(driverId, returnUrl) {
       email: user.email,
       business_type: 'individual',
       capabilities: { transfers: { requested: true } },
-      business_profile: { product_description: 'Residential snow plowing through Drift', mcc: '0780' },
-      metadata: { drift_user_id: String(user.id) },
+      business_profile: { product_description: 'Residential snow plowing through Plowbird', mcc: '0780' },
+      metadata: { plowbird_user_id: String(user.id) },
     });
     db.prepare('UPDATE users SET stripe_account_id = ? WHERE id = ? AND stripe_account_id IS NULL').run(account.id, user.id);
     accountId = getUser(driverId).stripe_account_id;

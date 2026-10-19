@@ -435,7 +435,7 @@ api.post('/payments/setup/complete', requireAuth, requireRole('customer'), requi
 }));
 
 // Stripe only redirects to http(s), so app deep links bounce through /payouts/return.
-const APP_SCHEMES = ['drift:', 'exp:', 'exps:'];
+const APP_SCHEMES = ['plowbird:', 'exp:', 'exps:'];
 const parseUrl = (s) => {
   try {
     return new URL(String(s));
