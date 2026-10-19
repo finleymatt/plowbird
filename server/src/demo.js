@@ -4,21 +4,26 @@
 //
 // - New ASAP orders are auto-accepted by the demo driver (DEMO_DRIVER_EMAIL, default
 //   driver@plowbird.test), who then drives the real road route to the driveway.
-// - Drivers can also start a demo drive from their job screen.
+//   On arrival it plows for a bit and marks the job done, so the whole order can be watched.
+// - Drivers can also start a demo drive from their job screen (those they finish themselves).
+import { advanceJob } from './advance.js';
 import { db, nowIso } from './db.js';
+import { DEMO } from './env.js';
 import { broadcastJob, getJob, milesBetween, notify, updateDriverLocation } from './jobs.js';
 import { drivingRoute } from './routing.js';
 
-export const DEMO = process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE === '1';
+export { DEMO };
 const DEMO_DRIVER_EMAIL = process.env.DEMO_DRIVER_EMAIL ?? 'driver@plowbird.test';
 const ACCEPT_AFTER_MS = 6_000; // long enough for the customer to see "Finding your driver"
 const DRIVE_AFTER_MS = 4_000;
 const TICKS = 45; // ~70 seconds of driving, one position every 1.5 s
+const PLOW_MS = 20_000; // how long the demo driver "plows" before finishing
 
 const drives = new Map();
 
 // Move the job's driver along the real road route to the driveway. Returns the drive length in seconds.
-export async function startDemoDrive(jobId) {
+// With `finish`, the driver then plows and completes the job too.
+export async function startDemoDrive(jobId, { finish = false } = {}) {
   const job = getJob(jobId);
   if (!job?.driver || !['accepted', 'en_route'].includes(job.status)) return 0;
   // Start from the truck's real position if it's a sensible distance away, else ~2.5 mi out.
@@ -41,6 +46,7 @@ export async function startDemoDrive(jobId) {
     if (tick >= TICKS) {
       clearInterval(timer);
       drives.delete(job.id);
+      if (finish) finishDemoJob(job.id).catch((e) => console.error(`demo finish for job #${job.id} failed`, e.message));
     }
   }, 1500);
   drives.set(job.id, timer);
@@ -64,6 +70,16 @@ export function autoAcceptForDemo(jobId) {
     const updated = broadcastJob(jobId);
     notify(job.customer.id, 'Driver confirmed', `${driver.name} will plow ${job.property.label.toLowerCase()} — ETA about ${updated.etaMinutes ?? 15} min.`, jobId);
     notify(driver.id, 'Auto-accepted (demo)', `${job.property.address} was accepted for you in demo mode.`, jobId);
-    setTimeout(() => startDemoDrive(jobId).catch((e) => console.error(`demo drive for job #${jobId} failed`, e.message)), DRIVE_AFTER_MS);
+    setTimeout(() => startDemoDrive(jobId, { finish: true }).catch((e) => console.error(`demo drive for job #${jobId} failed`, e.message)), DRIVE_AFTER_MS);
   }, ACCEPT_AFTER_MS);
+}
+
+// Arrived: start plowing, then mark it done a little later. Skips any step a person already took.
+async function finishDemoJob(jobId) {
+  const job = getJob(jobId);
+  if (job?.status !== 'en_route') return;
+  await advanceJob(job);
+  await new Promise((r) => setTimeout(r, PLOW_MS));
+  const plowing = getJob(jobId);
+  if (plowing?.status === 'in_progress') await advanceJob(plowing);
 }
