@@ -139,9 +139,9 @@ Suggestions come from a local index of every addressable street segment in Minne
 - **Speed:** lookups take a few milliseconds.
 - **Location:** set `ADDRESS_DB_PATH` to keep the index somewhere else.
 
-### Apple Pay and Google Pay
+### Apple Pay, Google Pay and Link
 
-Customers can pay with Apple Pay or Google Pay instead of typing a card. The wallet is saved the same way as a card and charged after the plow.
+Customers can pay with Apple Pay, Google Pay or **Link** instead of typing a card. Link is Stripe's saved checkout: enter your email or phone, confirm with a code texted to you, done. It's the closest equivalent to Shop Pay, which only works in Shopify stores. The wallet is saved the same way as a card and charged after the plow.
 
 **Website:**
 1. Turn on Stripe (see above).
