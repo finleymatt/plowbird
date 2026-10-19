@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { StripeProvider } from '@/components/stripe-provider';
 import { Toast } from '@/components/toast';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -36,8 +37,10 @@ export default function RootLayout() {
           colors: { ...base.colors, primary: c.primary, background: c.background, card: c.tabBar, text: c.text, border: c.border },
         }}>
         <AuthProvider>
-          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-          <Root />
+          <StripeProvider>
+            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+            <Root />
+          </StripeProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

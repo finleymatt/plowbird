@@ -15,6 +15,19 @@ import {
   milesBetween,
   notify,
 } from './jobs.js';
+import {
+  authorizeJob,
+  chargeExtraTip,
+  createCardSetup,
+  finishCardSetup,
+  paymentsMode,
+  payoutDashboardLink,
+  payoutOnboardingLink,
+  payoutStatus,
+  savedCard,
+  settleJob,
+  voidJob,
+} from './payments.js';
 
 export const api = Router();
 
@@ -182,7 +195,15 @@ api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) =>
       'INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents, tip_cents, notes) VALUES (?,?,?,?,?,?,?,?,?,?)',
     )
     .run(req.user.id, p.id, status, kind, scheduledFor ? new Date(scheduledFor).toISOString() : null, Number(depthIn), JSON.stringify(q), q.total, Math.max(0, Math.round(tipCents)), notes ?? null);
-  const job = broadcastJob(Number(info.lastInsertRowid));
+  const jobId = Number(info.lastInsertRowid);
+  try {
+    await authorizeJob(jobId);
+  } catch (e) {
+    // No hold, no job: drivers never saw it, so just drop the row.
+    db.prepare('DELETE FROM jobs WHERE id = ?').run(jobId);
+    throw e;
+  }
+  const job = broadcastJob(jobId);
   if (status === 'requested') getIo()?.to('drivers').emit('jobs:new', { id: job.id, address: p.address });
   res.json(job);
 }));
@@ -203,13 +224,14 @@ api.get('/jobs/:id', requireAuth, (req, res) => {
   res.json(job);
 });
 
-api.post('/jobs/:id/cancel', requireAuth, (req, res) => {
+api.post('/jobs/:id/cancel', requireAuth, wrap(async (req, res) => {
   const job = getJob(req.params.id);
   if (!job) return bad(res, 'Job not found', 404);
   if (job.customer.id === req.user.id) {
     if (!['scheduled', 'requested', 'accepted'].includes(job.status))
       return bad(res, 'Your driver is already on the way — message them to cancel');
-    db.prepare("UPDATE jobs SET status='cancelled', cancelled_at=?, payment_status='voided' WHERE id=?").run(nowIso(), job.id);
+    db.prepare("UPDATE jobs SET status='cancelled', cancelled_at=? WHERE id=?").run(nowIso(), job.id);
+    await voidJob(job.id);
     if (job.driver) notify(job.driver.id, 'Job cancelled', `${job.property.address} was cancelled by the customer.`, job.id);
   } else if (job.driver?.id === req.user.id) {
     // Driver drops the job: it goes back into the pool.
@@ -219,19 +241,34 @@ api.post('/jobs/:id/cancel', requireAuth, (req, res) => {
     notify(job.customer.id, 'Finding a new driver', `${job.driver.name} can't make it. We're matching you with another driver.`, job.id);
   } else return bad(res, 'Job not found', 404);
   res.json(broadcastJob(job.id));
-});
+}));
 
-api.post('/jobs/:id/tip', requireAuth, requireRole('customer'), (req, res) => {
+api.post('/jobs/:id/tip', requireAuth, requireRole('customer'), wrap(async (req, res) => {
   const job = getJob(req.params.id);
   if (!job || job.customer.id !== req.user.id) return bad(res, 'Job not found', 404);
   if (job.status === 'cancelled') return bad(res, 'This job was cancelled');
   const cents = Math.round(Number(req.body?.cents));
   if (!Number.isFinite(cents) || cents < 0 || cents > 50000) return bad(res, 'Tip must be between $0 and $500');
-  db.prepare('UPDATE jobs SET tip_cents = ? WHERE id = ?').run(cents, job.id);
+  if (job.paymentStatus === 'failed') return bad(res, "We couldn't charge your card for this job, so tips are paused. Contact support.");
+  if (job.status === 'completed' && job.paymentStatus === 'authorized') return bad(res, 'Finishing your payment. Try again in a moment.', 409);
+  const charged = job.paymentStatus === 'captured';
+  if (charged && cents < job.tipCents) return bad(res, "Your card was already charged for this tip, so it can't be lowered");
+  // Conditional so two taps can't both charge the same increase.
+  if (!db.prepare('UPDATE jobs SET tip_cents = ? WHERE id = ? AND tip_cents = ?').run(cents, job.id, job.tipCents).changes)
+    return bad(res, 'Your tip was just updated. Check it and try again.', 409);
+  if (charged && cents > job.tipCents) {
+    try {
+      // Before completion the tip is just part of what gets captured; after, it's its own charge.
+      await chargeExtraTip(job.id, cents - job.tipCents);
+    } catch (e) {
+      db.prepare('UPDATE jobs SET tip_cents = ? WHERE id = ? AND tip_cents = ?').run(job.tipCents, job.id, cents);
+      throw e;
+    }
+  }
   if (job.driver && cents > job.tipCents)
     notify(job.driver.id, 'You got a tip! 🎉', `${job.customer.name} tipped $${(cents / 100).toFixed(2)} for ${job.property.address}.`, job.id);
   res.json(broadcastJob(job.id));
-});
+}));
 
 api.post('/jobs/:id/rate', requireAuth, requireRole('customer'), (req, res) => {
   const job = getJob(req.params.id);
@@ -335,20 +372,25 @@ const STATUS_COPY = {
   completed: (j) => ['Your driveway is clear ❄️', `Rate ${j.driver.name} and add a tip — 100% goes to your driver.`],
 };
 
-api.post('/jobs/:id/advance', requireAuth, requireRole('driver'), (req, res) => {
+api.post('/jobs/:id/advance', requireAuth, requireRole('driver'), wrap(async (req, res) => {
   const job = getJob(req.params.id);
   if (!job || job.driver?.id !== req.user.id) return bad(res, 'Job not found', 404);
   const next = DRIVER_FLOW[job.status];
   if (!next) return bad(res, job.status === 'scheduled' ? "This job isn't open yet" : 'Nothing left to do on this job');
   const stamp = { in_progress: 'started_at', completed: 'completed_at' }[next];
-  db.prepare(`UPDATE jobs SET status = ?${stamp ? `, ${stamp} = ?` : ''}${next === 'completed' ? ", payment_status = 'captured'" : ''} WHERE id = ?`).run(
-    ...(stamp ? [next, nowIso(), job.id] : [next, job.id]),
-  );
+  // Conditional on the current status so a double tap can't complete (and charge) twice.
+  const moved = db
+    .prepare(`UPDATE jobs SET status = ?${stamp ? `, ${stamp} = ?` : ''} WHERE id = ? AND status = ?`)
+    .run(...(stamp ? [next, nowIso(), job.id, job.status] : [next, job.id, job.status]));
+  if (!moved.changes) return bad(res, 'This job was just updated', 409);
+  const paid = next === 'completed' ? await settleJob(job.id) : true;
   const updated = broadcastJob(job.id);
   const [title, body] = STATUS_COPY[next](updated);
   notify(job.customer.id, title, body, job.id);
+  if (!paid)
+    notify(job.customer.id, 'Payment didn’t go through', `We couldn't charge ${updated.cardLabel ?? 'your card'} for ${job.property.address}. Update your card in Account.`, job.id);
   res.json(updated);
-});
+}));
 
 api.get('/driver/earnings', requireAuth, requireRole('driver'), (req, res) => {
   const jobs = listJobs("j.driver_id = ? AND j.status = 'completed'", req.user.id);
@@ -372,6 +414,57 @@ api.get('/driver/earnings', requireAuth, requireRole('driver'), (req, res) => {
       rating: j.rating,
     })),
   });
+});
+
+/* ---------------- payments ---------------- */
+
+const requireStripe = (req, res, next) =>
+  paymentsMode === 'stripe' ? next() : bad(res, 'Payments are simulated on this server (no STRIPE_SECRET_KEY)', 501);
+
+api.get('/payments/methods', requireAuth, requireRole('customer'), wrap(async (req, res) => {
+  res.json({ mode: paymentsMode, card: await savedCard(req.user.id) });
+}));
+
+api.post('/payments/setup', requireAuth, requireRole('customer'), requireStripe, wrap(async (req, res) => {
+  res.json(await createCardSetup(req.user.id));
+}));
+
+api.post('/payments/setup/complete', requireAuth, requireRole('customer'), requireStripe, wrap(async (req, res) => {
+  if (!req.body?.setupIntentId) return bad(res, 'setupIntentId is required');
+  res.json({ mode: paymentsMode, card: await finishCardSetup(req.user.id, req.body.setupIntentId) });
+}));
+
+// Stripe only redirects to http(s), so app deep links bounce through /payouts/return.
+const APP_SCHEMES = ['drift:', 'exp:', 'exps:'];
+const parseUrl = (s) => {
+  try {
+    return new URL(String(s));
+  } catch {
+    return null;
+  }
+};
+
+api.get('/driver/payouts', requireAuth, requireRole('driver'), wrap(async (req, res) => {
+  res.json(await payoutStatus(req.user.id));
+}));
+
+api.post('/driver/payouts/onboard', requireAuth, requireRole('driver'), requireStripe, wrap(async (req, res) => {
+  const back = parseUrl(req.body?.returnUrl);
+  if (!back || ![...APP_SCHEMES, 'http:', 'https:'].includes(back.protocol)) return bad(res, 'returnUrl must be an app or web URL');
+  const returnUrl = APP_SCHEMES.includes(back.protocol)
+    ? `${req.protocol}://${req.get('host')}/api/payouts/return?to=${encodeURIComponent(back.toString())}`
+    : back.toString();
+  res.json({ url: await payoutOnboardingLink(req.user.id, returnUrl) });
+}));
+
+api.post('/driver/payouts/dashboard', requireAuth, requireRole('driver'), requireStripe, wrap(async (req, res) => {
+  res.json({ url: await payoutDashboardLink(req.user.id) });
+}));
+
+api.get('/payouts/return', (req, res) => {
+  const to = parseUrl(req.query.to);
+  if (!to || !APP_SCHEMES.includes(to.protocol)) return bad(res, 'Invalid return link');
+  res.redirect(to.toString());
 });
 
 /* ---------------- dev helpers ---------------- */

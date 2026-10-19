@@ -1,3 +1,4 @@
+import './env.js';
 import { createServer } from 'node:http';
 import express from 'express';
 import cors from 'cors';
@@ -5,6 +6,7 @@ import { Server } from 'socket.io';
 import { api, updateDriverLocation } from './routes.js';
 import { verifyToken } from './auth.js';
 import { attachIo } from './jobs.js';
+import { PaymentError } from './payments.js';
 import { startScheduler } from './scheduler.js';
 
 const PORT = Number(process.env.PORT ?? 4000);
@@ -15,7 +17,9 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.use('/api', api);
 app.use((err, req, res, next) => {
+  if (err instanceof PaymentError) return res.status(402).json({ error: err.message, code: err.code });
   console.error(err);
+  if (err?.type?.startsWith?.('Stripe')) return res.status(502).json({ error: `Payments are unavailable right now (${err.message})` });
   res.status(500).json({ error: 'Something went wrong on our end' });
 });
 
@@ -45,6 +49,6 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`PlowNow API listening on http://localhost:${PORT}`);
+  console.log(`Drift API listening on http://localhost:${PORT}`);
   startScheduler();
 });

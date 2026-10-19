@@ -7,9 +7,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { SIZE_LABEL } from '@/lib/format';
-import type { Property, User } from '@/lib/types';
+import type { PaymentMethods, Property, User } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
+import { PaymentMethodCard } from './payment-method';
 import { Button, Card, ErrorText, Icon, Input, Row, Screen, SectionTitle, T } from './ui';
 
 export function AccountScreen() {
@@ -21,6 +22,7 @@ export function AccountScreen() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const props = useApi<Property[]>(user?.role === 'customer' ? '/properties' : null);
+  const payment = useApi<PaymentMethods>(user?.role === 'customer' ? '/payments/methods' : null);
   const [demoStorm, setDemoStorm] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -87,6 +89,9 @@ export function AccountScreen() {
               </Card>
             ))}
           </View>
+
+          <SectionTitle>Payment</SectionTitle>
+          <PaymentMethodCard methods={payment.data} onChange={payment.setData} />
         </>
       )}
 

@@ -31,6 +31,23 @@ function headline(job: Job) {
   }
 }
 
+// Simulated payments leave cardLabel empty, so those jobs keep the "(demo)" wording.
+function paymentNote(job: Job) {
+  const card = job.cardLabel;
+  switch (job.paymentStatus) {
+    case 'captured':
+      return card ? `Charged to ${card} after completion` : 'Charged after completion (demo)';
+    case 'voided':
+      return card ? `No charge. The hold on ${card} was released.` : 'No charge';
+    case 'failed':
+      return `We couldn’t charge ${card ?? 'your card'}. Update your card in Account.`;
+    default:
+      return card
+        ? `${money(job.priceCents + job.tipCents)} hold on ${card}. You’re charged when the job is done.`
+        : 'Card authorized, charged when done (demo)';
+  }
+}
+
 export default function CustomerJob() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: job, setData, error } = useApi<Job>(`/jobs/${id}`);
@@ -64,6 +81,9 @@ export default function CustomerJob() {
 
   const canCancel = ['scheduled', 'requested', 'accepted'].includes(job.status);
   const tipValue = tip ?? job.tipCents;
+  // Once the card is charged, tips can go up (as a separate charge) but not down.
+  const charged = job.paymentStatus === 'captured';
+  const tipChanged = tip != null && tip !== job.tipCents && !(charged && tip < job.tipCents);
 
   return (
     <Screen edges={[]} contentStyle={{ gap: Spacing.three }}>
@@ -131,7 +151,10 @@ export default function CustomerJob() {
         <>
           <SectionTitle>{job.status === 'completed' ? 'Say thanks with a tip' : 'Tip'}</SectionTitle>
           <TipPicker value={tipValue} onChange={setTip} base={job.priceCents} />
-          {tip != null && tip !== job.tipCents && (
+          {charged && tip != null && tip < job.tipCents && (
+            <T variant="caption" color="textSecondary">Your {money(job.tipCents)} tip was already charged, so it can’t be lowered.</T>
+          )}
+          {tipChanged && (
             <Button
               title={tip > job.tipCents ? `Send ${money(tip)} tip` : `Update tip to ${money(tip)}`}
               size="md"
@@ -139,6 +162,9 @@ export default function CustomerJob() {
               loading={busy === 'tip'}
               onPress={() => run('tip', `/jobs/${job.id}/tip`, { cents: tip }).then(() => setTip(null))}
             />
+          )}
+          {tipChanged && charged && job.cardLabel && (
+            <T variant="caption" color="textSecondary">The extra {money(tip - job.tipCents)} is charged to {job.cardLabel} right away.</T>
           )}
         </>
       )}
@@ -148,7 +174,7 @@ export default function CustomerJob() {
         <QuoteLines quote={job.quote} tipCents={job.tipCents} />
         <Divider />
         <T variant="caption" color="textSecondary">
-          {job.paymentStatus === 'captured' ? 'Charged after completion (demo)' : job.paymentStatus === 'voided' ? 'No charge' : 'Card authorized, charged when done (demo)'}
+          {paymentNote(job)}
           {job.notes ? `\nNotes: ${job.notes}` : ''}
         </T>
       </Card>

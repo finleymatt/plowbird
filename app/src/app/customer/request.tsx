@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import { QuoteLines, TipPicker } from '@/components/job-parts';
+import { PaymentMethodCard } from '@/components/payment-method';
 import { Badge, Button, Card, Chip, ChipGroup, ErrorText, Icon, Input, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { money, SIZE_LABEL, when } from '@/lib/format';
-import type { Conditions, Job, Property, Quote } from '@/lib/types';
+import type { Conditions, Job, PaymentMethods, Property, Quote } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
 const DEPTHS = [2, 4, 6, 8, 12, 18];
@@ -28,6 +29,8 @@ export default function RequestPlow() {
   const props = useApi<Property[]>('/properties');
   const property = props.data?.find((p) => String(p.id) === params.propertyId) ?? props.data?.[0];
   const wx = useApi<Conditions>(property ? `/weather?lat=${property.lat}&lng=${property.lng}` : null);
+  const payment = useApi<PaymentMethods>('/payments/methods');
+  const needsCard = payment.data?.mode === 'stripe' && !payment.data.card;
 
   // Captured once so slot math is stable across renders.
   const [now] = useState(() => Date.now());
@@ -164,10 +167,10 @@ export default function RequestPlow() {
 
       <SectionTitle>Price</SectionTitle>
       <Card>{quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}</Card>
-      <Row style={{ marginTop: Spacing.two }}>
-        <Icon name="card-outline" color="textSecondary" size={18} />
-        <T variant="caption" color="textSecondary">Demo payments: no card is charged. You’re only billed after the job is done.</T>
-      </Row>
+
+      <SectionTitle>Payment</SectionTitle>
+      <PaymentMethodCard methods={payment.data} onChange={payment.setData} />
+      <ErrorText>{payment.error}</ErrorText>
 
       <ErrorText>{error}</ErrorText>
       <Button
@@ -179,7 +182,7 @@ export default function RequestPlow() {
         }
         onPress={submit}
         loading={busy}
-        disabled={!quote || (mode === 'schedule' && !hours.length)}
+        disabled={!quote || !payment.data || needsCard || (mode === 'schedule' && !hours.length)}
       />
     </Screen>
   );

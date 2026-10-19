@@ -15,7 +15,7 @@ export function Brand({ size = 22 }: { size?: number }) {
       <View style={{ backgroundColor: theme.primary, borderRadius: 10, padding: 6 }}>
         <Icon name="snow" size={size - 4} color="primaryText" />
       </View>
-      <T style={{ fontSize: size, fontWeight: '800', letterSpacing: -0.5 }}>PlowNow</T>
+      <T style={{ fontSize: size, fontWeight: '800', letterSpacing: -0.5 }}>Drift</T>
     </Row>
   );
 }
@@ -74,7 +74,7 @@ export function Landing({ compact }: { compact?: boolean }) {
               Snowed in?{'\n'}Plowed out.
             </T>
             <T style={{ fontSize: 19, lineHeight: 28 }} color="textSecondary">
-              Book a local plow driver in minutes, schedule a clear before your commute, or let PlowNow book one automatically when the National Weather Service says a storm is coming.
+              Book a local plow driver in minutes, schedule a clear before your commute, or let Drift book one automatically when the National Weather Service says a storm is coming.
             </T>
             <Row gap={Spacing.two} style={{ flexWrap: 'wrap', marginTop: Spacing.two }}>
               <Button title="Book a plow" icon="home" onPress={() => router.push('/sign-up')} />
