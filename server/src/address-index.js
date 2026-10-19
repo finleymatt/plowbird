@@ -207,6 +207,12 @@ const byCore = db.prepare(`
   SELECT s.*, z.city, z.state FROM seg s LEFT JOIN zips z ON z.zip = s.zip
   WHERE s.core >= ? AND s.core < ? AND (? IS NULL OR (s.lo <= ? AND s.hi >= ?))
   LIMIT 3000`);
+// Same, closest first, so a short prefix ("350 S…") still finds the streets near the user.
+const byCoreNear = db.prepare(`
+  SELECT s.*, z.city, z.state FROM seg s LEFT JOIN zips z ON z.zip = s.zip
+  WHERE s.core >= ? AND s.core < ? AND (? IS NULL OR (s.lo <= ? AND s.hi >= ?))
+  ORDER BY (s.y1 - ?) * (s.y1 - ?) * 1.9 + (s.x1 - ?) * (s.x1 - ?)
+  LIMIT 3000`);
 
 const pretty = (s) => s.replace(/\b(\d+)(ST|ND|RD|TH)\b/gi, (_, n, x) => n + x.toLowerCase());
 const miles2 = (a, b) => ((a.lat - b.lat) * 69) ** 2 + ((a.lng - b.lng) * 49) ** 2;
@@ -218,11 +224,13 @@ export function searchAddressIndex(raw, near) {
   const m = q.match(/^(\d+)[a-z]?\s+(.+)$/i);
   const number = m ? Number(m[1]) : null;
   const typed = words(m ? m[2] : q);
-  // The street's own name is the first word that isn't a direction ("n 2nd" → 2ND).
-  const lead = typed.find((t) => !DIRS.has(t));
-  if (!lead || (lead.length < 2 && !/^\d/.test(lead))) return [];
+  // The street's own name is the first word that isn't a direction ("n 2nd" → 2ND). Mid-typing
+  // ("350 s", "1234 l") the only word may be a letter or a direction: use it as the start of the name.
+  const lead = typed.find((t) => !DIRS.has(t)) ?? typed.at(-1);
+  if (!lead || (lead.length < 2 && number == null)) return [];
 
-  const rows = byCore.all(lead, `${lead}￿`, number, number, number);
+  const range = [lead, `${lead}￿`, number, number, number];
+  const rows = near ? byCoreNear.all(...range, near.lat, near.lat, near.lng, near.lng) : byCore.all(...range);
   const out = new Map();
   for (const r of rows) {
     if (number != null && ((r.parity === 'O' && number % 2 === 0) || (r.parity === 'E' && number % 2 === 1))) continue;
