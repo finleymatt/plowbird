@@ -42,8 +42,8 @@ async function cached(key, ttlMs, fn) {
   return value;
 }
 
-const fetchJson = async (url) => {
-  const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8000) });
+const fetchJson = async (url, timeoutMs = 8000) => {
+  const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok) throw new Error(`${new URL(url).host} ${res.status}`);
   return res.json();
 };
@@ -76,7 +76,7 @@ export async function suggestAddresses(raw, near = DEFAULT_NEAR) {
   const urls = [`&lat=${near.lat}&lon=${near.lng}&location_bias_scale=0.15`, ''].map(
     (bias) => `${PHOTON}?q=${encodeURIComponent(rest)}&limit=15&lang=en&bbox=${BBOX}&layer=street&layer=house${bias}`,
   );
-  const pages = await Promise.all(urls.map((url) => cached(`p:${url}`, 10 * 60_000, () => fetchJson(url)).catch(() => ({ features: [] }))));
+  const pages = await Promise.all(urls.map((url) => cached(`p:${url}`, 10 * 60_000, () => fetchJson(url, 2500)).catch(() => ({ features: [] }))));
   for (const data of pages) {
     for (const f of data.features ?? []) {
       const p = f.properties;
