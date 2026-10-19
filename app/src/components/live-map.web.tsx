@@ -157,7 +157,9 @@ export function LiveMap(props: LiveMapProps) {
         const s: MapState = { lib, map, ready: false, markers: new Map(), routeKey: '', fitKey: '', dark };
         state.current = s;
         sync(s, latest.current);
-        map.on('load', () => {
+        // Draw as soon as the style is ready; waiting for 'load' would also wait on every tile.
+        const onReady = () => {
+          if (s.ready || !map.isStyleLoaded()) return;
           s.ready = true;
           s.routeKey = '';
           s.fitKey = ''; // frame again now that the map has its real size
@@ -167,7 +169,9 @@ export function LiveMap(props: LiveMapProps) {
           attrib?.classList.remove('maplibregl-compact-show');
           attrib?.removeAttribute('open');
           sync(s, latest.current);
-        });
+        };
+        map.on('styledata', onReady);
+        map.on('load', onReady);
         // The container often gets its final size after mount (flex layouts, sheets).
         const ro = new ResizeObserver(() => {
           map.resize();

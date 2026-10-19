@@ -26,8 +26,10 @@ export async function drivingRoute(from, to) {
   const route = data.routes?.[0];
   if (data.code !== 'Ok' || !route) throw new Error(`routing ${data.code}`);
 
-  const minutes = Math.max(1, Math.round((route.duration / 60) * WINTER_FACTOR + SETUP_MIN));
+  const seconds = Math.max(60, Math.round(route.duration * WINTER_FACTOR + SETUP_MIN * 60));
+  const minutes = Math.round(seconds / 60);
   const value = {
+    seconds,
     // [lat, lng] pairs, the order both map libraries want.
     coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
     miles: Math.round((route.distance / 1609.34) * 10) / 10,

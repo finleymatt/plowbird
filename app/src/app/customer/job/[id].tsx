@@ -48,9 +48,10 @@ function status(job: Job, route: JobRoute | null): { kicker: string; big: string
       const eta = route ? new Date(route.arriveAt) : mins != null ? new Date(Date.now() + mins * 60_000) : null;
       const kicker = job.status === 'accepted' ? `${first} is getting ready` : `${first} is on the way`;
       if (route && route.miles <= 0.1) return { kicker: `${first} is here`, big: 'Arriving now', sub: 'Your driver is pulling up to your driveway' };
+      const left = eta ? Math.max(0, Math.round((eta.getTime() - Date.now()) / 1000)) : null;
       return {
-        kicker,
-        big: mins != null ? `${mins} min` : 'On the way',
+        kicker: left != null ? `${kicker} · arriving in` : kicker,
+        big: left != null ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : 'On the way',
         sub: [eta && `Arrives ${clock(eta)}`, route ? `${route.miles} mi away` : job.driverMiles != null ? `${job.driverMiles} mi away` : null].filter(Boolean).join(' · ') || null,
       };
     }
@@ -82,7 +83,7 @@ export default function CustomerJob() {
   // Re-render each minute so "Arrives 7:42" and the countdown stay fresh between GPS updates.
   const [, setTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setTick((n) => n + 1), 30_000);
+    const t = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -125,7 +126,7 @@ export default function CustomerJob() {
           <T variant="label" color="textSecondary">{s.kicker}</T>
           {job.status === 'en_route' && <LiveDot />}
         </Row>
-        <T style={{ fontSize: 40, lineHeight: 44, letterSpacing: -1.2, fontWeight: '800' }}>{s.big}</T>
+        <T style={{ fontSize: 52, lineHeight: 56, letterSpacing: -1.6, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{s.big}</T>
         {s.sub && <T color="textSecondary">{s.sub}</T>}
         {job.status !== 'cancelled' && job.status !== 'scheduled' && <Progress step={step} />}
         {job.status !== 'cancelled' && job.status !== 'scheduled' && (
@@ -186,10 +187,10 @@ export default function CustomerJob() {
         </Card>
       )}
 
-      {/* Tip */}
-      {job.status !== 'cancelled' && (
+      {/* Tip: set at checkout; offered again once the driveway is clear. */}
+      {job.status === 'completed' && (
         <View style={{ gap: Spacing.two }}>
-          <T variant="heading">{job.status === 'completed' ? 'Say thanks with a tip' : 'Tip'}</T>
+          <T variant="heading">Say thanks with a tip</T>
           <TipPicker value={tipValue} onChange={setTip} base={job.priceCents} />
           <T variant="caption" color="textSecondary">100% goes to your driver.</T>
           {charged && tip != null && tip < job.tipCents && (
@@ -227,7 +228,9 @@ export default function CustomerJob() {
 
       <ErrorText>{actionError}</ErrorText>
       {canCancel && (
-        <Button title="Cancel request" kind="danger" loading={busy === 'cancel'} onPress={() => run('cancel', `/jobs/${job.id}/cancel`)} />
+        <Pressable onPress={() => run('cancel', `/jobs/${job.id}/cancel`)} disabled={busy === 'cancel'} accessibilityRole="button" style={{ alignSelf: 'center', padding: Spacing.two }}>
+          <T variant="label" color="danger">{busy === 'cancel' ? 'Cancelling…' : 'Cancel request'}</T>
+        </Pressable>
       )}
     </View>
   );

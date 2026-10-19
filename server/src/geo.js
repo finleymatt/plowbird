@@ -66,10 +66,12 @@ export async function suggestAddresses(raw, near = DEFAULT_NEAR) {
 
   const out = [];
   const seen = new Set();
-  // Near the user first; if that turns up little, search the whole service area.
-  for (const bias of [`&lat=${near.lat}&lon=${near.lng}&location_bias_scale=0.15`, '']) {
-    const url = `${PHOTON}?q=${encodeURIComponent(rest)}&limit=25&lang=en&bbox=${BBOX}&layer=street&layer=house${bias}`;
-    const data = await cached(`p:${url}`, 10 * 60_000, () => fetchJson(url));
+  // Near the user and across the whole service area, at the same time; nearby results rank first.
+  const urls = [`&lat=${near.lat}&lon=${near.lng}&location_bias_scale=0.15`, ''].map(
+    (bias) => `${PHOTON}?q=${encodeURIComponent(rest)}&limit=15&lang=en&bbox=${BBOX}&layer=street&layer=house${bias}`,
+  );
+  const pages = await Promise.all(urls.map((url) => cached(`p:${url}`, 10 * 60_000, () => fetchJson(url)).catch(() => ({ features: [] }))));
+  for (const data of pages) {
     for (const f of data.features ?? []) {
       const p = f.properties;
       const st = STATES[p.state];
@@ -86,10 +88,10 @@ export async function suggestAddresses(raw, near = DEFAULT_NEAR) {
       if (seen.has(key)) continue;
       seen.add(key);
       const [lng, lat] = f.geometry.coordinates;
-      out.push({ line1, line2, text: `${line1}, ${line2}`, lat, lng, needsNumber: !exact && !number });
+      // exact: Photon knows this very house, so it doesn't need a Census check.
+      out.push({ line1, line2, text: `${line1}, ${line2}`, lat, lng, needsNumber: !exact && !number, exact: !!exact });
       if (out.length === 5) return out;
     }
-    if (out.length >= 3) break;
   }
   return out;
 }

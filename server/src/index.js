@@ -8,6 +8,7 @@ import { verifyToken } from './auth.js';
 import { attachIo } from './jobs.js';
 import { PaymentError } from './payments.js';
 import { startScheduler } from './scheduler.js';
+import { startTicker } from './ticker.js';
 
 const PORT = Number(process.env.PORT ?? 4000);
 
@@ -53,4 +54,5 @@ io.on('connection', (socket) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Plowbird API listening on http://localhost:${PORT}`);
   startScheduler();
+  startTicker();
 });

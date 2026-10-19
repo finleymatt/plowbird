@@ -7,6 +7,7 @@ import { getConditions, getAlertsSafe, geocode, setDemoStorm, isDemoStorm } from
 import { checkStormPlans } from './scheduler.js';
 import { resolveAddress, suggestAddresses } from './geo.js';
 import { drivingRoute } from './routing.js';
+import { getTicker } from './ticker.js';
 import { SocialError, socialConfig, verifySocialToken } from './social.js';
 import {
   ACTIVE_STATUSES,
@@ -189,6 +190,9 @@ api.get('/quote/preview', wrap(async (req, res) => {
   res.json(await priceFor(property, Number(depth)));
 }));
 
+// Stock-ticker style weather across the service area (served from memory, refreshed every 10 min).
+api.get('/weather/ticker', (req, res) => res.json(getTicker()));
+
 api.get('/geocode', wrap(async (req, res) => {
   const q = String(req.query.q ?? '').trim();
   if (q.length < 5) return res.json([]);
@@ -306,7 +310,7 @@ api.get('/jobs/:id/route', requireAuth, wrap(async (req, res) => {
   if (!d || d.lat == null || !['accepted', 'en_route'].includes(job.status)) return res.json(null);
   try {
     const route = await drivingRoute({ lat: d.lat, lng: d.lng }, job.property);
-    res.json({ ...route, arriveAt: new Date(Date.now() + route.minutes * 60_000).toISOString() });
+    res.json({ ...route, arriveAt: new Date(Date.now() + route.seconds * 1000).toISOString() });
   } catch {
     // Routing is a nice-to-have: fall back to the straight-line ETA the job already carries.
     res.json(null);

@@ -2,27 +2,29 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-// Clean, high-contrast palette in the spirit of Uber / DoorDash: white (or true black) canvas,
-// near-black type, gray fills instead of outlines, and one vivid orange for the brand and CTAs.
+// Winter palette: fresh-snow white, icy blues and deep navy type, with plow-beacon orange
+// reserved for the one main action on each screen.
 export const Colors = {
   light: {
-    text: '#0A0A0A',
-    textSecondary: '#5E5E5E',
+    text: '#0B1B2E',
+    textSecondary: '#5B6B7C',
     background: '#FFFFFF',
     card: '#FFFFFF',
-    border: '#E8E8E8',
-    backgroundElement: '#F3F3F3',
-    backgroundSelected: '#E4E4E4',
-    primary: '#FF4F12',
+    border: '#E3EAF2',
+    backgroundElement: '#F1F6FB',
+    backgroundSelected: '#DCE8F4',
+    primary: '#FF5A1F',
     primaryText: '#FFFFFF',
-    inverse: '#0A0A0A',
+    inverse: '#0B1B2E',
     inverseText: '#FFFFFF',
-    accent: '#276EF1',
-    success: '#05944F',
+    accent: '#1E6FD9',
+    ice: '#E8F2FC',
+    sky: '#CFE4FA',
+    success: '#0E9F6E',
     warning: '#B45309',
-    danger: '#E11900',
-    stormBg: '#FFF1EB',
-    stormBorder: '#FFC7B2',
+    danger: '#D92D20',
+    stormBg: '#FFF3EC',
+    stormBorder: '#FFCDB8',
     tabBar: '#FFFFFF',
   },
   dark: {
@@ -38,6 +40,8 @@ export const Colors = {
     inverse: '#FFFFFF',
     inverseText: '#0A0A0A',
     accent: '#5B97FF',
+    ice: '#16212E',
+    sky: '#1D2C3D',
     success: '#2BB673',
     warning: '#F5A524',
     danger: '#FF5A4F',

@@ -16,7 +16,17 @@ export function useJobRoute(job: Job | null) {
     if (!key || !job) return;
     let stale = false;
     api<JobRoute | null>(`/jobs/${job.id}/route`)
-      .then((r) => !stale && setRoute(r))
+      .then((r) => {
+        if (stale) return;
+        // Keep the countdown steady: a new route may push arrival later only for a real delay
+        // (over 45 s), not for routing wobble, so the clock doesn't tick back up.
+        setRoute((prev) => {
+          if (!r || !prev) return r;
+          const before = Date.parse(prev.arriveAt);
+          const after = Date.parse(r.arriveAt);
+          return after > before && after - before < 45_000 ? { ...r, arriveAt: prev.arriveAt } : r;
+        });
+      })
       .catch(() => {});
     return () => {
       stale = true;
