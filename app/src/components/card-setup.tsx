@@ -25,7 +25,7 @@ export function CardSetup({ title, onSaved }: CardSetupProps) {
     try {
       const setup = await api<CardSetupParams>('/payments/setup', { method: 'POST' });
       const init = await initPaymentSheet({
-        merchantDisplayName: 'Drift',
+        merchantDisplayName: 'Plowbird',
         customerId: setup.customerId,
         customerSessionClientSecret: setup.customerSessionClientSecret,
         setupIntentClientSecret: setup.setupIntentClientSecret,

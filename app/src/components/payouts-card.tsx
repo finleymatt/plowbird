@@ -81,7 +81,7 @@ export function PayoutsCard() {
       )}
       {data.failedCents > 0 && (
         <T variant="label" color="danger">
-          {moneyExact(data.failedCents)} couldn’t be sent. Contact Drift support.
+          {moneyExact(data.failedCents)} couldn’t be sent. Contact Plowbird support.
         </T>
       )}
       <View style={{ gap: Spacing.two, marginTop: Spacing.one }}>

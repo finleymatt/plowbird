@@ -1,4 +1,4 @@
-# Drift
+# Plowbird
 
 On-demand snow plowing for driveways, like DoorDash for plow trucks. Built for Minnesota and South Dakota winters.
 
@@ -55,13 +55,13 @@ On a phone, the app reaches the API through the same computer that serves the bu
 
 ### Demo accounts (password `plowdemo123`)
 
-| Role     | Email                 |
-| -------- | --------------------- |
-| Customer | `customer@drift.test` |
-| Driver   | `driver@drift.test`   |
-| Driver   | `driver2@drift.test`  |
+| Role     | Email                    |
+| -------- | ------------------------ |
+| Customer | `customer@plowbird.test` |
+| Driver   | `driver@plowbird.test`   |
+| Driver   | `driver2@plowbird.test`  |
 
-These were `@plownow.test` before the rename to Drift. If your database predates that, run the seed command again to add them.
+Databases seeded before the rename to Plowbird still have these accounts under `@plownow.test` or `@drift.test`. Run the seed command again to add the new ones.
 
 To test both sides at once in one browser, sign in as the customer at `http://localhost:8081` and as the driver at `http://127.0.0.1:8081`. They're separate origins, so each keeps its own login.
 

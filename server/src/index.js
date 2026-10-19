@@ -49,6 +49,6 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Drift API listening on http://localhost:${PORT}`);
+  console.log(`Plowbird API listening on http://localhost:${PORT}`);
   startScheduler();
 });
