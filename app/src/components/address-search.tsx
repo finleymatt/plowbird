@@ -4,14 +4,18 @@ import { ActivityIndicator, Platform, Pressable, TextInput, View } from 'react-n
 import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
+import type { Place } from '@/lib/places';
 
-import { Button, elevation, Icon, Row, T } from './ui';
+import { elevation, Icon, Row, T } from './ui';
 
-export type Place = { address: string; lat: number; lng: number };
-type Suggestion = { line1: string; line2: string; text: string; lat: number; lng: number; needsNumber: boolean };
-type Resolved = Place & { verified: boolean };
+export type { Place };
+type Suggestion = { line1: string; line2: string; text: string; lat: number; lng: number; needsNumber: boolean; exact?: boolean };
 
-// Type-ahead address box: suggestions appear as you type, picking one confirms the exact house.
+// Suggestions already fetched this session, so backspacing and retyping are instant.
+const cache = new Map<string, Suggestion[]>();
+
+// Type-ahead address box. Picking a suggestion returns right away; callers confirm the exact
+// house in the background with confirmPlace() (see lib/places.ts).
 export function AddressSearch({
   onPick,
   placeholder = 'Enter your address',
@@ -23,9 +27,9 @@ export function AddressSearch({
   onPick: (place: Place) => void;
   placeholder?: string;
   autoFocus?: boolean;
-  /** Big white search bar (for hero sections), always light so it pops on any background. */
+  /** Big search bar for hero sections. */
   large?: boolean;
-  /** Button inside the bar, e.g. "Find a plow"; picks the highlighted suggestion. */
+  /** Button inside the bar, e.g. "Get a plow"; picks the highlighted suggestion. */
   cta?: string;
   near?: { lat: number; lng: number } | null;
 }) {
@@ -35,37 +39,43 @@ export function AddressSearch({
   const [results, setResults] = useState<{ q: string; list: Suggestion[] }>({ q: '', list: [] });
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  // The confirmed address now in the box; no suggestions while it's unchanged.
   const [picked, setPicked] = useState<string | null>(null);
-  const [checking, setChecking] = useState<string | null>(null);
-  const [unverified, setUnverified] = useState<Resolved | null>(null);
   const [highlight, setHighlight] = useState(0);
+  const [focused, setFocused] = useState(false);
 
   const q = query.trim();
-  const eligible = q.length >= 3 && !unverified && query !== picked;
+  const key = `${q.toLowerCase()}|${near ? `${near.lat.toFixed(2)},${near.lng.toFixed(2)}` : ''}`;
+  const eligible = q.length >= 3 && query !== picked;
+  const hit = eligible ? cache.get(key) : undefined;
+  // Ask on every keystroke (no waiting for a pause) and let answers land as they come back:
+  // the list always shows the freshest results we have, so it fills in while you type.
   useEffect(() => {
-    if (!eligible) return;
-    const t = setTimeout(() => {
-      const bias = near ? `&lat=${near.lat}&lng=${near.lng}` : '';
-      api<Suggestion[]>(`/places/suggest?q=${encodeURIComponent(q)}${bias}`)
-        .then((list) => {
-          setResults({ q, list });
-          setHighlight(0);
-          setError(null);
-        })
-        .catch((e) => {
-          setResults({ q, list: [] });
-          setError(e.message);
-        });
-    }, 200);
-    return () => clearTimeout(t);
-  }, [q, eligible, near]);
+    if (!eligible || cache.has(key)) return;
+    let stale = false;
+    const bias = near ? `&lat=${near.lat}&lng=${near.lng}` : '';
+    api<Suggestion[]>(`/places/suggest?q=${encodeURIComponent(q)}${bias}`)
+      .then((list) => {
+        cache.set(key, list);
+        // An older, shorter query answering late shouldn't replace newer results.
+        setResults((prev) => (prev.q.length > q.length && prev.q.startsWith(q) ? prev : { q, list }));
+        if (!stale) setHighlight(0);
+        setError(null);
+      })
+      .catch((e) => {
+        if (!stale) setError(e.message);
+      });
+    return () => {
+      stale = true;
+    };
+  }, [key, eligible]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const searching = eligible && results.q !== q;
-  const list = eligible ? results.list : [];
+  const searching = eligible && !hit && results.q !== q;
+  // Exact cached answer if we have one, otherwise the latest list so far (no flicker, no blank).
+  const list = eligible ? (hit ?? results.list) : [];
+  const active = Math.min(highlight, Math.max(0, list.length - 1));
   const hasNumber = /^\d/.test(q);
 
-  const pick = async (s: Suggestion) => {
+  const pick = (s: Suggestion) => {
     // A street with no house number yet: fill it in and let them type the number in front.
     if (s.needsNumber) {
       setQuery(`${s.line1}, ${s.line2}`);
@@ -73,20 +83,10 @@ export function AddressSearch({
       input.current?.focus();
       return;
     }
-    setChecking(s.text);
-    setError(null);
-    try {
-      const r = await api<Resolved>('/places/resolve', { body: { text: s.text, lat: s.lat, lng: s.lng } });
-      if (r.verified) {
-        setQuery(r.address);
-        setPicked(r.address);
-        onPick(r);
-      } else setUnverified(r);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setChecking(null);
-    }
+    setQuery(s.text);
+    setPicked(s.text);
+    setHint(null);
+    onPick({ address: s.text, lat: s.lat, lng: s.lng, confirmed: !!s.exact });
   };
 
   const onKeyPress = (e: { nativeEvent: { key: string }; preventDefault?: () => void }) => {
@@ -99,31 +99,31 @@ export function AddressSearch({
   };
 
   const height = large ? 64 : 52;
-  // The hero bar stays white with dark text in both color schemes.
-  const fg = large ? '#0A0A0A' : theme.text;
-  const muted = large ? '#6B6B6B' : theme.textSecondary;
   return (
     <View style={{ gap: Spacing.two }}>
       <Row
         gap={Spacing.two}
         style={[
-          { height, paddingLeft: Spacing.three, paddingRight: cta ? 6 : Spacing.three, borderRadius: large ? Radius.pill : Radius.md },
-          large ? [{ backgroundColor: '#FFFFFF' }, elevation(2)] : { backgroundColor: theme.backgroundElement },
+          { height, paddingLeft: Spacing.three, paddingRight: cta ? 6 : Spacing.three, borderRadius: large ? Radius.pill : Radius.md, borderWidth: 2 },
+          large
+            ? [{ backgroundColor: theme.card, borderColor: focused ? theme.accent : theme.card }, elevation(2)]
+            : { backgroundColor: theme.backgroundElement, borderColor: focused ? theme.accent : 'transparent' },
         ]}>
-        <Icon name="location-sharp" color={large ? 'primary' : 'text'} size={large ? 24 : 20} />
+        <Icon name="location-sharp" color="primary" size={large ? 24 : 20} />
         <TextInput
           ref={input}
           value={query}
           onChangeText={(t) => {
             setQuery(t);
-            setUnverified(null);
             setError(null);
             setHint(null);
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onKeyPress={onKeyPress}
-          onSubmitEditing={() => list[highlight] && pick(list[highlight])}
+          onSubmitEditing={() => list[active] && pick(list[active])}
           placeholder={placeholder}
-          placeholderTextColor={muted}
+          placeholderTextColor={theme.textSecondary}
           autoFocus={autoFocus}
           autoCorrect={false}
           autoComplete="street-address"
@@ -131,13 +131,13 @@ export function AddressSearch({
           returnKeyType="search"
           accessibilityLabel="Address"
           style={[
-            { flex: 1, height: '100%', color: fg, fontSize: large ? 18 : 16 },
+            { flex: 1, height: '100%', color: theme.text, fontSize: large ? 18 : 16 },
             font('600'),
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as object),
           ]}
         />
-        {(searching || checking) && <ActivityIndicator color={theme.primary} />}
-        {!!query && !searching && !checking && (
+        {searching && <ActivityIndicator color={theme.accent} />}
+        {!!query && !searching && (
           <Pressable accessibilityLabel="Clear address" hitSlop={10} onPress={() => setQuery('')}>
             <Icon name="close-circle" color="textSecondary" />
           </Pressable>
@@ -146,9 +146,9 @@ export function AddressSearch({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={cta}
-            onPress={() => (list[highlight] ? pick(list[highlight]) : input.current?.focus())}
-            style={({ pressed }) => ({ height: height - 12, paddingHorizontal: 22, borderRadius: Radius.pill, backgroundColor: '#0A0A0A', justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
-            <T style={[{ color: '#fff', fontSize: 16 }, font('700')]}>{cta}</T>
+            onPress={() => (list[active] ? pick(list[active]) : input.current?.focus())}
+            style={({ pressed }) => ({ height: height - 14, paddingHorizontal: 24, borderRadius: Radius.pill, backgroundColor: theme.primary, justifyContent: 'center', opacity: pressed ? 0.85 : 1 })}>
+            <T style={[{ color: theme.primaryText, fontSize: 16 }, font('700')]}>{cta}</T>
           </Pressable>
         )}
       </Row>
@@ -168,16 +168,17 @@ export function AddressSearch({
                 gap: Spacing.three,
                 paddingVertical: 12,
                 paddingHorizontal: Spacing.three,
-                backgroundColor: pressed || (Platform.OS === 'web' && i === highlight) ? theme.backgroundElement : 'transparent',
+                backgroundColor: pressed || (Platform.OS === 'web' && i === active) ? theme.backgroundElement : 'transparent',
                 borderTopWidth: i ? 1 : 0,
                 borderColor: theme.border,
               })}>
-              <Icon name={s.needsNumber ? 'navigate-outline' : 'home-outline'} color="textSecondary" />
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.ice, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={s.needsNumber ? 'navigate' : 'home'} color="accent" size={18} />
+              </View>
               <View style={{ flex: 1 }}>
                 <T variant="label" numberOfLines={1}>{s.line1}</T>
                 <T variant="caption" color="textSecondary" numberOfLines={1}>{s.line2}</T>
               </View>
-              {checking === s.text && <ActivityIndicator color={theme.primary} />}
             </Pressable>
           ))}
         </View>
@@ -188,26 +189,6 @@ export function AddressSearch({
           {hasNumber ? 'No match yet. Keep typing the street name, then the city.' : 'Start with your house number, e.g. 1234 Lyndale Ave S.'}
         </T>
       )}
-
-      {unverified && (
-        <View style={{ gap: Spacing.two, padding: Spacing.three, borderRadius: Radius.md, backgroundColor: theme.stormBg, borderWidth: 1, borderColor: theme.stormBorder }}>
-          <T variant="label">We couldn’t confirm “{unverified.address}”.</T>
-          <T variant="caption" color="textSecondary">Double-check the house number. If it’s right (new homes can be missing), use it anyway and add directions for your driver.</T>
-          <Row gap={Spacing.two}>
-            <Button title="Use it anyway" size="sm" onPress={() => {
-              setQuery(unverified.address);
-              setPicked(unverified.address);
-              setUnverified(null);
-              onPick(unverified);
-            }} />
-            <Button title="Edit address" size="sm" kind="ghost" onPress={() => {
-              setUnverified(null);
-              input.current?.focus();
-            }} />
-          </Row>
-        </View>
-      )}
-
       {hint && <T variant="caption" color="textSecondary">{hint}</T>}
       {error && <T variant="caption" color="danger">{error}</T>}
     </View>

@@ -26,7 +26,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = any>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+export async function api<T = any>(path: string, opts: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api${path}`, {
@@ -36,8 +36,10 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
       body: opts.body ? JSON.stringify(opts.body) : undefined,
+      signal: opts.signal,
     });
-  } catch {
+  } catch (e) {
+    if (opts.signal?.aborted) throw e;
     throw new ApiError("Can't reach Plowbird. Check your connection.", 0);
   }
   const data = await res.json().catch(() => ({}));

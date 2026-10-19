@@ -7,6 +7,7 @@ import { Button, Card, Chip, ChipGroup, ErrorText, Icon, Input, Row, Screen, Sec
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
+import { confirmPlace } from '@/lib/places';
 import { LENGTH_LABEL, SIZE_LABEL } from '@/lib/format';
 import type { DrivewayLength, DrivewaySize } from '@/lib/types';
 
@@ -28,7 +29,9 @@ export default function AddProperty() {
     setBusy(true);
     setError(null);
     try {
-      await api('/properties', { body: { ...picked, label, size, length, sidewalk, notes: notes || undefined } });
+      // Pin the exact house (falls back to the street location if the Census doesn't know it).
+      const place = await confirmPlace(picked).catch(() => picked);
+      await api('/properties', { body: { address: place.address, lat: place.lat, lng: place.lng, label, size, length, sidewalk, notes: notes || undefined } });
       if (router.canGoBack()) router.back();
       else router.replace('/customer');
     } catch (e: any) {
