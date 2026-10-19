@@ -7,3 +7,6 @@ try {
 } catch {
   // No .env file: fine, everything has a dev default.
 }
+
+// Demo mode (see demo.js): on in development; in production only with DEMO_MODE=1.
+export const DEMO = process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE === '1';

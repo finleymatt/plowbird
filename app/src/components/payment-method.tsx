@@ -40,10 +40,17 @@ export function PaymentMethodCard({ methods, onChange }: { methods: PaymentMetho
             </T>
           </View>
         </Row>
+      ) : methods.demo ? (
+        <Row style={{ alignItems: 'flex-start' }}>
+          <Icon name="sparkles" color="accent" size={18} />
+          <T color="textSecondary" style={{ flex: 1 }}>
+            Demo: no card needed, so just tap Request plow. Nothing is charged. To try checkout anyway, use test card 4242 4242 4242 4242.
+          </T>
+        </Row>
       ) : (
         <T color="textSecondary">Pay with Apple Pay, Google Pay, Link or a card. We place a hold when you book and only charge it once your driveway is clear.</T>
       )}
-      <CardSetup title={card ? 'Use a different card' : 'Add a card'} autoOpen={!card} onSaved={(saved) => onChange({ ...methods, card: saved })} />
+      <CardSetup title={card ? 'Use a different card' : 'Add a card'} autoOpen={!card && !methods.demo} onSaved={(saved) => onChange({ ...methods, card: saved })} />
     </Card>
   );
 }

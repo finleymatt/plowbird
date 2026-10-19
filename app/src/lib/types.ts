@@ -136,13 +136,14 @@ export type Earnings = {
   recent: { id: number; address: string; completedAt: string; payoutCents: number; tipCents: number; rating: number | null }[];
 };
 
-export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed' | 'covered';
+export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed' | 'covered' | 'demo';
 
 /** A saved card, Apple Pay / Google Pay card, or Link (brand 'link': no number or expiry). */
 export type SavedCard = { id: string; brand: string; last4: string; expMonth: number | null; expYear: number | null; wallet?: string | null; label: string };
 
 /** 'demo' means the API has no STRIPE_SECRET_KEY and payments are status fields only. */
-export type PaymentMethods = { mode: 'stripe' | 'demo'; card: SavedCard | null };
+// `demo`: this server lets people order without a card (nothing is charged).
+export type PaymentMethods = { mode: 'stripe' | 'demo'; card: SavedCard | null; demo?: boolean };
 
 export type CardSetupParams = { customerId: string; setupIntentClientSecret: string; customerSessionClientSecret: string };
 

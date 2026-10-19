@@ -21,6 +21,7 @@ import {
   notify,
   updateDriverLocation,
 } from './jobs.js';
+import { advanceJob, DRIVER_FLOW } from './advance.js';
 import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
 import { activePassFor, checkStormPasses, ELIGIBILITY, markEnding, passPrice, STORM_PASS, subscriptionRow } from './storm-pass.js';
 import {
@@ -33,7 +34,6 @@ import {
   payoutOnboardingLink,
   payoutStatus,
   savedCard,
-  settleJob,
   startStormPassBilling,
   stopStormPassBilling,
   voidJob,
@@ -460,30 +460,12 @@ api.post('/jobs/:id/accept', requireAuth, requireRole('driver'), (req, res) => {
   res.json(updated);
 });
 
-const DRIVER_FLOW = { accepted: 'en_route', en_route: 'in_progress', in_progress: 'completed' };
-const STATUS_COPY = {
-  en_route: (j) => [`${j.driver.name} is on the way`, `ETA about ${j.etaMinutes ?? 10} min to ${j.property.address}.`],
-  in_progress: (j) => ['Plowing has started', `${j.driver.name} is clearing your driveway now.`],
-  completed: (j) => ['Your driveway is clear ❄️', `Rate ${j.driver.name} and add a tip — 100% goes to your driver.`],
-};
-
 api.post('/jobs/:id/advance', requireAuth, requireRole('driver'), wrap(async (req, res) => {
   const job = getJob(req.params.id);
   if (!job || job.driver?.id !== req.user.id) return bad(res, 'Job not found', 404);
-  const next = DRIVER_FLOW[job.status];
-  if (!next) return bad(res, job.status === 'scheduled' ? "This job isn't open yet" : 'Nothing left to do on this job');
-  const stamp = { in_progress: 'started_at', completed: 'completed_at' }[next];
-  // Conditional on the current status so a double tap can't complete (and charge) twice.
-  const moved = db
-    .prepare(`UPDATE jobs SET status = ?${stamp ? `, ${stamp} = ?` : ''} WHERE id = ? AND status = ?`)
-    .run(...(stamp ? [next, nowIso(), job.id, job.status] : [next, job.id, job.status]));
-  if (!moved.changes) return bad(res, 'This job was just updated', 409);
-  const paid = next === 'completed' ? await settleJob(job.id) : true;
-  const updated = broadcastJob(job.id);
-  const [title, body] = STATUS_COPY[next](updated);
-  notify(job.customer.id, title, body, job.id);
-  if (!paid)
-    notify(job.customer.id, 'Payment didn’t go through', `We couldn't charge ${updated.cardLabel ?? 'your card'} for ${job.property.address}. Update your card in Account.`, job.id);
+  if (!DRIVER_FLOW[job.status]) return bad(res, job.status === 'scheduled' ? "This job isn't open yet" : 'Nothing left to do on this job');
+  const updated = await advanceJob(job);
+  if (!updated) return bad(res, 'This job was just updated', 409);
   res.json(updated);
 }));
 
@@ -517,7 +499,7 @@ const requireStripe = (req, res, next) =>
   paymentsMode === 'stripe' ? next() : bad(res, 'Payments are simulated on this server (no STRIPE_SECRET_KEY)', 501);
 
 api.get('/payments/methods', requireAuth, requireRole('customer'), wrap(async (req, res) => {
-  res.json({ mode: paymentsMode, card: await savedCard(req.user.id) });
+  res.json({ mode: paymentsMode, card: await savedCard(req.user.id), demo: DEMO });
 }));
 
 api.post('/payments/setup', requireAuth, requireRole('customer'), requireStripe, wrap(async (req, res) => {

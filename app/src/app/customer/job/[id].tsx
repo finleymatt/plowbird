@@ -22,6 +22,8 @@ function paymentNote(job: Job) {
   const card = job.cardLabel;
   if (job.covered) return 'Covered by your Storm Pass. No charge for this plow.';
   switch (job.paymentStatus) {
+    case 'demo':
+      return 'Demo order. Nothing is charged.';
     case 'captured':
       return card ? `Charged to ${card} after completion` : 'Charged after completion (demo)';
     case 'voided':

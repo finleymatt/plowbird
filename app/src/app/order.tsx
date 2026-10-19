@@ -96,7 +96,7 @@ export default function Order() {
     };
   }, [place, size, sidewalk, depth]);
 
-  const needsCard = payments.data?.mode === 'stripe' && !payments.data.card;
+  const needsCard = payments.data?.mode === 'stripe' && !payments.data.card && !payments.data.demo;
   const accountProblem = user
     ? user.role !== 'customer'
       ? 'You’re signed in as a driver. Sign out to book a plow.'
@@ -128,7 +128,7 @@ export default function Order() {
       }
       // Live payments: the card is added once there's an account to attach it to.
       const pm = await api<PaymentMethods>('/payments/methods');
-      if (pm.mode === 'stripe' && !pm.card) {
+      if (pm.mode === 'stripe' && !pm.card && !pm.demo) {
         payments.setData(pm);
         throw new Error('Add a card below to finish booking. You’re only charged once your driveway is clear.');
       }

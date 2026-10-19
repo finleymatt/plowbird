@@ -8,6 +8,7 @@
 import Stripe from 'stripe';
 
 import { db } from './db.js';
+import { DEMO } from './env.js';
 
 const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
 export const stripe = secretKey ? new Stripe(secretKey, { maxNetworkRetries: 2, appInfo: { name: 'Plowbird' } }) : null;
@@ -171,6 +172,11 @@ const jobPayment = (jobId) => db.prepare("SELECT * FROM payments WHERE job_id = 
 export async function authorizeJob(jobId) {
   if (!stripe) return;
   const job = jobRow(jobId);
+  // Demo server: anyone can try a whole order without a card. Card-less orders are never charged.
+  if (DEMO && !(await savedCard(job.customer_id))) {
+    db.prepare("UPDATE jobs SET payment_status = 'demo' WHERE id = ?").run(job.id);
+    return;
+  }
   const amount = job.price_cents + job.tip_cents;
   const { pi, card } = await chargeSavedCard(job, amount, { capture: false, kind: 'job' });
   insertPayment(job.id, 'job', pi, amount, 'authorized');
@@ -196,6 +202,7 @@ export async function voidJob(jobId) {
 export async function settleJob(jobId) {
   const job = jobRow(jobId);
   if (job.covered) return settleCoveredJob(job);
+  if (job.payment_status === 'demo') return true;
   if (!stripe) {
     db.prepare("UPDATE jobs SET payment_status = 'captured' WHERE id = ?").run(jobId);
     return true;
