@@ -168,7 +168,8 @@ const insertPayment = (jobId, kind, pi, amount, status) =>
 
 const jobPayment = (jobId) => db.prepare("SELECT * FROM payments WHERE job_id = ? AND kind = 'job' ORDER BY id DESC LIMIT 1").get(jobId);
 
-// Put a hold for price + tip on the customer's card. Throws PaymentError if it's declined.
+// Put a hold for price + tip on the customer's card (price_cents already has any promo taken off).
+// Throws PaymentError if it's declined.
 export async function authorizeJob(jobId) {
   if (!stripe) return;
   const job = jobRow(jobId);
@@ -232,7 +233,11 @@ export async function settleJob(jobId) {
       mainCharge = fresh.pi.latest_charge;
     }
     // The main charge covers the driver's share plus as much of the tip as fit in the hold.
-    queuePayout(job, quote.driverPayout + Math.max(0, Math.min(job.tip_cents, charged - job.price_cents)), mainCharge);
+    // A promo can bring the charge below the driver's share (a transfer can't exceed its source
+    // charge), so the platform pays the rest from its balance: the driver's pay never shrinks.
+    const owed = quote.driverPayout + Math.max(0, Math.min(job.tip_cents, charged - job.price_cents));
+    queuePayout(job, Math.min(owed, charged), mainCharge);
+    queuePayout(job, owed - Math.min(owed, charged), '', true);
     if (due > charged) {
       const extra = await chargeSavedCard(job, due - charged, { capture: true, kind: 'tip' });
       insertPayment(job.id, 'tip', extra.pi, due - charged, 'captured');

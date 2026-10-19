@@ -37,6 +37,11 @@ export type Quote = {
   serviceFee: number;
   total: number;
   driverPayout: number;
+  /** Set when a promo code is applied: `total` already has it taken off. */
+  promo?: { code: string; label: string; cents: number };
+  totalBeforeDiscount?: number;
+  /** Why the promo code sent with the quote request wasn't applied. */
+  promoError?: string;
 };
 
 export type JobStatus = 'scheduled' | 'requested' | 'accepted' | 'en_route' | 'in_progress' | 'completed' | 'cancelled';
@@ -55,6 +60,9 @@ export type Job = {
   cardLabel: string | null;
   /** Booked by Storm Pass: no charge to the customer. */
   covered: boolean;
+  /** Promo code used on this job; discountCents is already taken off priceCents. */
+  promoCode: string | null;
+  discountCents: number;
   rating: number | null;
   review: string | null;
   notes: string | null;

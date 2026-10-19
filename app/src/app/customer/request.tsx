@@ -4,10 +4,12 @@ import { View } from 'react-native';
 
 import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { PaymentMethodCard } from '@/components/payment-method';
+import { PromoField } from '@/components/promo-field';
 import { Badge, Button, Card, Chip, ChipGroup, ErrorText, Icon, Input, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { money, SIZE_LABEL, when } from '@/lib/format';
+import { clearPendingPromo, usePromoCode } from '@/lib/promo';
 import type { Conditions, Job, PaymentMethods, Property, Quote } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
@@ -25,7 +27,7 @@ function slotDate(now: number, dayOffset: number, hour: number) {
 }
 
 export default function RequestPlow() {
-  const params = useLocalSearchParams<{ propertyId: string; mode?: 'now' | 'schedule' }>();
+  const params = useLocalSearchParams<{ propertyId: string; mode?: 'now' | 'schedule'; promo?: string }>();
   const props = useApi<Property[]>('/properties');
   const property = props.data?.find((p) => String(p.id) === params.propertyId) ?? props.data?.[0];
   const wx = useApi<Conditions>(property ? `/weather?lat=${property.lat}&lng=${property.lng}` : null);
@@ -41,6 +43,12 @@ export default function RequestPlow() {
   const [tip, setTip] = useState(500);
   const [notes, setNotes] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [promo, setPromoCode] = usePromoCode(params.promo);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const setPromo = (code: string) => {
+    setPromoError(null);
+    setPromoCode(code);
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,13 +60,13 @@ export default function RequestPlow() {
   useEffect(() => {
     if (!property) return;
     let stale = false; // ignore out-of-order responses when depth changes quickly
-    api<Quote>(`/quote?propertyId=${property.id}&depth=${effectiveDepth}`)
+    api<Quote>(`/quote?propertyId=${property.id}&depth=${effectiveDepth}${promo ? `&promo=${encodeURIComponent(promo)}` : ''}`)
       .then((q) => !stale && setQuote(q))
       .catch((e) => !stale && setError(e.message));
     return () => {
       stale = true;
     };
-  }, [property?.id, effectiveDepth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [property?.id, effectiveDepth, promo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const days = useMemo(
     () =>
@@ -86,10 +94,13 @@ export default function RequestPlow() {
           tipCents: tip,
           notes: effectiveNotes || undefined,
           scheduledFor: scheduledFor?.toISOString(),
+          promoCode: quote?.promo?.code,
         },
       });
+      if (job.promoCode) clearPendingPromo();
       router.dismissTo({ pathname: '/customer/job/[id]', params: { id: String(job.id) } });
     } catch (e: any) {
+      if (e instanceof ApiError && e.code === 'promo_invalid') setPromoError(e.message);
       setError(e.message);
       setBusy(false);
     }
@@ -159,14 +170,17 @@ export default function RequestPlow() {
       </ChipGroup>
 
       <SectionTitle>Tip your driver</SectionTitle>
-      <TipPicker value={tip} onChange={setTip} base={quote?.total ?? 4500} />
+      <TipPicker value={tip} onChange={setTip} base={quote?.totalBeforeDiscount ?? quote?.total ?? 4500} />
       <T variant="caption" color="textSecondary">100% goes to your driver. You can change it after the job.</T>
 
       <SectionTitle>Notes for driver</SectionTitle>
       <Input value={effectiveNotes} onChangeText={setNotes} placeholder="Gate codes, where to pile snow, cars in the driveway…" multiline style={{ minHeight: 72, textAlignVertical: 'top' }} />
 
       <SectionTitle>Price</SectionTitle>
-      <Card>{quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}</Card>
+      <Card style={{ gap: Spacing.three }}>
+        {quote ? <QuoteLines quote={quote} tipCents={tip} /> : <T color="textSecondary">Calculating…</T>}
+        <PromoField code={promo} quote={quote} error={promoError} onChange={setPromo} />
+      </Card>
 
       <SectionTitle>Payment</SectionTitle>
       <PaymentMethodCard methods={payment.data} onChange={payment.setData} />

@@ -70,6 +70,8 @@ export function serializeJob(r) {
     tipCents: r.tip_cents,
     paymentStatus: r.payment_status,
     cardLabel: r.card_label,
+    promoCode: r.promo_code,
+    discountCents: r.discount_cents,
     covered: !!r.covered,
     rating: r.rating,
     review: r.review,

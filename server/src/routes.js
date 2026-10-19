@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { db, nowIso } from './db.js';
-import { hashPassword, verifyPassword, signToken, requireAuth, requireRole } from './auth.js';
+import { hashPassword, verifyPassword, signToken, optionalAuth, requireAuth, requireRole } from './auth.js';
 import { quote, surgeMultiplier } from './pricing.js';
+import { applyPromo, checkPromo, normalizeCode, PromoError, quoteWithPromo } from './promos.js';
 import { getConditions, getAlertsSafe, geocode, setDemoStorm, isDemoStorm } from './weather.js';
 import { checkStormPlans } from './scheduler.js';
 import { resolveAddress, suggestAddresses } from './geo.js';
@@ -187,12 +188,15 @@ api.post('/places/resolve', wrap(async (req, res) => {
 }));
 
 // Upfront price for any address, before an account or saved driveway exists.
-api.get('/quote/preview', wrap(async (req, res) => {
-  const { lat, lng, size = 'double', length = 'standard', sidewalk, depth = 4 } = req.query;
+// With `promo`, the code is applied (or `promoError` says why not); signed-in customers get
+// their own eligibility checked too.
+api.get('/quote/preview', optionalAuth, wrap(async (req, res) => {
+  const { lat, lng, size = 'double', length = 'standard', sidewalk, depth = 4, promo, address } = req.query;
   if (lat == null || lng == null) return bad(res, 'lat and lng are required');
   if (!SIZES.includes(size) || !LENGTHS.includes(length)) return bad(res, 'Invalid driveway size');
   const property = { lat: Number(lat), lng: Number(lng), size, length, sidewalk: sidewalk === '1' || sidewalk === 'true' };
-  res.json(await priceFor(property, Number(depth)));
+  const customerId = req.user?.role === 'customer' ? req.user.id : null;
+  res.json(quoteWithPromo(await priceFor(property, Number(depth)), promo, { customerId, address: address ? String(address) : null }));
 }));
 
 // Stock-ticker style weather across the service area (served from memory, refreshed every 10 min).
@@ -250,11 +254,11 @@ api.delete('/properties/:id', requireAuth, (req, res) => {
 api.get('/quote', requireAuth, wrap(async (req, res) => {
   const p = db.prepare('SELECT * FROM properties WHERE id = ? AND user_id = ?').get(req.query.propertyId, req.user.id);
   if (!p) return bad(res, 'Property not found', 404);
-  res.json(await priceFor(p, Number(req.query.depth ?? 4)));
+  res.json(quoteWithPromo(await priceFor(p, Number(req.query.depth ?? 4)), req.query.promo, { customerId: req.user.id, address: p.address }));
 }));
 
 api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) => {
-  const { propertyId, scheduledFor, depthIn = 4, tipCents = 0, notes } = req.body ?? {};
+  const { propertyId, scheduledFor, depthIn = 4, tipCents = 0, notes, promoCode } = req.body ?? {};
   const p = db.prepare('SELECT * FROM properties WHERE id = ? AND user_id = ?').get(propertyId, req.user.id);
   if (!p) return bad(res, 'Property not found', 404);
   const dup = db
@@ -271,12 +275,25 @@ api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) =>
     kind = 'scheduled';
     status = t - Date.now() > DISPATCH_LEAD_MIN * 60_000 ? 'scheduled' : 'requested';
   }
-  const q = await priceFor(p, Number(depthIn));
+  let q = await priceFor(p, Number(depthIn));
+  // Checked after the last await, so the check and the insert below can't interleave with
+  // another order using the same code.
+  if (normalizeCode(promoCode)) {
+    try {
+      q = applyPromo(q, checkPromo(promoCode, { customerId: req.user.id, address: p.address }));
+    } catch (e) {
+      if (e instanceof PromoError) return res.status(400).json({ error: e.message, code: 'promo_invalid' });
+      throw e;
+    }
+  }
   const info = db
     .prepare(
-      'INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents, tip_cents, notes) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents, tip_cents, notes, promo_code, discount_cents) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
     )
-    .run(req.user.id, p.id, status, kind, scheduledFor ? new Date(scheduledFor).toISOString() : null, Number(depthIn), JSON.stringify(q), q.total, Math.max(0, Math.round(tipCents)), notes ?? null);
+    .run(
+      req.user.id, p.id, status, kind, scheduledFor ? new Date(scheduledFor).toISOString() : null, Number(depthIn), JSON.stringify(q),
+      q.total, Math.max(0, Math.round(tipCents)), notes ?? null, q.promo?.code ?? null, q.promo?.cents ?? 0,
+    );
   const jobId = Number(info.lastInsertRowid);
   try {
     await authorizeJob(jobId);
