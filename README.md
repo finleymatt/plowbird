@@ -102,6 +102,31 @@ Test with card `4242 4242 4242 4242`, any future expiry, any CVC and any ZIP. Fo
 
 Card entry uses Stripe's PaymentSheet on iOS and Android, and the Payment Element on web. Stripe's React Native SDK ships in Expo Go, so card setup works there. Apple Pay and Google Pay need a development build.
 
+### Sign in with Google and Apple
+
+The buttons appear once the API knows your client IDs. On Render, add them under **plowbird-api → Environment**; no app rebuild needed.
+
+**Google** (free):
+
+1. In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create a project, then configure the OAuth consent screen.
+2. Go to **Credentials → Create credentials → OAuth client ID → Web application**.
+3. Under **Authorized JavaScript origins**, add `https://plowbird.app` and `http://localhost:8081`.
+4. Set this on the API: `GOOGLE_CLIENT_IDS=<the client ID>`.
+
+**Apple** (needs the $99/yr Apple Developer Program):
+
+1. In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list), enable **Sign in with Apple** on the App ID `com.plowbird.app`.
+2. Create a **Services ID** (e.g. `app.plowbird.web`). Configure it with the domain `plowbird.app` and the return URL `https://plowbird.app/`.
+3. Set these on the API:
+   - `APPLE_SERVICES_ID=app.plowbird.web`
+   - `APPLE_CLIENT_IDS=com.plowbird.app,app.plowbird.web,host.exp.Exponent` (`host.exp.Exponent` lets you test in Expo Go)
+
+On iPhone, the native Apple button works in Expo Go. Native Google sign-in needs a development build with `@react-native-google-signin`; until then, Google sign-in is website-only.
+
+### Live tracking and demo drives
+
+Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. Remove `DEMO_MODE` once real drivers are online.
+
 ## Layout
 
 ```
@@ -111,6 +136,9 @@ app/      Expo (React Native) app: iOS, Android, web
   src/lib/         API client, auth + realtime socket, types
 server/   Node API: Express + Socket.IO + SQLite
   src/routes.js    REST endpoints
+  src/geo.js       address type-ahead (Photon + US Census)
+  src/routing.js   driving routes + ETA (OSRM)
+  src/social.js    Google / Apple sign-in token checks
   src/payments.js  Stripe: card holds, capture, tips, Connect payouts (simulated without keys)
   src/weather.js   NWS client + US Census geocoder
   src/pricing.js   pricing and storm surge

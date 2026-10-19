@@ -8,6 +8,7 @@ import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
 import { LiveMap } from '@/components/live-map';
 import { PaymentMethodCard } from '@/components/payment-method';
+import { SocialSignIn } from '@/components/social-sign-in';
 import { Badge, Button, Card, Chip, ChipGroup, elevation, ErrorText, Icon, Input, PasswordInput, Row, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -249,6 +250,8 @@ export default function Order() {
             <T variant="heading">{hasAccount ? 'Sign in to book' : 'Your details'}</T>
             <Button title={hasAccount ? 'New here?' : 'I have an account'} size="sm" kind="secondary" onPress={() => setHasAccount((v) => !v)} />
           </Row>
+          {/* Signing in here just fills "Booking as …"; the order still needs the button below. */}
+          <SocialSignIn onDone={() => setError(null)} />
           {!hasAccount && (
             <>
               <Input label="Name" value={name} onChangeText={setName} placeholder="First and last name" autoComplete="name" textContentType="name"

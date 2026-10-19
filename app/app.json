@@ -10,7 +10,8 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.plowbird.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.plowbird.app",
@@ -51,7 +52,8 @@
           "merchantIdentifier": [],
           "enableGooglePay": false
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

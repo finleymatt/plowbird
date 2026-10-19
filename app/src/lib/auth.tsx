@@ -8,6 +8,7 @@ import type { AppNotification, Role, User } from './types';
 const TOKEN_KEY = 'plowbird.token';
 
 type SignUpInput = { role: Role; name: string; email: string; password: string; phone?: string; vehicle?: string };
+export type SocialInput = { provider: 'google' | 'apple'; idToken: string; name?: string; role?: Role };
 
 type AuthState = {
   user: User | null;
@@ -17,6 +18,8 @@ type AuthState = {
   dismissToast: () => void;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (input: SignUpInput) => Promise<User>;
+  /** Continue with Google / Apple. `created` is true when this made a new account. */
+  socialSignIn: (input: SocialInput) => Promise<{ user: User; created: boolean }>;
   signOut: () => Promise<void>;
   setUser: (u: User) => void;
 };
@@ -82,6 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (input: SignUpInput) => api<{ token: string; user: User }>('/auth/register', { body: input }).then(accept),
     [accept],
   );
+  const socialSignIn = useCallback(
+    async (input: SocialInput) => {
+      const res = await api<{ token: string; user: User; created: boolean }>('/auth/social', { body: input });
+      return { user: await accept(res), created: res.created };
+    },
+    [accept],
+  );
   const signOut = useCallback(async () => {
     await storage.remove(TOKEN_KEY);
     setApiToken(null);
@@ -91,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, socket, toast, dismissToast: () => setToast(null), signIn, signUp, signOut, setUser }}>
+      value={{ user, loading, socket, toast, dismissToast: () => setToast(null), signIn, signUp, socialSignIn, signOut, setUser }}>
       {children}
     </AuthContext.Provider>
   );

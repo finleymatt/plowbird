@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { Brand } from '@/components/landing';
+import { SocialSignIn } from '@/components/social-sign-in';
 import { Button, ErrorText, Input, PasswordInput, Screen, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
@@ -35,6 +36,7 @@ export default function SignIn() {
           <T variant="title">Welcome back</T>
           <T color="textSecondary">Sign in to request a plow or start driving.</T>
         </View>
+        <SocialSignIn onDone={({ user }) => router.replace(user.role === 'driver' ? '/driver' : '/customer')} />
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" />
         <PasswordInput label="Password" value={password} onChangeText={setPassword} autoComplete="password" textContentType="password" onSubmitEditing={submit} />
         <ErrorText>{error}</ErrorText>

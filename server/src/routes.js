@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { db, nowIso } from './db.js';
 import { hashPassword, verifyPassword, signToken, requireAuth, requireRole } from './auth.js';
@@ -6,6 +7,7 @@ import { getConditions, getAlertsSafe, geocode, setDemoStorm, isDemoStorm } from
 import { checkStormPlans } from './scheduler.js';
 import { resolveAddress, suggestAddresses } from './geo.js';
 import { drivingRoute } from './routing.js';
+import { SocialError, socialConfig, verifySocialToken } from './social.js';
 import {
   ACTIVE_STATUSES,
   DISPATCH_LEAD_MIN,
@@ -81,9 +83,45 @@ api.post('/auth/register', (req, res) => {
 api.post('/auth/login', (req, res) => {
   const { email, password } = req.body ?? {};
   const user = email && db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim());
-  if (!user || !verifyPassword(password ?? '', user.password_hash)) return bad(res, 'Wrong email or password', 401);
+  if (!user || !verifyPassword(password ?? '', user.password_hash)) {
+    if (user && (user.google_sub || user.apple_sub))
+      return bad(res, `This account signs in with ${user.google_sub ? 'Google' : 'Apple'}. Use that button instead.`, 401);
+    return bad(res, 'Wrong email or password', 401);
+  }
   res.json({ token: signToken(user), user: publicUser(user) });
 });
+
+// "Continue with Google / Apple": sign in, link to an existing account with the same verified
+// email, or create a new account (customers by default).
+api.post('/auth/social', wrap(async (req, res) => {
+  const { provider, idToken, name, role } = req.body ?? {};
+  let id;
+  try {
+    id = await verifySocialToken(provider, idToken);
+  } catch (e) {
+    if (e instanceof SocialError) return bad(res, e.message, 401);
+    throw e;
+  }
+  const col = provider === 'google' ? 'google_sub' : 'apple_sub';
+  let user = db.prepare(`SELECT * FROM users WHERE ${col} = ?`).get(id.sub);
+  let created = false;
+  if (!user && id.email && id.emailVerified) {
+    user = db.prepare('SELECT * FROM users WHERE email = ?').get(id.email);
+    if (user) db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(id.sub, user.id);
+  }
+  if (!user) {
+    if (!id.email) return bad(res, 'We need an email address to create your account');
+    const displayName = String(name ?? id.name ?? '').trim() || id.email.split('@')[0];
+    // No password: the random hash can never match, so this account signs in with the provider only.
+    const info = db
+      .prepare(`INSERT INTO users (role, name, email, password_hash, ${col}) VALUES (?, ?, ?, ?, ?)`)
+      .run(role === 'driver' ? 'driver' : 'customer', displayName, id.email, hashPassword(randomBytes(32).toString('hex')), id.sub);
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+    created = true;
+  }
+  user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  res.json({ token: signToken(user), user: publicUser(user), created });
+}));
 
 api.get('/me', requireAuth, (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
@@ -525,7 +563,7 @@ api.get('/payouts/return', (req, res) => {
 const DEMO = process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE === '1';
 const demoDrives = new Map();
 
-api.get('/config', (req, res) => res.json({ demo: DEMO, payments: paymentsMode }));
+api.get('/config', (req, res) => res.json({ demo: DEMO, payments: paymentsMode, auth: socialConfig() }));
 
 api.post('/jobs/:id/demo-drive', requireAuth, requireRole('driver'), wrap(async (req, res) => {
   if (!DEMO) return bad(res, 'Demo drives are off on this server', 404);

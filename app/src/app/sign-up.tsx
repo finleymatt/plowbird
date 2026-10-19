@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
 import { Brand } from '@/components/landing';
+import { SocialSignIn } from '@/components/social-sign-in';
 import { Button, ErrorText, Icon, Input, PasswordInput, Row, Screen, T, type IconName } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -75,7 +76,9 @@ export default function SignUp() {
           <RoleCard icon="car" title="I drive a plow" sub="Earn on snow days" selected={driver} onPress={() => setRole('driver')} />
         </Row>
 
-        <Input label="Name" value={name} onChangeText={setName} placeholder="First and last name" autoComplete="name" textContentType="name" autoFocus
+        <SocialSignIn role={role} onDone={({ user }) => router.replace(user.role === 'driver' ? '/driver' : '/order')} />
+
+        <Input label="Name" value={name} onChangeText={setName} placeholder="First and last name" autoComplete="name" textContentType="name"
           invalid={touched && !name.trim()} />
         <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress"
           invalid={touched && !validEmail(email)} hint={touched && !validEmail(email) ? 'Enter a valid email' : null} />
