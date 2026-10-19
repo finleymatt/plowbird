@@ -3,7 +3,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { useEffect, type ReactNode } from 'react';
 
-import { STRIPE_PUBLISHABLE_KEY } from '@/lib/stripe';
+import { APPLE_MERCHANT_ID, STRIPE_PUBLISHABLE_KEY } from '@/lib/stripe';
 
 // Expo Go needs the `/--/` separator so Stripe's redirect URLs come back to this project.
 const urlScheme =
@@ -22,7 +22,7 @@ function StripeLinks() {
 export function StripeProvider({ children }: { children: ReactNode }) {
   if (!STRIPE_PUBLISHABLE_KEY) return children;
   return (
-    <NativeStripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme={urlScheme}>
+    <NativeStripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier={APPLE_MERCHANT_ID} urlScheme={urlScheme}>
       <>
         <StripeLinks />
         {children}

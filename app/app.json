@@ -49,8 +49,10 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": [],
-          "enableGooglePay": false
+          "merchantIdentifier": [
+            "merchant.app.plowbird"
+          ],
+          "enableGooglePay": true
         }
       ],
       "expo-apple-authentication"

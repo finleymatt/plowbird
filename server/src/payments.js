@@ -24,6 +24,7 @@ export class PaymentError extends Error {
 }
 
 const BRANDS = { amex: 'Amex', diners: 'Diners Club', discover: 'Discover', jcb: 'JCB', mastercard: 'Mastercard', unionpay: 'UnionPay', visa: 'Visa' };
+const WALLETS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay', link: 'Link' };
 const cardSummary = (pm) =>
   pm?.card
     ? {
@@ -32,7 +33,9 @@ const cardSummary = (pm) =>
         last4: pm.card.last4,
         expMonth: pm.card.exp_month,
         expYear: pm.card.exp_year,
-        label: `${BRANDS[pm.card.brand] ?? 'Card'} •••• ${pm.card.last4}`,
+        wallet: pm.card.wallet?.type ?? null,
+        // Apple Pay / Google Pay show as such ("Apple Pay · Visa •••• 1234"), like in other apps.
+        label: `${WALLETS[pm.card.wallet?.type] ? `${WALLETS[pm.card.wallet.type]} · ` : ''}${BRANDS[pm.card.brand] ?? 'Card'} •••• ${pm.card.last4}`,
       }
     : null;
 
@@ -394,4 +397,23 @@ export async function stopStormPassBilling(sub) {
   const updated = await stripe.subscriptions.update(sub.stripe_subscription_id, { cancel_at_period_end: true });
   const end = updated.items?.data?.[0]?.current_period_end ?? updated.current_period_end;
   return end ? new Date(end * 1000).toISOString() : sub.renews_at;
+}
+
+/* ---------------- Apple Pay / Google Pay on the web ---------------- */
+
+// Wallet buttons only appear on domains registered with Stripe (Stripe does Apple's merchant
+// validation, so no Apple Merchant ID or verification file is needed for the website).
+// Runs at boot; registering an already-registered domain is harmless.
+export async function registerWalletDomains() {
+  if (!stripe) return;
+  const domains = (process.env.APP_DOMAINS ?? 'plowbird.app').split(',').map((d) => d.trim()).filter(Boolean);
+  for (const domain_name of domains) {
+    try {
+      const existing = await stripe.paymentMethodDomains.list({ domain_name, limit: 1 });
+      const d = existing.data[0] ?? (await stripe.paymentMethodDomains.create({ domain_name }));
+      if (!d.apple_pay?.status || d.apple_pay.status !== 'active') await stripe.paymentMethodDomains.validate(d.id).catch(() => {});
+    } catch (e) {
+      console.error(`couldn't register ${domain_name} for Apple Pay`, e.message);
+    }
+  }
 }

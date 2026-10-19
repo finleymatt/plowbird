@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 import { api } from './routes.js';
 import { verifyToken } from './auth.js';
 import { attachIo, updateDriverLocation } from './jobs.js';
-import { PaymentError } from './payments.js';
+import { PaymentError, registerWalletDomains } from './payments.js';
 import { startScheduler } from './scheduler.js';
 import { startTicker } from './ticker.js';
 import { buildAddressIndex } from './address-index.js';
@@ -57,4 +57,5 @@ server.listen(PORT, '0.0.0.0', () => {
   startScheduler();
   startTicker();
   buildAddressIndex(); // first boot only; runs in the background
+  registerWalletDomains().catch(() => {});
 });

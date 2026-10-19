@@ -9,7 +9,12 @@ import type { CardSetupParams, PaymentMethods, SavedCard } from '@/lib/types';
 
 import { Button, ErrorText } from './ui';
 
-export type CardSetupProps = { title: string; onSaved: (card: SavedCard) => void };
+export type CardSetupProps = {
+  title: string;
+  onSaved: (card: SavedCard) => void;
+  /** Web: show the wallet buttons and card form right away (no card on file yet). */
+  autoOpen?: boolean;
+};
 
 // Native: Stripe's PaymentSheet in setup mode saves the card without charging it.
 export function CardSetup({ title, onSaved }: CardSetupProps) {
@@ -31,6 +36,9 @@ export function CardSetup({ title, onSaved }: CardSetupProps) {
         setupIntentClientSecret: setup.setupIntentClientSecret,
         returnURL: Linking.createURL('stripe-redirect'),
         defaultBillingDetails: { name: user?.name, email: user?.email },
+        // Wallets need a development build (not Expo Go); Apple Pay also needs APPLE_MERCHANT_ID (see README).
+        applePay: { merchantCountryCode: 'US' },
+        googlePay: { merchantCountryCode: 'US', testEnv: STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_') },
       });
       if (init.error) throw new Error(init.error.message);
       const shown = await presentPaymentSheet();
