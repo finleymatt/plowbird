@@ -1,35 +1,21 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Linking, View } from 'react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Linking, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DriverCard, KindBadge, QuoteLines, Stars, StatusBadge, StatusTimeline, TipPicker } from '@/components/job-parts';
+import { QuoteLines, Stars, TipPicker } from '@/components/job-parts';
 import { LiveMap, type MapPin } from '@/components/live-map';
-import { Button, Card, Divider, ErrorText, Icon, Input, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Badge, Button, Card, Divider, elevation, ErrorText, Icon, Input, Loading, Row, Screen, T, type IconName } from '@/components/ui';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useSocketEvent } from '@/lib/auth';
 import { money, when } from '@/lib/format';
-import type { Job } from '@/lib/types';
+import type { Job, JobRoute } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
+import { useJobRoute } from '@/lib/use-route';
 
-function headline(job: Job) {
-  switch (job.status) {
-    case 'scheduled':
-      return job.driver ? `${job.driver.name.split(' ')[0]} is booked for ${when(job.scheduledFor)}` : `Scheduled for ${when(job.scheduledFor)}`;
-    case 'requested':
-      return 'Finding a driver near you…';
-    case 'accepted':
-      return `${job.driver?.name.split(' ')[0]} accepted your job`;
-    case 'en_route':
-      return job.etaMinutes != null ? `Arriving in about ${job.etaMinutes} min` : 'Your driver is on the way';
-    case 'in_progress':
-      return 'Clearing your driveway now';
-    case 'completed':
-      return 'Your driveway is clear!';
-    case 'cancelled':
-      return 'This request was cancelled';
-  }
-}
+const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 // Simulated payments leave cardLabel empty, so those jobs keep the "(demo)" wording.
 function paymentNote(job: Job) {
@@ -48,14 +34,57 @@ function paymentNote(job: Job) {
   }
 }
 
+// The big line at the top of the sheet, DoorDash-style.
+function status(job: Job, route: JobRoute | null): { kicker: string; big: string; sub: string | null } {
+  const first = job.driver?.name.split(' ')[0];
+  switch (job.status) {
+    case 'scheduled':
+      return { kicker: 'Scheduled', big: when(job.scheduledFor), sub: job.driver ? `${first} is booked for your driveway` : 'We’ll match you with a driver before then' };
+    case 'requested':
+      return { kicker: 'Finding your driver', big: 'Hang tight…', sub: 'Nearby plow drivers are seeing your request now' };
+    case 'accepted':
+    case 'en_route': {
+      const mins = route?.minutes ?? job.etaMinutes;
+      const eta = route ? new Date(route.arriveAt) : mins != null ? new Date(Date.now() + mins * 60_000) : null;
+      const kicker = job.status === 'accepted' ? `${first} is getting ready` : `${first} is on the way`;
+      if (route && route.miles <= 0.1) return { kicker: `${first} is here`, big: 'Arriving now', sub: 'Your driver is pulling up to your driveway' };
+      return {
+        kicker,
+        big: mins != null ? `${mins} min` : 'On the way',
+        sub: [eta && `Arrives ${clock(eta)}`, route ? `${route.miles} mi away` : job.driverMiles != null ? `${job.driverMiles} mi away` : null].filter(Boolean).join(' · ') || null,
+      };
+    }
+    case 'in_progress':
+      return { kicker: `${first} is plowing`, big: 'Clearing now', sub: job.startedAt ? `Started ${clock(new Date(job.startedAt))}` : null };
+    case 'completed':
+      return { kicker: 'Done', big: 'Driveway clear', sub: job.completedAt ? `Finished ${clock(new Date(job.completedAt))}` : null };
+    case 'cancelled':
+      return { kicker: 'Cancelled', big: 'No plow coming', sub: 'You weren’t charged' };
+  }
+}
+
+const STEPS = ['requested', 'accepted', 'en_route', 'in_progress', 'completed'] as const;
+const STEP_LABEL = ['Requested', 'Assigned', 'On the way', 'Plowing', 'Clear'];
+
 export default function CustomerJob() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const wide = width >= 900;
   const { data: job, setData, error } = useApi<Job>(`/jobs/${id}`);
+  const route = useJobRoute(job);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
   const [review, setReview] = useState('');
   const [tip, setTip] = useState<number | null>(null);
+  // Re-render each minute so "Arrives 7:42" and the countdown stay fresh between GPS updates.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
   useSocketEvent<Job>('job', (j) => {
     if (String(j.id) === id) setData(j);
@@ -75,59 +104,69 @@ export default function CustomerJob() {
     }
   };
 
-  const pins: MapPin[] = [{ id: 'home', kind: 'home', lat: job.property.lat, lng: job.property.lng, title: job.property.label }];
-  if (job.driver?.lat != null && ['accepted', 'en_route', 'in_progress'].includes(job.status))
-    pins.push({ id: 'driver', kind: 'driver', lat: job.driver.lat, lng: job.driver.lng!, title: job.driver.name });
+  const pins: MapPin[] = [{ id: 'home', kind: 'home', lat: job.property.lat, lng: job.property.lng, title: 'Your driveway' }];
+  const tracking = ['accepted', 'en_route', 'in_progress'].includes(job.status);
+  if (job.driver?.lat != null && tracking) pins.push({ id: 'driver', kind: 'driver', lat: job.driver.lat, lng: job.driver.lng!, title: job.driver.name });
 
+  const s = status(job, route);
+  const step = STEPS.indexOf(job.status as (typeof STEPS)[number]);
   const canCancel = ['scheduled', 'requested', 'accepted'].includes(job.status);
   const tipValue = tip ?? job.tipCents;
   // Once the card is charged, tips can go up (as a separate charge) but not down.
   const charged = job.paymentStatus === 'captured';
   const tipChanged = tip != null && tip !== job.tipCents && !(charged && tip < job.tipCents);
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/customer'));
 
-  return (
-    <Screen edges={[]} contentStyle={{ gap: Spacing.three }}>
-      <Stack.Screen options={{ title: job.property.label }} />
-      <View style={{ gap: Spacing.one }}>
+  const sheet = (
+    <View style={{ gap: Spacing.four }}>
+      {/* ETA */}
+      <View style={{ gap: Spacing.two }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <StatusBadge status={job.status} />
-          <KindBadge job={job} />
+          <T variant="label" color="textSecondary">{s.kicker}</T>
+          {job.status === 'en_route' && <LiveDot />}
         </Row>
-        <T variant="title">{headline(job)}</T>
-        <T color="textSecondary" numberOfLines={1}>
-          {job.property.address}
-        </T>
+        <T style={{ fontSize: 40, lineHeight: 44, letterSpacing: -1.2, fontWeight: '800' }}>{s.big}</T>
+        {s.sub && <T color="textSecondary">{s.sub}</T>}
+        {job.status !== 'cancelled' && job.status !== 'scheduled' && <Progress step={step} />}
+        {job.status !== 'cancelled' && job.status !== 'scheduled' && (
+          <T variant="caption" color="textSecondary">{STEP_LABEL.map((l, i) => (i === step ? l : null)).filter(Boolean)[0] ?? ''}</T>
+        )}
       </View>
 
-      {job.status !== 'cancelled' && <StatusTimeline status={job.status} />}
-
-      <LiveMap pins={pins} height={240} />
-
-      {job.driver ? (
+      {/* Driver */}
+      {job.driver && job.status !== 'cancelled' && (
         <Card style={{ gap: Spacing.three }}>
-          <DriverCard job={job} onCall={() => Linking.openURL(`tel:${job.driver!.phone}`)} />
-          {job.driverMiles != null && ['accepted', 'en_route'].includes(job.status) && (
-            <T variant="caption" color="textSecondary">
-              {job.driverMiles} mi away{job.etaMinutes != null ? ` · ETA ~${job.etaMinutes} min` : ''}
-            </T>
-          )}
+          <Row gap={Spacing.three}>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: theme.inverse, alignItems: 'center', justifyContent: 'center' }}>
+              <T variant="heading" style={{ color: theme.inverseText }}>{job.driver.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}</T>
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <T variant="heading" numberOfLines={1}>{job.driver.name}</T>
+              <T variant="caption" color="textSecondary" numberOfLines={1}>
+                {job.driver.rating ? `★ ${job.driver.rating}` : 'New driver'} · {job.driver.vehicle ?? 'Plow truck'}
+              </T>
+            </View>
+            {job.driver.phone && job.status !== 'completed' && (
+              <>
+                <RoundButton icon="chatbubble" label="Text driver" onPress={() => Linking.openURL(`sms:${job.driver!.phone}`)} />
+                <RoundButton icon="call" label="Call driver" onPress={() => Linking.openURL(`tel:${job.driver!.phone}`)} />
+              </>
+            )}
+          </Row>
         </Card>
-      ) : (
-        job.status !== 'cancelled' && (
-          <Card style={{ gap: Spacing.two }}>
-            <Row>
-              <Icon name="radio-outline" color="primary" />
-              <T variant="heading">{job.status === 'scheduled' ? 'Waiting for a driver to claim it' : 'Alerting nearby drivers'}</T>
-            </Row>
-            <T variant="caption" color="textSecondary">
-              {job.status === 'scheduled'
-                ? 'Drivers can reserve your slot now. It opens to everyone nearby 45 minutes before your time.'
-                : 'During storms it can take a little longer. Adding a tip helps your job get picked up sooner.'}
-            </T>
-          </Card>
-        )
       )}
 
+      {job.status === 'requested' && (
+        <Card style={{ gap: Spacing.one }}>
+          <Row>
+            <Icon name="radio-outline" color="primary" />
+            <T variant="label">Alerting nearby drivers</T>
+          </Row>
+          <T variant="caption" color="textSecondary">During storms it can take a little longer. A bigger tip helps your job get picked up sooner.</T>
+        </Card>
+      )}
+
+      {/* Rate */}
       {job.status === 'completed' && (
         <Card style={{ gap: Spacing.three }}>
           {job.rating ? (
@@ -140,17 +179,19 @@ export default function CustomerJob() {
             <>
               <T variant="heading">How did {job.driver?.name.split(' ')[0]} do?</T>
               <Stars value={stars} onChange={setStars} />
-              <Input value={review} onChangeText={setReview} placeholder="Optional: anything to share?" />
+              <Input value={review} onChangeText={setReview} placeholder="Optional: anything to share?" style={{ backgroundColor: theme.background }} />
               <Button title="Submit rating" size="md" disabled={!stars} loading={busy === 'rate'} onPress={() => run('rate', `/jobs/${job.id}/rate`, { stars, review: review || undefined })} />
             </>
           )}
         </Card>
       )}
 
+      {/* Tip */}
       {job.status !== 'cancelled' && (
-        <>
-          <SectionTitle>{job.status === 'completed' ? 'Say thanks with a tip' : 'Tip'}</SectionTitle>
+        <View style={{ gap: Spacing.two }}>
+          <T variant="heading">{job.status === 'completed' ? 'Say thanks with a tip' : 'Tip'}</T>
           <TipPicker value={tipValue} onChange={setTip} base={job.priceCents} />
+          <T variant="caption" color="textSecondary">100% goes to your driver.</T>
           {charged && tip != null && tip < job.tipCents && (
             <T variant="caption" color="textSecondary">Your {money(job.tipCents)} tip was already charged, so it can’t be lowered.</T>
           )}
@@ -166,23 +207,119 @@ export default function CustomerJob() {
           {tipChanged && charged && job.cardLabel && (
             <T variant="caption" color="textSecondary">The extra {money(tip - job.tipCents)} is charged to {job.cardLabel} right away.</T>
           )}
-        </>
+        </View>
       )}
 
-      <SectionTitle>Receipt</SectionTitle>
-      <Card>
-        <QuoteLines quote={job.quote} tipCents={job.tipCents} />
+      {/* Details + receipt */}
+      <View style={{ gap: Spacing.two }}>
+        <T variant="heading">Details</T>
+        <Row gap={Spacing.three} style={{ alignItems: 'flex-start' }}>
+          <Icon name="home-outline" color="textSecondary" />
+          <View style={{ flex: 1 }}>
+            <T variant="label">{job.property.address}</T>
+            {job.notes && <T variant="caption" color="textSecondary">{job.notes}</T>}
+          </View>
+        </Row>
         <Divider />
-        <T variant="caption" color="textSecondary">
-          {paymentNote(job)}
-          {job.notes ? `\nNotes: ${job.notes}` : ''}
-        </T>
-      </Card>
+        <QuoteLines quote={job.quote} tipCents={job.tipCents} />
+        <T variant="caption" color="textSecondary" style={{ marginTop: Spacing.two }}>{paymentNote(job)}</T>
+      </View>
 
       <ErrorText>{actionError}</ErrorText>
       {canCancel && (
         <Button title="Cancel request" kind="danger" loading={busy === 'cancel'} onPress={() => run('cancel', `/jobs/${job.id}/cancel`)} />
       )}
-    </Screen>
+    </View>
+  );
+
+  const map = (
+    <LiveMap
+      pins={pins}
+      route={route?.coords}
+      height="100%"
+      rounded={false}
+      fitPadding={wide ? { top: 80, right: 80, bottom: 80, left: 80 } : { top: 80, right: 40, bottom: 40 + Radius.xl, left: 40 }}
+    />
+  );
+
+  const BackButton = (
+    <Pressable
+      onPress={back}
+      accessibilityLabel="Back"
+      style={[{ position: 'absolute', top: insets.top + 12, left: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: theme.card, alignItems: 'center', justifyContent: 'center' }, elevation(1)]}>
+      <Icon name="arrow-back" />
+    </Pressable>
+  );
+
+  if (wide) {
+    return (
+      <View style={{ flex: 1, flexDirection: 'row', backgroundColor: theme.background }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScrollView style={{ width: 460, flexGrow: 0 }} contentContainerStyle={{ padding: Spacing.five, paddingTop: Spacing.four, gap: Spacing.four }}>
+          <Pressable onPress={back} accessibilityLabel="Back" style={{ alignSelf: 'flex-start' }}>
+            <Row>
+              <Icon name="arrow-back" />
+              <T variant="label">Back</T>
+            </Row>
+          </Pressable>
+          {sheet}
+        </ScrollView>
+        <View style={{ flex: 1 }}>{map}</View>
+      </View>
+    );
+  }
+
+  // Phone: interactive map on top, the sheet tucked under its bottom edge and scrolling on its own.
+  const mapHeight = Math.round(height * (tracking ? 0.5 : 0.36));
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ height: mapHeight + Radius.xl }}>{map}</View>
+      <View style={{ flex: 1, marginTop: -Radius.xl }}>
+        <SheetSurface>
+          <ScrollView contentContainerStyle={{ padding: Spacing.four, paddingTop: Spacing.two, paddingBottom: Spacing.six + insets.bottom }} showsVerticalScrollIndicator={false}>
+            {sheet}
+          </ScrollView>
+        </SheetSurface>
+      </View>
+      {BackButton}
+    </View>
+  );
+}
+
+function SheetSurface({ children }: { children: ReactNode }) {
+  const theme = useTheme();
+  return (
+    <View style={[{ flex: 1, backgroundColor: theme.background, borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl, overflow: 'hidden' }, elevation(2)]}>
+      <View style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.backgroundSelected, marginTop: Spacing.two }} />
+      {children}
+    </View>
+  );
+}
+
+function Progress({ step }: { step: number }) {
+  const theme = useTheme();
+  return (
+    <Row gap={6} style={{ marginTop: Spacing.two }}>
+      {STEPS.map((k, i) => (
+        <View key={k} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: i <= step ? (i === step ? theme.primary : theme.inverse) : theme.backgroundSelected }} />
+      ))}
+    </Row>
+  );
+}
+
+function LiveDot() {
+  return <Badge label="LIVE" tone="success" icon="radio-button-on" />;
+}
+
+function RoundButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+      <Icon name={icon} size={18} />
+    </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Linking, Platform, View } from 'react-native';
 
 import { KindBadge, QuoteLines, StatusBadge } from '@/components/job-parts';
@@ -11,6 +11,7 @@ import { useAuth, useSocketEvent } from '@/lib/auth';
 import { LENGTH_LABEL, SIZE_LABEL, when } from '@/lib/format';
 import type { Job } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
+import { useJobRoute } from '@/lib/use-route';
 
 const NEXT_ACTION: Partial<Record<Job['status'], { title: string; icon: 'car' | 'snow' | 'checkmark-circle' }>> = {
   accepted: { title: 'Start driving', icon: 'car' },
@@ -35,14 +36,13 @@ export default function DriverJob() {
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [simulating, setSimulating] = useState(false);
-  const sim = useRef<ReturnType<typeof setInterval> | null>(null);
+  const route = useJobRoute(job);
+  // Demo drives are on in development, and in production when the API sets DEMO_MODE=1.
+  const config = useApi<{ demo: boolean }>('/config');
 
   useSocketEvent<Job>('job', (j) => {
     if (String(j.id) === id) setData(j);
   });
-  useEffect(() => () => {
-    if (sim.current) clearInterval(sim.current);
-  }, []);
 
   if (!job) return error ? <Screen><ErrorText>{error}</ErrorText></Screen> : <Loading />;
   const mineJob = job.driver?.id === user?.id;
@@ -61,22 +61,17 @@ export default function DriverJob() {
     }
   };
 
-  // Dev-only: glide the truck toward the driveway so you can watch tracking from a desk.
-  const simulateDrive = () => {
-    const start = job.driver?.lat != null ? { lat: job.driver.lat, lng: job.driver.lng! } : { lat: job.property.lat + 0.03, lng: job.property.lng - 0.03 };
-    const end = { lat: job.property.lat, lng: job.property.lng };
-    let step = 0;
-    const steps = 12;
+  // Demo: the server drives the truck along the real road route so tracking can be shown off.
+  const demoDrive = async () => {
     setSimulating(true);
-    sim.current = setInterval(() => {
-      step++;
-      const t = step / steps;
-      api('/driver/location', { body: { lat: start.lat + (end.lat - start.lat) * t, lng: start.lng + (end.lng - start.lng) * t } }).catch(() => {});
-      if (step >= steps && sim.current) {
-        clearInterval(sim.current);
-        setSimulating(false);
-      }
-    }, 1500);
+    setActionError(null);
+    try {
+      const { seconds } = await api<{ seconds: number }>(`/jobs/${job.id}/demo-drive`, { method: 'POST' });
+      setTimeout(() => setSimulating(false), seconds * 1000);
+    } catch (e: any) {
+      setActionError(e.message);
+      setSimulating(false);
+    }
   };
 
   const pins: MapPin[] = [{ id: 'home', kind: 'home', lat: job.property.lat, lng: job.property.lng, title: job.property.address }];
@@ -100,7 +95,13 @@ export default function DriverJob() {
         </T>
       </View>
 
-      <LiveMap pins={pins} height={240} />
+      <LiveMap pins={pins} route={route?.coords} height={260} />
+      {route && (
+        <Row>
+          <Icon name="navigate" color="primary" size={18} />
+          <T variant="label">{route.minutes} min · {route.miles} mi to the driveway</T>
+        </Row>
+      )}
 
       <Row gap={Spacing.two}>
         <Button title="Directions" icon="navigate" kind="secondary" size="md" style={{ flex: 1 }} onPress={() => openDirections(p.lat, p.lng)} />
@@ -157,8 +158,8 @@ export default function DriverJob() {
         </Card>
       )}
 
-      {mineJob && __DEV__ && ['accepted', 'en_route'].includes(job.status) && (
-        <Button title={simulating ? 'Simulating drive…' : 'Simulate drive to driveway (dev)'} kind="ghost" size="sm" disabled={simulating} onPress={simulateDrive} />
+      {mineJob && config.data?.demo && ['accepted', 'en_route'].includes(job.status) && (
+        <Button title={simulating ? 'Driving the route…' : 'Demo: drive the route to this driveway'} kind="secondary" size="md" icon="navigate" disabled={simulating} onPress={demoDrive} />
       )}
 
       {mineJob && ['scheduled', 'accepted'].includes(job.status) && (

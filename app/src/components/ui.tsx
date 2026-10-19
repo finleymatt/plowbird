@@ -14,11 +14,12 @@ import {
   type StyleProp,
   type TextInputProps,
   type TextProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { Fonts, MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
+import { font, MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -27,9 +28,29 @@ const tap = () => {
   if (Platform.OS !== 'web') Haptics.selectionAsync().catch(() => {});
 };
 
+// Soft, wide shadow for floating surfaces (cards over maps, sheets, the address bar).
+export const elevation = (level: 1 | 2 = 1): ViewStyle =>
+  Platform.select({
+    web: { boxShadow: level === 1 ? '0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06)' : '0 8px 32px rgba(0,0,0,.16)' } as ViewStyle,
+    default: { shadowColor: '#000', shadowOpacity: level === 1 ? 0.08 : 0.18, shadowRadius: level === 1 ? 12 : 24, shadowOffset: { width: 0, height: level === 1 ? 2 : 8 }, elevation: level * 4 },
+  });
+
 /* ---------- Text ---------- */
 
 type Variant = 'hero' | 'title' | 'heading' | 'body' | 'label' | 'caption' | 'number';
+
+const text = StyleSheet.create({
+  hero: { fontSize: 44, lineHeight: 48, letterSpacing: -1.5, ...font('800') },
+  title: { fontSize: 28, lineHeight: 34, letterSpacing: -0.6, ...font('800') },
+  heading: { fontSize: 18, lineHeight: 24, letterSpacing: -0.2, ...font('700') },
+  body: { fontSize: 16, lineHeight: 22, ...font('400') },
+  label: { fontSize: 15, lineHeight: 20, ...font('600') },
+  caption: { fontSize: 13, lineHeight: 18, ...font('500') },
+  number: { fontSize: 44, lineHeight: 50, letterSpacing: -1.5, fontVariant: ['tabular-nums'], ...font('800') },
+});
+
+// Inter ships one family per weight, so a fontWeight override picks the matching family.
+const WEIGHTS = { normal: '400', bold: '700', '100': '400', '200': '400', '300': '400', '400': '400', '500': '500', '600': '600', '700': '700', '800': '800', '900': '800' } as const;
 
 export function T({
   variant = 'body',
@@ -38,18 +59,9 @@ export function T({
   ...rest
 }: TextProps & { variant?: Variant; color?: ThemeColor }) {
   const theme = useTheme();
-  return <Text style={[{ color: theme[color], fontFamily: Fonts.sans }, text[variant], style]} {...rest} />;
+  const weight = (StyleSheet.flatten(style) as TextStyle | undefined)?.fontWeight;
+  return <Text style={[{ color: theme[color] }, text[variant], style, weight && font(WEIGHTS[weight as keyof typeof WEIGHTS] ?? '700')]} {...rest} />;
 }
-
-const text = StyleSheet.create({
-  hero: { fontSize: 40, lineHeight: 46, fontWeight: '800', letterSpacing: -1 },
-  title: { fontSize: 28, lineHeight: 34, fontWeight: '800', letterSpacing: -0.5 },
-  heading: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
-  body: { fontSize: 16, lineHeight: 22, fontWeight: '500' },
-  label: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
-  caption: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
-  number: { fontSize: 44, lineHeight: 50, fontWeight: '800', letterSpacing: -1.5, fontVariant: ['tabular-nums'] },
-});
 
 /* ---------- Layout ---------- */
 
@@ -90,9 +102,24 @@ export function Row({ children, gap = Spacing.two, style }: { children: ReactNod
   return <View style={[{ flexDirection: 'row', alignItems: 'center', gap }, style]}>{children}</View>;
 }
 
-export function Card({ children, style, onPress }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
+// Flat surface: gray fill on white, or a raised card when `raised` (e.g. floating over a map).
+export function Card({
+  children,
+  style,
+  onPress,
+  raised,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+  raised?: boolean;
+}) {
   const theme = useTheme();
-  const base = [styles.card, { backgroundColor: theme.card, borderColor: theme.border }, style];
+  const base = [
+    styles.card,
+    raised ? [{ backgroundColor: theme.card }, elevation(1)] : { backgroundColor: theme.backgroundElement },
+    style,
+  ];
   if (!onPress) return <View style={base}>{children}</View>;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [base, pressed && { opacity: 0.85 }]}>
@@ -103,8 +130,8 @@ export function Card({ children, style, onPress }: { children: ReactNode; style?
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <Row style={{ justifyContent: 'space-between', marginTop: Spacing.four, marginBottom: Spacing.two }}>
-      <T variant="heading">{children}</T>
+    <Row style={{ justifyContent: 'space-between', marginTop: Spacing.four, marginBottom: Spacing.one }}>
+      <T variant="heading" style={{ fontSize: 20 }}>{children}</T>
       {action}
     </Row>
   );
@@ -124,7 +151,7 @@ export function Button({
 }: {
   title: string;
   onPress?: () => void;
-  kind?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  kind?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
   icon?: IconName;
   loading?: boolean;
   disabled?: boolean;
@@ -132,24 +159,25 @@ export function Button({
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useTheme();
-  const bg = { primary: theme.primary, secondary: theme.backgroundElement, ghost: 'transparent', danger: 'transparent' }[kind];
-  const fg = { primary: theme.primaryText, secondary: theme.text, ghost: theme.accent, danger: theme.danger }[kind];
-  const pad = { lg: 16, md: 12, sm: 8 }[size];
-  const padX = { lg: Spacing.four, md: 18, sm: 12 }[size];
+  const bg = { primary: theme.primary, dark: theme.inverse, secondary: theme.backgroundElement, ghost: 'transparent', danger: theme.backgroundElement }[kind];
+  const fg = { primary: theme.primaryText, dark: theme.inverseText, secondary: theme.text, ghost: theme.text, danger: theme.danger }[kind];
+  const height = { lg: 54, md: 46, sm: 36 }[size];
+  const padX = { lg: Spacing.four, md: 20, sm: 14 }[size];
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={title}
       disabled={disabled || loading}
       onPress={() => {
         tap();
         onPress?.();
       }}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
         styles.button,
-        { backgroundColor: bg, paddingVertical: pad, paddingHorizontal: padX, borderColor: kind === 'danger' ? theme.danger : 'transparent' },
-        kind === 'danger' && { borderWidth: 1 },
-        (disabled || loading) && { opacity: 0.5 },
-        pressed && { opacity: 0.8, transform: [{ scale: 0.99 }] },
+        { backgroundColor: bg, minHeight: height, paddingHorizontal: padX },
+        kind === 'ghost' && hovered && { backgroundColor: theme.backgroundElement },
+        (disabled || loading) && { opacity: 0.4 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.985 }] },
         style,
       ]}>
       {loading ? (
@@ -157,7 +185,7 @@ export function Button({
       ) : (
         <Row gap={Spacing.two} style={{ justifyContent: 'center' }}>
           {icon && <Ionicons name={icon} size={size === 'sm' ? 16 : 20} color={fg} />}
-          <Text style={{ color: fg, fontSize: size === 'sm' ? 14 : 16, fontWeight: '700', fontFamily: Fonts.sans }}>{title}</Text>
+          <Text style={[{ color: fg, fontSize: size === 'sm' ? 14 : 16, letterSpacing: -0.1 }, font('700')]}>{title}</Text>
         </Row>
       )}
     </Pressable>
@@ -178,6 +206,7 @@ export function Chip({
   sublabel?: string;
 }) {
   const theme = useTheme();
+  const fg = selected ? theme.inverseText : theme.text;
   return (
     <Pressable
       accessibilityRole="button"
@@ -188,20 +217,15 @@ export function Chip({
       }}
       style={({ pressed }) => [
         styles.chip,
-        {
-          backgroundColor: selected ? theme.text : theme.card,
-          borderColor: selected ? theme.text : theme.border,
-        },
+        { backgroundColor: selected ? theme.inverse : theme.backgroundElement },
         pressed && { opacity: 0.8 },
       ]}>
       <Row gap={6}>
-        {icon && <Ionicons name={icon} size={16} color={selected ? theme.background : theme.text} />}
-        <Text style={{ color: selected ? theme.background : theme.text, fontWeight: '700', fontSize: 14, fontFamily: Fonts.sans }}>
-          {label}
-        </Text>
+        {icon && <Ionicons name={icon} size={16} color={fg} />}
+        <Text style={[{ color: fg, fontSize: 15 }, font('600')]}>{label}</Text>
       </Row>
       {sublabel && (
-        <Text style={{ color: selected ? theme.background : theme.textSecondary, fontSize: 12, marginTop: 2, fontFamily: Fonts.sans }}>
+        <Text style={[{ color: selected ? theme.inverseText : theme.textSecondary, opacity: selected ? 0.75 : 1, fontSize: 12, marginTop: 2 }, font('500')]}>
           {sublabel}
         </Text>
       )}
@@ -219,25 +243,42 @@ export function Input({
   invalid,
   right,
   style,
+  onFocus,
+  onBlur,
   ...props
 }: TextInputProps & { label?: string; hint?: string | null; invalid?: boolean; right?: ReactNode }) {
   const theme = useTheme();
+  const [focused, setFocused] = useState(false);
   return (
     <View style={{ gap: 6 }}>
-      {label && <T variant="label" color="textSecondary">{label}</T>}
+      {label && <T variant="caption" color="textSecondary" style={{ fontWeight: '600' }}>{label}</T>}
       <View style={{ justifyContent: 'center' }}>
         <TextInput
           placeholderTextColor={theme.textSecondary}
           accessibilityLabel={label}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            onBlur?.(e);
+          }}
           style={[
             styles.input,
-            { color: theme.text, backgroundColor: theme.card, borderColor: invalid ? theme.danger : theme.border, fontFamily: Fonts.sans },
+            font('500'),
+            {
+              color: theme.text,
+              backgroundColor: theme.backgroundElement,
+              borderColor: invalid ? theme.danger : focused ? theme.inverse : 'transparent',
+            },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as object),
             !!right && { paddingRight: 48 },
             style,
           ]}
           {...props}
         />
-        {right && <View style={{ position: 'absolute', right: 12 }}>{right}</View>}
+        {right && <View style={{ position: 'absolute', right: 14 }}>{right}</View>}
       </View>
       {hint && <T variant="caption" color={invalid ? 'danger' : 'textSecondary'}>{hint}</T>}
     </View>
@@ -265,9 +306,9 @@ export function Badge({ label, tone = 'neutral', icon }: { label: string; tone?:
   const theme = useTheme();
   const color = { neutral: theme.textSecondary, primary: theme.primary, success: theme.success, warning: theme.warning, danger: theme.danger, accent: theme.accent }[tone];
   return (
-    <View style={[styles.badge, { borderColor: color }]}>
+    <View style={[styles.badge, { backgroundColor: tone === 'neutral' ? theme.backgroundElement : `${color}1F` }]}>
       {icon && <Ionicons name={icon} size={12} color={color} />}
-      <Text style={{ color, fontSize: 12, fontWeight: '700', fontFamily: Fonts.sans }}>{label}</Text>
+      <Text style={[{ color, fontSize: 12, letterSpacing: 0.1 }, font('700')]}>{label}</Text>
     </View>
   );
 }
@@ -310,37 +351,35 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.lg,
-    borderWidth: 1,
     padding: Spacing.three,
   },
   button: {
-    borderRadius: Radius.md,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chip: {
     borderRadius: Radius.md,
-    borderWidth: 1,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     minWidth: 56,
     alignItems: 'center',
   },
   input: {
-    borderWidth: 1,
     borderRadius: Radius.md,
-    paddingHorizontal: 14,
+    borderWidth: 2,
+    minHeight: 52,
     paddingVertical: 12,
+    paddingHorizontal: Spacing.three,
     fontSize: 16,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    borderWidth: 1,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
     alignSelf: 'flex-start',
+    borderRadius: Radius.pill,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
 });
