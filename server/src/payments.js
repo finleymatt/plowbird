@@ -185,6 +185,7 @@ export async function voidJob(jobId) {
 // driver's transfer. Returns false if the card couldn't be charged.
 export async function settleJob(jobId) {
   const job = jobRow(jobId);
+  if (job.covered) return settleCoveredJob(job);
   if (!stripe) {
     db.prepare("UPDATE jobs SET payment_status = 'captured' WHERE id = ?").run(jobId);
     return true;
@@ -245,8 +246,30 @@ export async function chargeExtraTip(jobId, cents) {
 
 /* ---------------- driver payouts (Connect Express) ---------------- */
 
-function queuePayout(job, amount, chargeId) {
-  if (!job.driver_id || amount <= 0 || !chargeId) return;
+// A Storm Pass plow: nothing to charge for the job itself (the subscription pays). Any tip is its own
+// charge. The driver's share is paid from the platform balance, so it has no source charge ('').
+async function settleCoveredJob(job) {
+  db.prepare("UPDATE jobs SET payment_status = 'covered' WHERE id = ?").run(job.id);
+  if (!stripe) return true;
+  const quote = JSON.parse(job.quote_json);
+  try {
+    queuePayout(job, quote.driverPayout, '', true);
+    if (job.tip_cents > 0) {
+      const { pi } = await chargeSavedCard(job, job.tip_cents, { capture: true, kind: 'tip' });
+      insertPayment(job.id, 'tip', pi, job.tip_cents, 'captured');
+      queuePayout(job, job.tip_cents, pi.latest_charge);
+    }
+    return true;
+  } catch (e) {
+    console.error(`settling covered job #${job.id} failed`, e.message);
+    return false;
+  } finally {
+    if (job.driver_id) await flushPayouts(job.driver_id).catch((e) => console.error('payout flush failed', e.message));
+  }
+}
+
+function queuePayout(job, amount, chargeId, fromBalance = false) {
+  if (!job.driver_id || amount <= 0 || (!chargeId && !fromBalance)) return;
   db.prepare('INSERT INTO payouts (job_id, driver_id, amount_cents, charge_id) VALUES (?, ?, ?, ?)').run(job.id, job.driver_id, amount, chargeId);
 }
 
@@ -270,7 +293,8 @@ async function flushPayouts(driverId, account) {
           amount: p.amount_cents,
           currency: 'usd',
           destination: stripe_account_id,
-          source_transaction: p.charge_id,
+          // Tied to the customer's charge when there is one; Storm Pass plows come from the balance.
+          ...(p.charge_id ? { source_transaction: p.charge_id } : {}),
           transfer_group: `job_${p.job_id}`,
           description: `Plowbird job #${p.job_id}`,
           metadata: { plowbird_job_id: String(p.job_id), plowbird_payout_id: String(p.id) },
@@ -329,4 +353,45 @@ export async function payoutDashboardLink(driverId) {
   const { stripe_account_id } = getUser(driverId);
   if (!stripe_account_id) throw new PaymentError('Set up payouts first', 'payouts_not_set_up');
   return (await stripe.accounts.createLoginLink(stripe_account_id)).url;
+}
+
+/* ---------------- Storm Pass billing ---------------- */
+
+let passProductId = null;
+// One Stripe product for all Storm Pass prices; found by metadata, created on first use.
+async function stormPassProduct() {
+  if (passProductId) return passProductId;
+  const found = await stripe.products.search({ query: "metadata['plowbird']:'storm_pass'" }).catch(() => ({ data: [] }));
+  passProductId = found.data[0]?.id ?? (await stripe.products.create({ name: 'Plowbird Storm Pass', metadata: { plowbird: 'storm_pass' } })).id;
+  return passProductId;
+}
+
+// Start monthly billing on the customer's saved card. Returns { stripeSubscriptionId, renewsAt }.
+// Without Stripe keys it's simulated: no charge, renews in a month.
+export async function startStormPassBilling(userId, property, priceCents) {
+  const nextMonth = new Date(Date.now() + 30 * 86400_000).toISOString();
+  if (!stripe) return { stripeSubscriptionId: null, renewsAt: nextMonth };
+  const customer = await customerIdFor(userId);
+  const pm = await defaultPaymentMethod(customer);
+  if (!pm) throw new PaymentError('Add a card to start your Storm Pass.', 'card_required');
+  const sub = await cardCall(async () =>
+    stripe.subscriptions.create({
+      customer,
+      default_payment_method: pm.id,
+      items: [{ price_data: { currency: 'usd', product: await stormPassProduct(), unit_amount: priceCents, recurring: { interval: 'month' } } }],
+      payment_behavior: 'error_if_incomplete',
+      description: `Storm Pass · ${property.address}`,
+      metadata: { plowbird_property_id: String(property.id) },
+    }),
+  );
+  const end = sub.items?.data?.[0]?.current_period_end ?? sub.current_period_end;
+  return { stripeSubscriptionId: sub.id, renewsAt: end ? new Date(end * 1000).toISOString() : nextMonth };
+}
+
+// Stop renewing; coverage continues to the end of the paid period. Returns that end date.
+export async function stopStormPassBilling(sub) {
+  if (!stripe || !sub.stripe_subscription_id) return sub.renews_at ?? new Date().toISOString();
+  const updated = await stripe.subscriptions.update(sub.stripe_subscription_id, { cancel_at_period_end: true });
+  const end = updated.items?.data?.[0]?.current_period_end ?? updated.current_period_end;
+  return end ? new Date(end * 1000).toISOString() : sub.renews_at;
 }

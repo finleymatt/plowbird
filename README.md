@@ -123,6 +123,15 @@ The buttons appear once the API knows your client IDs. On Render, add them under
 
 On iPhone, the native Apple button works in Expo Go. Native Google sign-in needs a development build with `@react-native-google-signin`; until then, Google sign-in is website-only.
 
+### Storm Pass (subscription)
+
+Storm Pass is a monthly plan that plows a driveway automatically every time a storm qualifies. Customers see it at `/storm-pass`, on the home screen, and on the landing page.
+- **Prices:** $79 (1-car), $99 (2-car) and $129 (3+ car) per month, plus $15 for sidewalks.
+- **Rules:** a storm qualifies when 2"+ of snow is forecast within 24 h, or an NWS Winter Storm, Blizzard, Ice Storm or Heavy Snow Warning is issued. There are at most 2 plows a day, about 10 hours apart.
+- **Configuration:** prices and rules live in `server/src/storm-pass.js`. The page shows the eligibility list from there, so the page and the scheduler always agree.
+- **Covered plows:** the scheduler books them automatically ($0 to the customer). Drivers are paid as usual: from the platform balance with Stripe, simulated without.
+- **Billing:** with Stripe on, each pass is a monthly Stripe subscription on the saved card. Cancelling stops renewal, and coverage runs to the end of the paid month.
+
 ### Address search
 
 Suggestions come from a local index of every addressable street segment in Minnesota and South Dakota: 1.2 million house-number ranges from the US Census TIGER/Line address features, with ZIP-to-city names from [GeoNames](https://www.geonames.org/) (CC BY 4.0).

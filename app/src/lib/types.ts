@@ -53,6 +53,8 @@ export type Job = {
   paymentStatus: PaymentStatus;
   /** Card the job was charged to, e.g. "Visa •••• 4242". Null when payments are simulated. */
   cardLabel: string | null;
+  /** Booked by Storm Pass: no charge to the customer. */
+  covered: boolean;
   rating: number | null;
   review: string | null;
   notes: string | null;
@@ -134,7 +136,7 @@ export type Earnings = {
   recent: { id: number; address: string; completedAt: string; payoutCents: number; tipCents: number; rating: number | null }[];
 };
 
-export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed';
+export type PaymentStatus = 'authorized' | 'captured' | 'voided' | 'failed' | 'covered';
 
 export type SavedCard = { id: string; brand: string; last4: string; expMonth: number; expYear: number; label: string };
 
@@ -163,4 +165,23 @@ export type AppConfig = {
   demo: boolean;
   payments: 'stripe' | 'demo';
   auth?: { google: { webClientId: string } | null; apple: { servicesId: string | null } | null };
+};
+
+/** GET /storm-pass/plans */
+export type StormPassPlans = { name: string; prices: Record<DrivewaySize, number>; sidewalkCents: number; triggerInches: number; eligibility: string[] };
+
+/** A customer's Storm Pass on one driveway. `ending` = cancelled, still covering until endsAt. */
+export type StormPass = {
+  id: number;
+  propertyId: number;
+  address: string;
+  label: string;
+  size: DrivewaySize;
+  sidewalk: boolean;
+  priceCents: number;
+  status: 'active' | 'ending' | 'cancelled';
+  renewsAt: string | null;
+  endsAt: string | null;
+  startedAt: string;
+  billing: 'stripe' | 'demo';
 };

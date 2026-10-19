@@ -117,6 +117,23 @@ CREATE TABLE IF NOT EXISTS payouts (
 CREATE INDEX IF NOT EXISTS payouts_driver ON payouts(driver_id, status);
 `);
 
+// Storm Pass subscriptions: one driveway each, billed monthly (Stripe when configured).
+db.exec(`
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id                INTEGER NOT NULL REFERENCES users(id),
+  property_id            INTEGER NOT NULL REFERENCES properties(id),
+  status                 TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','cancelled')),
+  price_cents            INTEGER NOT NULL,
+  stripe_subscription_id TEXT,
+  renews_at              TEXT,
+  ends_at                TEXT,
+  cancelled_at           TEXT,
+  created_at             TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE INDEX IF NOT EXISTS subscriptions_property ON subscriptions(property_id, status);
+`);
+
 // Columns added after the first release. SQLite has no ADD COLUMN IF NOT EXISTS.
 function addColumn(table, column, type) {
   if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column))
@@ -126,6 +143,7 @@ addColumn('users', 'stripe_customer_id', 'TEXT');
 addColumn('users', 'stripe_account_id', 'TEXT');
 addColumn('users', 'google_sub', 'TEXT');
 addColumn('users', 'apple_sub', 'TEXT');
+addColumn('jobs', 'covered', 'INTEGER NOT NULL DEFAULT 0'); // Storm Pass: no charge to the customer
 addColumn('jobs', 'card_label', 'TEXT');
 
 export const nowIso = () => new Date().toISOString();
