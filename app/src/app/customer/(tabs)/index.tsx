@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 
+import { AddressSearch } from '@/components/address-search';
 import { JobRow } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
-import { Button, Card, Chip, ChipGroup, ErrorText, Icon, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
+import { Button, Card, Chip, ChipGroup, ErrorText, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { ConditionsCard, StormBanner } from '@/components/weather';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -69,12 +70,14 @@ export default function CustomerHome() {
       </Row>
 
       {!property ? (
-        <Card style={{ gap: Spacing.three, alignItems: 'flex-start' }}>
-          <Icon name="home" size={32} color="primary" />
-          <T variant="heading">Add your driveway</T>
-          <T color="textSecondary">We’ll show live snow conditions for your address and give you an upfront price.</T>
-          <Button title="Add address" icon="add" onPress={() => router.push('/customer/add-property')} />
-        </Card>
+        <View style={{ gap: Spacing.three }}>
+          <T variant="heading">Where should we plow?</T>
+          <AddressSearch
+            large
+            onPick={(p) => router.push({ pathname: '/order', params: { address: p.address, lat: String(p.lat), lng: String(p.lng) } })}
+          />
+          <T variant="caption" color="textSecondary">You’ll see your price right away. We save the address for next time.</T>
+        </View>
       ) : (
         <>
           <ChipGroup>

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import type { ComponentProps, ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -213,21 +213,51 @@ export function ChipGroup({ children }: { children: ReactNode }) {
   return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two }}>{children}</View>;
 }
 
-export function Input({ label, style, ...props }: TextInputProps & { label?: string }) {
+export function Input({
+  label,
+  hint,
+  invalid,
+  right,
+  style,
+  ...props
+}: TextInputProps & { label?: string; hint?: string | null; invalid?: boolean; right?: ReactNode }) {
   const theme = useTheme();
   return (
     <View style={{ gap: 6 }}>
       {label && <T variant="label" color="textSecondary">{label}</T>}
-      <TextInput
-        placeholderTextColor={theme.textSecondary}
-        style={[
-          styles.input,
-          { color: theme.text, backgroundColor: theme.card, borderColor: theme.border, fontFamily: Fonts.sans },
-          style,
-        ]}
-        {...props}
-      />
+      <View style={{ justifyContent: 'center' }}>
+        <TextInput
+          placeholderTextColor={theme.textSecondary}
+          accessibilityLabel={label}
+          style={[
+            styles.input,
+            { color: theme.text, backgroundColor: theme.card, borderColor: invalid ? theme.danger : theme.border, fontFamily: Fonts.sans },
+            !!right && { paddingRight: 48 },
+            style,
+          ]}
+          {...props}
+        />
+        {right && <View style={{ position: 'absolute', right: 12 }}>{right}</View>}
+      </View>
+      {hint && <T variant="caption" color={invalid ? 'danger' : 'textSecondary'}>{hint}</T>}
     </View>
+  );
+}
+
+export function PasswordInput(props: TextInputProps & { label?: string; hint?: string | null; invalid?: boolean }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <Input
+      {...props}
+      secureTextEntry={!shown}
+      autoCapitalize="none"
+      autoCorrect={false}
+      right={
+        <Pressable onPress={() => setShown((s) => !s)} hitSlop={10} accessibilityLabel={shown ? 'Hide password' : 'Show password'}>
+          <Icon name={shown ? 'eye-off-outline' : 'eye-outline'} color="textSecondary" />
+        </Pressable>
+      }
+    />
   );
 }
 

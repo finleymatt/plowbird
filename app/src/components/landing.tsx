@@ -6,7 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
+import { AddressSearch, type Place } from './address-search';
 import { Badge, Button, Card, Icon, Row, T, type IconName } from './ui';
+
+const startOrder = (p: Place) => router.push({ pathname: '/order', params: { address: p.address, lat: String(p.lat), lng: String(p.lng) } });
 
 export function Brand({ size = 22 }: { size?: number }) {
   const theme = useTheme();
@@ -42,12 +45,12 @@ export function Landing({ compact }: { compact?: boolean }) {
         <ScrollView contentContainerStyle={{ padding: Spacing.four, gap: Spacing.four, flexGrow: 1, justifyContent: 'center' }}>
           <Brand size={28} />
           <T variant="hero">Snowed in?{'\n'}Plowed out.</T>
-          <T color="textSecondary">Local plow drivers on demand, scheduled, or booked automatically when a storm is coming.</T>
-          <HeroCard />
-          <View style={{ gap: Spacing.two }}>
-            <Button title="Get my driveway plowed" icon="home" onPress={() => router.push('/sign-up')} />
-            <Button title="I drive a plow truck" kind="secondary" icon="car" onPress={() => router.push({ pathname: '/sign-up', params: { role: 'driver' } })} />
-            <Button title="I already have an account" kind="ghost" onPress={() => router.push('/sign-in')} />
+          <T color="textSecondary">Enter your address to see your price. A local driver can be there in minutes.</T>
+          <AddressSearch large onPick={startOrder} />
+          <T variant="caption" color="textSecondary">Driveways from $35 · Pay after it’s plowed · Cancel free</T>
+          <View style={{ gap: Spacing.two, marginTop: Spacing.two }}>
+            <Button title="I already have an account" kind="secondary" onPress={() => router.push('/sign-in')} />
+            <Button title="I drive a plow truck" kind="ghost" icon="car" onPress={() => router.push({ pathname: '/sign-up', params: { role: 'driver' } })} />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -60,8 +63,8 @@ export function Landing({ compact }: { compact?: boolean }) {
         <Row style={{ justifyContent: 'space-between', paddingVertical: Spacing.three }}>
           <Brand />
           <Row gap={wide ? Spacing.two : 0}>
-            <Button title="Sign in" kind="ghost" size={wide ? 'md' : 'sm'} onPress={() => router.push('/sign-in')} />
-            <Button title="Get started" size={wide ? 'md' : 'sm'} onPress={() => router.push('/sign-up')} />
+            {wide && <Button title="Drive with us" kind="ghost" size="md" icon="car" onPress={() => router.push({ pathname: '/sign-up', params: { role: 'driver' } })} />}
+            <Button title="Sign in" kind="secondary" size={wide ? 'md' : 'sm'} onPress={() => router.push('/sign-in')} />
           </Row>
         </Row>
       </Section>
@@ -74,13 +77,12 @@ export function Landing({ compact }: { compact?: boolean }) {
               Snowed in?{'\n'}Plowed out.
             </T>
             <T style={{ fontSize: 19, lineHeight: 28 }} color="textSecondary">
-              Book a local plow driver in minutes, schedule a clear before your commute, or let Plowbird book one automatically when the National Weather Service says a storm is coming.
+              Enter your address for an instant price. A local plow driver can be there in minutes.
             </T>
-            <Row gap={Spacing.two} style={{ flexWrap: 'wrap', marginTop: Spacing.two }}>
-              <Button title="Book a plow" icon="home" onPress={() => router.push('/sign-up')} />
-              <Button title="Drive & earn" kind="secondary" icon="car" onPress={() => router.push({ pathname: '/sign-up', params: { role: 'driver' } })} />
-            </Row>
-            <T variant="caption" color="textSecondary">Driveways from $35 · No subscription · Cancel free until your driver heads out</T>
+            <View style={{ maxWidth: 560, marginTop: Spacing.two }}>
+              <AddressSearch large onPick={startOrder} />
+            </View>
+            <T variant="caption" color="textSecondary">Driveways from $35 · Pay after it’s plowed · Cancel free until your driver heads out</T>
           </View>
           <View style={{ flex: wide ? 0.85 : undefined }}>
             <HeroCard />
@@ -92,8 +94,8 @@ export function Landing({ compact }: { compact?: boolean }) {
         <Section>
           <T variant="title" style={{ marginBottom: Spacing.four }}>How it works</T>
           <View style={{ flexDirection: wide ? 'row' : 'column', gap: Spacing.three }}>
-            <Step n={1} title="Add your driveway" body="Enter your address and pick your driveway size. We pull live conditions for your exact spot." />
-            <Step n={2} title="Request, schedule, or automate" body="Plow now, pick a time, or turn on storm auto-plow and forget about it." />
+            <Step n={1} title="Enter your address" body="Pick your driveway size and see the full price instantly. No account needed to look." />
+            <Step n={2} title="Request in one tap" body="Plow now or tomorrow morning. Add your name and email at checkout. That’s your account." />
             <Step n={3} title="Track, then tip" body="Follow your driver on the map. Rate and tip when your driveway is clear." />
           </View>
         </Section>
