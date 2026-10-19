@@ -12,6 +12,8 @@ import { startScheduler } from './scheduler.js';
 const PORT = Number(process.env.PORT ?? 4000);
 
 const app = express();
+// Behind Render's (or any) HTTPS proxy, so req.protocol reports https for payout return links.
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.get('/health', (req, res) => res.json({ ok: true }));

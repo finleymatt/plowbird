@@ -1,0 +1,51 @@
+# Render Blueprint: the Plowbird web app (plowbird.app) and API (api.plowbird.app).
+# In Render: New → Blueprint → pick this repo. Docs: https://render.com/docs/blueprint-spec
+services:
+  # Node API: Express + Socket.IO + SQLite. The disk keeps the database across deploys,
+  # which needs a paid instance (free instances have no disk and sleep when idle).
+  - type: web
+    name: plowbird-api
+    runtime: node
+    region: ohio
+    plan: 0.5c-512mb
+    rootDir: server
+    buildCommand: npm ci
+    # The seed only adds the demo accounts if they're missing, so it's safe on every boot.
+    startCommand: npm run seed && npm start
+    healthCheckPath: /health
+    domains:
+      - api.plowbird.app
+    disk:
+      name: plowbird-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /var/data/plow.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NWS_USER_AGENT
+        value: Plowbird/1.0 (https://plowbird.app)
+      # Payments stay simulated until you add STRIPE_SECRET_KEY in the dashboard (see README).
+
+  # Expo web build, served as a single-page app.
+  - type: web
+    name: plowbird-web
+    runtime: static
+    buildCommand: cd app && npm ci && npx expo export --platform web
+    staticPublishPath: ./app/dist
+    domains:
+      - plowbird.app
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: EXPO_PUBLIC_API_URL
+        value: https://api.plowbird.app
