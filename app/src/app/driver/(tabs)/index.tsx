@@ -69,6 +69,9 @@ export default function DriverHome() {
     ...(available.data ?? []).map((j) => ({ id: String(j.id), kind: 'job' as const, lat: j.property.lat, lng: j.property.lng, title: `${money(j.quote.driverPayout + j.tipCents)} · ${j.property.address}` })),
   ];
 
+  // Not approved yet: no job board, just where the application stands.
+  if (user?.driverStatus && user.driverStatus !== 'approved') return <ApplicationStatus status={user.driverStatus} />;
+
   return (
     <Screen
       onRefresh={() => {
@@ -159,6 +162,24 @@ export default function DriverHome() {
           </View>
         </>
       )}
+    </Screen>
+  );
+}
+
+function ApplicationStatus({ status }: { status: 'none' | 'pending' | 'rejected' }) {
+  const copy = {
+    none: { icon: 'document-text', title: 'Finish your application', body: 'Tell us about your truck, plow and insurance. It takes about 3 minutes, then we’ll give you a quick call.', cta: 'Finish application' },
+    pending: { icon: 'time', title: 'Application under review', body: 'We’ll call you within 2 business days to check your insurance and plow. Set up payouts in Account meanwhile, so you’re ready for the first storm.', cta: 'View application' },
+    rejected: { icon: 'alert-circle', title: 'Application not approved', body: 'We couldn’t approve your application. Check your notifications for details, or update it and apply again.', cta: 'Update application' },
+  }[status];
+  return (
+    <Screen contentStyle={{ gap: Spacing.three }}>
+      <Card style={{ gap: Spacing.three, alignItems: 'flex-start' }}>
+        <Icon name={copy.icon as 'time'} size={36} color="accent" />
+        <T variant="title">{copy.title}</T>
+        <T color="textSecondary">{copy.body}</T>
+        <Button title={copy.cta} onPress={() => router.push('/drive')} />
+      </Card>
     </Screen>
   );
 }
