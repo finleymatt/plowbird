@@ -175,7 +175,7 @@ The landing page's "Get storm alerts" form and the outside-area waitlist post to
 
 ```
 app/      Expo (React Native) app: iOS, Android, web
-  src/app/         routes (expo-router): customer/*, driver/*, sign-in, sign-up
+  src/app/         routes (expo-router): customer/*, driver/*, sign-in, sign-up, terms, privacy, contact
   src/components/  UI kit, weather cards, maps (native + web), landing page
   src/lib/         API client, auth + realtime socket, types
 server/   Node API: Express + Socket.IO + SQLite
@@ -189,6 +189,12 @@ server/   Node API: Express + Socket.IO + SQLite
   src/pricing.js   pricing and storm surge
   src/scheduler.js scheduled-job release + storm auto-plow
 ```
+
+## Before going live
+
+- **Support mailbox.** The Terms, Privacy and Contact pages (`/terms`, `/privacy`, `/contact`) send people to `support@plowbird.app`. That address has to receive mail before launch, for example with email forwarding on the plowbird.app domain. To use another address or show a phone number, set `EXPO_PUBLIC_SUPPORT_EMAIL` and `EXPO_PUBLIC_SUPPORT_PHONE` on **plowbird-web** and redeploy.
+- **Attorney review.** The Terms of Service and Privacy Policy are drafts. Have a Minnesota attorney review them before relying on them, then remove the draft notices. Fill in the legal entity name and mailing address (`LEGAL_ENTITY` and `MAILING_ADDRESS` in `app/src/components/legal.tsx`) and the other bracketed placeholders.
+- Stripe live-mode activation and Google OAuth verification ask for these URLs: `https://plowbird.app/terms`, `https://plowbird.app/privacy` and `https://plowbird.app/contact`.
 
 ## Not production-ready yet
 

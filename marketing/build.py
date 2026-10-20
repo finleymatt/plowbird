@@ -1,10 +1,11 @@
 """Builds the Plowbird launch materials: QR codes, print PDFs and preview images.
+(Customer poster, coupon cards and email, plus the driver recruiting poster.)
 
     python build.py            (needs `segno`: pip install segno)
 
 Change the offer here, then rebuild. The HTML files read the QR codes from qr/.
-Every QR code carries the promo code plus a utm_source, so analytics show which
-piece of paper each visit came from.
+Every QR code carries a utm_source, so analytics show which piece of paper each visit
+came from. Customer codes also carry the promo code; the driver poster's code goes to /drive.
 """
 
 import shutil
@@ -25,6 +26,11 @@ QR = {
     'card': 'card',  # the 4-up handout cards
 }
 
+# Codes that go somewhere other than the customer offer: name → full link.
+QR_LINKS = {
+    'driver-poster': f'{SITE}drive?utm_source=driver-poster',  # driver recruiting poster and its tabs
+}
+
 EDGE = next(
     (p for p in [
         Path(r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'),
@@ -43,11 +49,12 @@ def url_for(source):
 def make_qr_codes():
     out = HERE / 'qr'
     out.mkdir(exist_ok=True)
-    for name, source in QR.items():
-        qr = segno.make(url_for(source), error='m', micro=False)
+    links = {name: url_for(source) for name, source in QR.items()} | QR_LINKS
+    for name, url in links.items():
+        qr = segno.make(url, error='m', micro=False)
         # Viewbox only (no fixed size) so the HTML can scale it; quiet zone added in CSS.
         qr.save(out / f'{name}.svg', kind='svg', border=0, dark='#0B1B2E', omitsize=True, xmldecl=False)
-        print(f'qr/{name}.svg  version {qr.version}  → {url_for(source)}')
+        print(f'qr/{name}.svg  version {qr.version}  → {url}')
 
 
 def render(html, pdf=None, png=None, size=None):
@@ -82,6 +89,7 @@ if __name__ == '__main__':
     (HERE / 'preview').mkdir(exist_ok=True)
     render('poster.html', pdf='print/plowbird-poster.pdf', png='preview/poster.png', size='816,1056')
     render('cards.html', pdf='print/plowbird-coupon-cards.pdf', png='preview/cards.png', size='816,1056')
+    render('driver-poster.html', pdf='print/plowbird-driver-poster.pdf', png='preview/driver-poster.png', size='816,1056')
     # The email's picture, as a PNG (email apps don't show SVG).
     (HERE / 'email' / 'images').mkdir(parents=True, exist_ok=True)
     render('assets/hero.html', png='email/images/hero.png', size='1200,750')

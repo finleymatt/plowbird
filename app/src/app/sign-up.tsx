@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
 import { Brand } from '@/components/landing';
+import { AgreeLine } from '@/components/legal';
 import { SocialSignIn } from '@/components/social-sign-in';
 import { Button, ErrorText, Icon, Input, PasswordInput, Row, Screen, T, type IconName } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -91,6 +92,7 @@ export default function SignUp() {
 
         <ErrorText>{error ?? (touched ? problem : null)}</ErrorText>
         <Button title={driver ? 'Create driver account' : 'Continue'} onPress={submit} loading={busy} />
+        <AgreeLine />
         {!driver && (
           <T variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
             Next, enter your address to see your price.
