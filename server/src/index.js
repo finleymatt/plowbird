@@ -7,6 +7,7 @@ import { api } from './routes.js';
 import { adminApi } from './admin.js';
 import { driversApi } from './drivers.js';
 import { messagesApi } from './messages.js';
+import { leadsApi } from './leads.js';
 import { verifyToken } from './auth.js';
 import { attachIo, updateDriverLocation } from './jobs.js';
 import { PaymentError, registerWalletDomains } from './payments.js';
@@ -24,6 +25,7 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.use('/api', api);
 app.use('/api', messagesApi);
+app.use('/api', leadsApi);
 app.use('/api', driversApi);
 app.use('/api', adminApi);
 app.use((err, req, res, next) => {

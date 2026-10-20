@@ -80,6 +80,7 @@ export function serializeJob(r) {
     startedAt: r.started_at,
     completedAt: r.completed_at,
     cancelledAt: r.cancelled_at,
+    cancelReason: r.cancel_reason ?? null, // 'no_driver': nobody accepted in time (timeouts.js)
     property,
     // No phone numbers for either side: customer and driver talk through in-app chat (messages.js).
     customer: { id: r.customer_id, name: r.c_name },

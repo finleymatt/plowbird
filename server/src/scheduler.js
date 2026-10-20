@@ -5,6 +5,8 @@ import { activePassFor, checkStormPasses } from './storm-pass.js';
 import { authorizeJob, PaymentError } from './payments.js';
 import { quote, surgeMultiplier } from './pricing.js';
 import { getConditions } from './weather.js';
+import { outsideAreaSync } from './service-area.js';
+import { expireUnacceptedJobs, markRequested } from './timeouts.js';
 
 const fmtTime = (iso) =>
   new Date(iso).toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'short', hour: 'numeric', minute: '2-digit' });
@@ -19,6 +21,7 @@ export function releaseScheduledJobs() {
       notify(j.driver_id, 'Scheduled job is up', 'Head out when you’re ready — the customer is expecting you soon.', j.id);
     } else {
       db.prepare("UPDATE jobs SET status = 'requested' WHERE id = ?").run(j.id);
+      markRequested(j.id); // the no-driver timeout counts from now, not from booking
       getIo()?.to('drivers').emit('jobs:new', { id: j.id });
       autoAcceptForDemo(j.id);
     }
@@ -49,6 +52,7 @@ export async function checkStormPlans() {
     const snow = wx.snowfall.next24h;
     if (snow.inches < plan.threshold_in) continue;
     if (activePassFor(plan.property_id)) continue; // Storm Pass books (and covers) these
+    if (outsideAreaSync(plan.address)) continue; // outside the pilot ZIPs: no drivers there yet
     const open = db
       .prepare("SELECT 1 FROM jobs WHERE property_id = ? AND status NOT IN ('completed','cancelled')")
       .get(plan.property_id);
@@ -91,6 +95,7 @@ export async function checkStormPlans() {
 
 export function startScheduler() {
   setInterval(releaseScheduledJobs, 30_000);
+  setInterval(() => expireUnacceptedJobs().catch((e) => console.error('unaccepted job check failed', e)), 30_000);
   setInterval(() => {
     checkStormPasses().catch((e) => console.error('storm pass check failed', e));
     checkStormPlans().catch((e) => console.error('storm check failed', e));

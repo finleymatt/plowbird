@@ -23,6 +23,9 @@ import {
   updateDriverLocation,
 } from './jobs.js';
 import { advanceJob, DRIVER_FLOW } from './advance.js';
+import { recordSignupSource } from './leads.js';
+import { outsideArea, sendOutsideArea } from './service-area.js';
+import { markRequested } from './timeouts.js';
 import { isAdminEmail } from './admin.js';
 import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
 import { driverStatus, requireApprovedDriver } from './drivers.js';
@@ -87,6 +90,7 @@ api.post('/auth/register', (req, res) => {
   const info = db
     .prepare('INSERT INTO users (role, name, email, phone, password_hash, vehicle) VALUES (?, ?, ?, ?, ?, ?)')
     .run(role, name.trim(), email.trim(), phone ?? null, hashPassword(password), role === 'driver' ? vehicle ?? null : null);
+  recordSignupSource(Number(info.lastInsertRowid), req.body.attribution);
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   res.json({ token: signToken(user), user: publicUser(user) });
 });
@@ -129,6 +133,7 @@ api.post('/auth/social', wrap(async (req, res) => {
       .run(role === 'driver' ? 'driver' : 'customer', displayName, id.email, hashPassword(randomBytes(32).toString('hex')), id.sub);
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
     created = true;
+    recordSignupSource(user.id, req.body?.attribution);
   }
   user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
   res.json({ token: signToken(user), user: publicUser(user), created });
@@ -199,6 +204,8 @@ api.get('/quote/preview', optionalAuth, wrap(async (req, res) => {
   if (lat == null || lng == null) return bad(res, 'lat and lng are required');
   if (!SIZES.includes(size) || !LENGTHS.includes(length)) return bad(res, 'Invalid driveway size');
   const property = { lat: Number(lat), lng: Number(lng), size, length, sidewalk: sidewalk === '1' || sidewalk === 'true' };
+  const outside = await outsideArea({ address, lat: property.lat, lng: property.lng });
+  if (outside) return sendOutsideArea(res, outside);
   const customerId = req.user?.role === 'customer' ? req.user.id : null;
   res.json(quoteWithPromo(await priceFor(property, Number(depth)), promo, { customerId, address: address ? String(address) : null }));
 }));
@@ -258,6 +265,8 @@ api.delete('/properties/:id', requireAuth, (req, res) => {
 api.get('/quote', requireAuth, wrap(async (req, res) => {
   const p = db.prepare('SELECT * FROM properties WHERE id = ? AND user_id = ?').get(req.query.propertyId, req.user.id);
   if (!p) return bad(res, 'Property not found', 404);
+  const outside = await outsideArea(p);
+  if (outside) return sendOutsideArea(res, outside);
   res.json(quoteWithPromo(await priceFor(p, Number(req.query.depth ?? 4)), req.query.promo, { customerId: req.user.id, address: p.address }));
 }));
 
@@ -269,6 +278,8 @@ api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) =>
     .prepare("SELECT id FROM jobs WHERE property_id = ? AND status IN ('requested','accepted','en_route','in_progress')")
     .get(p.id);
   if (dup && !scheduledFor) return bad(res, 'This driveway already has a plow on the way', 409);
+  const outside = await outsideArea(p);
+  if (outside) return sendOutsideArea(res, outside);
 
   let status = 'requested';
   let kind = 'asap';
@@ -360,6 +371,7 @@ api.post('/jobs/:id/cancel', requireAuth, wrap(async (req, res) => {
     if (!['scheduled', 'accepted'].includes(job.status)) return bad(res, 'You can only release a job before heading out');
     const back = job.scheduledFor && Date.parse(job.scheduledFor) - Date.now() > DISPATCH_LEAD_MIN * 60_000 ? 'scheduled' : 'requested';
     db.prepare('UPDATE jobs SET status=?, driver_id=NULL, accepted_at=NULL WHERE id=?').run(back, job.id);
+    if (back === 'requested') markRequested(job.id); // a fresh no-driver timeout (timeouts.js)
     notify(job.customer.id, 'Finding a new driver', `${job.driver.name} can't make it. We're matching you with another driver.`, job.id);
   } else return bad(res, 'Job not found', 404);
   res.json(broadcastJob(job.id));

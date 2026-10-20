@@ -14,6 +14,8 @@ import { drivingRoute } from './routing.js';
 
 export { DEMO };
 const DEMO_DRIVER_EMAIL = process.env.DEMO_DRIVER_EMAIL ?? 'driver@plowbird.test';
+// DEMO_AUTO_ACCEPT=0 keeps demo mode but leaves orders for real drivers (e.g. to try the no-driver timeout).
+const AUTO_ACCEPT = process.env.DEMO_AUTO_ACCEPT !== '0';
 const ACCEPT_AFTER_MS = 6_000; // long enough for the customer to see "Finding your driver"
 const DRIVE_AFTER_MS = 4_000;
 const TICKS = 45; // ~70 seconds of driving, one position every 1.5 s
@@ -55,7 +57,7 @@ export async function startDemoDrive(jobId, { finish = false } = {}) {
 
 // A new ASAP order: have the demo driver accept it after a moment, then drive over.
 export function autoAcceptForDemo(jobId) {
-  if (!DEMO) return;
+  if (!DEMO || !AUTO_ACCEPT) return;
   setTimeout(() => {
     const driver = db.prepare("SELECT * FROM users WHERE email = ? AND role = 'driver'").get(DEMO_DRIVER_EMAIL);
     if (!driver) return;

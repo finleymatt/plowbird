@@ -8,10 +8,13 @@ import { StripeProvider } from '@/components/stripe-provider';
 import { Toast } from '@/components/toast';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { captureAttribution } from '@/lib/attribution';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useAppFonts } from '@/lib/fonts';
 
 SplashScreen.preventAutoHideAsync();
+// Before the router rewrites the URL: keep the utm_* params of the link that brought them here.
+captureAttribution();
 
 function Root() {
   const { loading } = useAuth();
