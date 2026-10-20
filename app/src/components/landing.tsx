@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Link, router, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,12 @@ const startOrder = (p: Place, promo?: string) =>
     params: { address: p.address, lat: String(p.lat), lng: String(p.lng), c: p.confirmed ? '1' : '0', ...(promo ? { promo } : {}) },
   });
 const driverSignUp = () => router.push({ pathname: '/sign-up', params: { role: 'driver' } });
+const FOOTER_LINKS: [string, Href][] = [
+  ['Terms', '/terms'],
+  ['Privacy', '/privacy'],
+  ['Contact', '/contact'],
+  ['Drive with Plowbird', '/drive' as Href],
+];
 
 // Icy sky fading to snow white, behind the hero.
 const SKY = Platform.OS === 'web' ? ({ backgroundImage: 'linear-gradient(180deg, #D6E9FB 0%, #EEF6FF 55%, #FFFFFF 100%)' } as object) : { backgroundColor: '#E8F2FC' };
@@ -140,6 +146,12 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
             <Pressable onPress={driverSignUp} accessibilityRole="link">
               <T variant="label" color="accent">Drive a plow? Earn with Plowbird →</T>
             </Pressable>
+          </Row>
+          <Row gap={Spacing.four} style={{ flexWrap: 'wrap', paddingBottom: Spacing.four }}>
+            {FOOTER_LINKS.map(([label, href]) => (
+              <Link key={label} href={href} style={{ color: theme.textSecondary, fontSize: 14, ...font('600') }}>{label}</Link>
+            ))}
+            <T variant="caption" color="textSecondary">© {new Date().getFullYear()} Plowbird</T>
           </Row>
         </Section>
       </View>
