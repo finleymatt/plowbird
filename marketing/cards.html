@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plowbird coupon cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=block" />
+<style>
+  /* Four 4.25in × 5.5in handout cards per US Letter sheet. Print on card stock, cut on the
+     dashed lines. Good for door drops, coffee-shop counters and hardware-store registers. */
+  @page { size: 8.5in 11in; margin: 0; }
+  :root { --ink: #0b1b2e; --muted: #4a5d73; --orange: #ff5a1f; --blue: #1e6fd9; --ice: #e8f2fc; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 8.5in; height: 11in; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet { width: 8.5in; height: 11in; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .card {
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
+    padding: 0.32in 0.32in 0.28in;
+    background: linear-gradient(#cfe4fa, #e8f2fc 42%, #fff 62%);
+    border-right: 1.5px dashed #9fb3c8; border-bottom: 1.5px dashed #9fb3c8;
+  }
+  .card:nth-child(2n) { border-right: 0; }
+  .card:nth-child(n + 3) { border-bottom: 0; }
+
+  .brand { display: flex; align-items: center; gap: 7px; }
+  .mark { width: 26px; height: 26px; border-radius: 8px; background: var(--orange); color: #fff; font-size: 16px; line-height: 26px; text-align: center; }
+  .name { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .flake { margin-left: auto; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--blue); text-transform: uppercase; }
+
+  h2 { margin-top: 0.16in; font-size: 30px; line-height: 1.02; font-weight: 900; letter-spacing: -1.1px; }
+  h2 span { color: var(--blue); }
+  .sub { margin-top: 7px; font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+
+  /* Cropped to the house and truck (the top of the picture is sky). */
+  .scene { margin: 0.1in 0 0; width: 100%; height: 1.55in; object-fit: cover; object-position: 50% 85%; border-radius: 12px; display: block; }
+
+  .coupon { margin-top: 0.14in; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 2px dashed var(--orange); border-radius: 14px; background: #fff7f3; }
+  .coupon .qr { width: 1.05in; height: 1.05in; flex: none; background: #fff; padding: 5px; border-radius: 8px; }
+  .coupon .qr img { width: 100%; height: 100%; display: block; }
+  .offer b { display: block; font-size: 25px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.05; }
+  .offer small { display: block; font-size: 11px; font-weight: 700; color: var(--muted); }
+  .code { display: inline-block; margin-top: 5px; padding: 3px 8px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 800; letter-spacing: 1.5px; }
+  .foot { margin-top: auto; display: flex; justify-content: space-between; font-size: 8.5px; color: var(--muted); }
+  .foot b { color: var(--ink); font-size: 10px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <!-- the same card ×4 -->
+  <template id="card">
+    <div class="card">
+      <div class="brand"><div class="mark">❄</div><div class="name">plowbird</div><div class="flake">Twin Cities</div></div>
+      <h2>Snowed in?<br /><span>We’ll plow you out.</span></h2>
+      <p class="sub">A local plow truck at your driveway in minutes. Watch it arrive live. Pay after it’s plowed. From $35.</p>
+      <img class="scene" src="assets/snow-scene.svg" alt="" />
+      <div class="coupon">
+        <div class="qr"><img src="qr/card.svg" alt="QR code to plowbird.app" /></div>
+        <div class="offer">
+          <b>$10 OFF</b>
+          <small>your first plow</small>
+          <div class="code">FIRSTPLOW</div>
+        </div>
+      </div>
+      <div class="foot"><b>plowbird.app</b><span>New customers, one per household. Expires 3/31/2027.</span></div>
+    </div>
+  </template>
+</div>
+<script>
+  const sheet = document.querySelector('.sheet');
+  const card = document.getElementById('card');
+  for (let i = 0; i < 4; i++) sheet.appendChild(card.content.cloneNode(true));
+</script>
+</body>
+</html>
