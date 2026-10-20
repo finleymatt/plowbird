@@ -1,7 +1,13 @@
-// Demo accounts for local testing. All share the password below.
-import './env.js';
+// Demo accounts for local testing and demo mode. All share the password below, which is public,
+// so they're only created in demo mode (and drivers.js never lets them take jobs outside it).
+import { DEMO } from './env.js';
 import { db } from './db.js';
 import { hashPassword } from './auth.js';
+
+if (!DEMO) {
+  console.log('Demo mode is off: not seeding demo accounts.');
+  process.exit(0);
+}
 
 const PASSWORD = 'plowdemo123';
 
@@ -15,6 +21,7 @@ const insertUser = db.prepare(
   'INSERT OR IGNORE INTO users (role, name, email, phone, password_hash, vehicle, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
 );
 for (const u of users) insertUser.run(u.role, u.name, u.email, u.phone, hashPassword(PASSWORD), u.vehicle ?? null, u.lat ?? null, u.lng ?? null);
+db.prepare("UPDATE users SET driver_status = 'approved' WHERE role = 'driver' AND email LIKE '%@plowbird.test' AND driver_status IS NULL").run();
 
 const customer = db.prepare('SELECT id FROM users WHERE email = ?').get('customer@plowbird.test');
 if (!db.prepare('SELECT 1 FROM properties WHERE user_id = ?').get(customer.id)) {

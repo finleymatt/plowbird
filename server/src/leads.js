@@ -4,9 +4,10 @@
 //   the pilot area, customers whose order timed out with no driver). One row per email.
 // - users.utm_*: first-touch attribution the web app saved on first load (app lib/attribution.ts),
 //   sent with sign-up.
-// - /admin/leads.csv and /admin/sources for ADMIN_EMAILS.
+// - /admin/leads.csv and /admin/sources for staff (ADMIN_EMAILS, see admin.js).
 import { Router } from 'express';
 import { db, nowIso } from './db.js';
+import { requireAdmin } from './admin.js';
 import { optionalAuth, requireAuth } from './auth.js';
 import { zipFromText } from './service-area.js';
 
@@ -110,21 +111,6 @@ function rateLimited(ip, max = 5, windowMs = 10 * 60_000) {
   return recent.length > max;
 }
 
-// Until the shared admin module lands: signed in, and the account's email is in ADMIN_EMAILS.
-const ADMIN_EMAILS = new Set(
-  String(process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean),
-);
-function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    const user = db.prepare('SELECT email FROM users WHERE id = ?').get(req.user.id);
-    if (!user || !ADMIN_EMAILS.has(user.email.toLowerCase())) return res.status(403).json({ error: 'Admins only' });
-    next();
-  });
-}
-
 // Spreadsheet-safe CSV cell: quoted, and formulas (=, +, -, @) defused.
 const cell = (v) => {
   if (v == null) return '';
@@ -144,7 +130,7 @@ leadsApi.post('/leads', optionalAuth, (req, res) => {
 
 const LEAD_COLUMNS = ['id', 'email', 'phone', 'address', 'zip', 'source', 'utm_source', 'utm_medium', 'utm_campaign', 'promo', 'user_id', 'created_at'];
 
-leadsApi.get('/admin/leads.csv', requireAdmin, (req, res) => {
+leadsApi.get('/admin/leads.csv', requireAuth, requireAdmin, (req, res) => {
   const rows = db.prepare(`SELECT ${LEAD_COLUMNS.join(', ')} FROM leads ORDER BY id`).all();
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="plowbird-leads-${nowIso().slice(0, 10)}.csv"`);
@@ -152,7 +138,7 @@ leadsApi.get('/admin/leads.csv', requireAdmin, (req, res) => {
 });
 
 // Sign-ups, leads and jobs per utm_source (or ?by=medium / campaign). "(direct)" = no utm.
-leadsApi.get('/admin/sources', requireAdmin, (req, res) => {
+leadsApi.get('/admin/sources', requireAuth, requireAdmin, (req, res) => {
   const col = { medium: 'utm_medium', campaign: 'utm_campaign' }[req.query.by] ?? 'utm_source';
   const key = (alias) => `COALESCE(${alias}.${col}, '(direct)')`;
   const out = new Map();

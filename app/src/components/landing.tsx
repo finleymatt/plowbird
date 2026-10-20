@@ -18,7 +18,7 @@ const startOrder = (p: Place, promo?: string) =>
     pathname: '/order',
     params: { address: p.address, lat: String(p.lat), lng: String(p.lng), c: p.confirmed ? '1' : '0', ...(promo ? { promo } : {}) },
   });
-const driverSignUp = () => router.push({ pathname: '/sign-up', params: { role: 'driver' } });
+const driverSignUp = () => router.push('/drive');
 
 // Icy sky fading to snow white, behind the hero.
 const SKY = Platform.OS === 'web' ? ({ backgroundImage: 'linear-gradient(180deg, #D6E9FB 0%, #EEF6FF 55%, #FFFFFF 100%)' } as object) : { backgroundColor: '#E8F2FC' };
