@@ -4,6 +4,8 @@ import express from 'express';
 import cors from 'cors';
 import { Server } from 'socket.io';
 import { api } from './routes.js';
+import { adminApi } from './admin.js';
+import { driversApi } from './drivers.js';
 import { messagesApi } from './messages.js';
 import { verifyToken } from './auth.js';
 import { attachIo, updateDriverLocation } from './jobs.js';
@@ -22,6 +24,8 @@ app.use(express.json({ limit: '1mb' }));
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.use('/api', api);
 app.use('/api', messagesApi);
+app.use('/api', driversApi);
+app.use('/api', adminApi);
 app.use((err, req, res, next) => {
   if (err instanceof PaymentError) return res.status(402).json({ error: err.message, code: err.code });
   console.error(err);

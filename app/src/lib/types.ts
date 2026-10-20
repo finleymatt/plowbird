@@ -12,6 +12,54 @@ export type User = {
   lng: number | null;
   rating: number | null;
   ratingCount: number;
+  /** Drivers only: where their application stands (see /drive). */
+  driverStatus?: DriverStatus | null;
+  /** Plowbird staff (ADMIN_EMAILS on the server). */
+  admin?: boolean;
+};
+
+export type DriverStatus = 'none' | 'pending' | 'approved' | 'rejected';
+export type PlowType = 'straight' | 'v' | 'wing' | 'box' | 'other';
+export type Availability = 'overnight' | 'early_morning' | 'weekdays' | 'weekends';
+export type DriverApplicationForm = {
+  phone: string;
+  zip: string;
+  radiusMiles: number;
+  truck: string;
+  plowType: PlowType;
+  plowWidthFt: number | null;
+  insured: boolean;
+  insuranceCarrier: string | null;
+  yearsPlowing: number;
+  availability: Availability[];
+  shovel: boolean;
+  notes: string | null;
+  heardFrom: string | null;
+  submittedAt?: string;
+};
+export type DriverApplication = { status: DriverStatus; application: DriverApplicationForm | null; note: string | null; reviewedAt: string | null };
+export type DriverForReview = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  status: DriverStatus;
+  application: DriverApplicationForm | null;
+  note: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  completedJobs: number;
+  rating: number | null;
+};
+export type AdminSummary = {
+  customers: number;
+  customersThisWeek: number;
+  drivers: Record<DriverStatus, number>;
+  driversOnline: number;
+  jobs: Partial<Record<string, number>>;
+  jobsThisWeek: number;
+  promoRedemptions: number;
+  stormPasses: number;
 };
 
 export type DrivewaySize = 'single' | 'double' | 'triple' | 'large';
