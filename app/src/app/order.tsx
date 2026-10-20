@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AddressSearch } from '@/components/address-search';
 import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
+import { AgreeLine } from '@/components/legal';
 import { LiveMap } from '@/components/live-map';
 import { PaymentMethodCard } from '@/components/payment-method';
 import { PromoField } from '@/components/promo-field';
@@ -279,6 +280,7 @@ export default function Order() {
         <Icon name="shield-checkmark" size={18} color="success" />
         <T variant="caption" color="textSecondary" style={{ flex: 1 }}>You’re only charged once your driveway is clear. Cancel free until your driver heads out.</T>
       </Row>
+      <AgreeLine />
       <ErrorText>{error ?? (touched ? accountProblem : null)}</ErrorText>
       {wide && ctaButton}
     </View>

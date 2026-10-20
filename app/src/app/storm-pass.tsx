@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddressSearch } from '@/components/address-search';
 import { Brand } from '@/components/landing';
+import { AgreeLine } from '@/components/legal';
 import { PaymentMethodCard } from '@/components/payment-method';
 import { SnowScene } from '@/components/snow-scene';
 import { Snowfall } from '@/components/snowfall';
@@ -199,6 +200,7 @@ export default function StormPassScreen() {
           <T variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
             {payments.data?.mode === 'stripe' ? 'Billed monthly to your card. ' : ''}Cancel anytime. No charge per plow.
           </T>
+          <AgreeLine />
         </>
       )}
     </Card>
