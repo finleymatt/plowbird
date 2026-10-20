@@ -25,8 +25,8 @@ const JOB_SELECT = `
   SELECT j.*,
     p.label AS p_label, p.address AS p_address, p.lat AS p_lat, p.lng AS p_lng,
     p.size AS p_size, p.length AS p_length, p.sidewalk AS p_sidewalk, p.notes AS p_notes,
-    c.name AS c_name, c.phone AS c_phone,
-    d.name AS d_name, d.phone AS d_phone, d.vehicle AS d_vehicle, d.lat AS d_lat, d.lng AS d_lng,
+    c.name AS c_name,
+    d.name AS d_name, d.vehicle AS d_vehicle, d.lat AS d_lat, d.lng AS d_lng,
     d.rating_sum AS d_rating_sum, d.rating_count AS d_rating_count
   FROM jobs j
   JOIN properties p ON p.id = j.property_id
@@ -50,7 +50,6 @@ export function serializeJob(r) {
     ? {
         id: r.driver_id,
         name: r.d_name,
-        phone: r.d_phone,
         vehicle: r.d_vehicle,
         lat: r.d_lat,
         lng: r.d_lng,
@@ -82,7 +81,8 @@ export function serializeJob(r) {
     completedAt: r.completed_at,
     cancelledAt: r.cancelled_at,
     property,
-    customer: { id: r.customer_id, name: r.c_name, phone: r.c_phone },
+    // No phone numbers for either side: customer and driver talk through in-app chat (messages.js).
+    customer: { id: r.customer_id, name: r.c_name },
     driver,
     driverMiles: miles == null ? null : Math.round(miles * 10) / 10,
     etaMinutes: ['accepted', 'en_route'].includes(r.status) ? etaMinutes(miles) : null,
@@ -94,11 +94,12 @@ export const getJob = (id) => serializeJob(db.prepare(`${JOB_SELECT} WHERE j.id 
 export const listJobs = (where, ...params) =>
   db.prepare(`${JOB_SELECT} WHERE ${where} ORDER BY COALESCE(j.scheduled_for, j.created_at) DESC`).all(...params).map(serializeJob);
 
-export function notify(userId, title, body, jobId = null) {
+// `extra` rides along on the live event only, e.g. { kind: 'message' } so the app can tell chat apart.
+export function notify(userId, title, body, jobId = null, extra = {}) {
   const info = db
     .prepare('INSERT INTO notifications (user_id, title, body, job_id) VALUES (?, ?, ?, ?)')
     .run(userId, title, body, jobId);
-  io?.to(`user:${userId}`).emit('notification', { id: Number(info.lastInsertRowid), title, body, jobId, createdAt: nowIso() });
+  io?.to(`user:${userId}`).emit('notification', { ...extra, id: Number(info.lastInsertRowid), title, body, jobId, createdAt: nowIso() });
 }
 
 // Push the latest job state to everyone who cares about it.

@@ -2,12 +2,14 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, View } from 'react-native';
 
+import { ChatSheet, MessageButton } from '@/components/chat';
 import { KindBadge, QuoteLines, StatusBadge } from '@/components/job-parts';
 import { LiveMap, type MapPin } from '@/components/live-map';
 import { Badge, Button, Card, ErrorText, Icon, Loading, Row, Screen, SectionTitle, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { useAuth, useSocketEvent } from '@/lib/auth';
+import { useChat } from '@/lib/chat';
 import { LENGTH_LABEL, SIZE_LABEL, when } from '@/lib/format';
 import type { Job } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
@@ -30,13 +32,16 @@ function openDirections(lat: number, lng: number) {
 }
 
 export default function DriverJob() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `chat=1` opens straight into the chat (from a new-message notification).
+  const { id, chat: openChat } = useLocalSearchParams<{ id: string; chat?: string }>();
   const { user } = useAuth();
   const { data: job, setData, error } = useApi<Job>(`/jobs/${id}`);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [simulating, setSimulating] = useState(false);
   const route = useJobRoute(job);
+  const chat = useChat(job);
+  const [chatOpen, setChatOpen] = useState(openChat === '1');
   // Demo drives are on in development, and in production when the API sets DEMO_MODE=1.
   const config = useApi<{ demo: boolean }>('/config');
 
@@ -105,8 +110,8 @@ export default function DriverJob() {
 
       <Row gap={Spacing.two}>
         <Button title="Directions" icon="navigate" kind="secondary" size="md" style={{ flex: 1 }} onPress={() => openDirections(p.lat, p.lng)} />
-        {mineJob && job.customer.phone && (
-          <Button title="Call" icon="call" kind="secondary" size="md" style={{ flex: 1 }} onPress={() => Linking.openURL(`tel:${job.customer.phone}`)} />
+        {mineJob && chat.available && (chat.open || chat.messages.length > 0) && (
+          <MessageButton title={chat.open ? 'Message' : 'Messages'} unread={chat.unread} onPress={() => setChatOpen(true)} style={{ flex: 1 }} />
         )}
       </Row>
 
@@ -173,6 +178,8 @@ export default function DriverJob() {
           }}
         />
       )}
+
+      {mineJob && <ChatSheet job={job} chat={chat} visible={chatOpen && chat.available} onClose={() => setChatOpen(false)} />}
     </Screen>
   );
 }

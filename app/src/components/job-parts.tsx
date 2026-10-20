@@ -158,7 +158,7 @@ export function Stars({ value, onChange, size = 36 }: { value: number; onChange?
   );
 }
 
-export function DriverCard({ job, onCall }: { job: Job; onCall?: () => void }) {
+export function DriverCard({ job }: { job: Job }) {
   const theme = useTheme();
   const d = job.driver!;
   return (
@@ -180,14 +180,6 @@ export function DriverCard({ job, onCall }: { job: Job; onCall?: () => void }) {
           {d.rating ? `★ ${d.rating} (${d.ratingCount})` : 'New driver'} · {d.vehicle ?? 'Plow truck'}
         </T>
       </View>
-      {onCall && d.phone && (
-        <Pressable
-          onPress={onCall}
-          accessibilityLabel="Call driver"
-          style={{ padding: 12, borderRadius: Radius.pill, backgroundColor: theme.backgroundElement }}>
-          <Icon name="call" color="accent" />
-        </Pressable>
-      )}
     </Row>
   );
 }

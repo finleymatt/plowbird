@@ -11,14 +11,14 @@ One Expo codebase ships the **iOS app, Android app and website**. A Node API han
 - **Plow now**, or **schedule** any hour in the next 7 days. The app suggests a time about an hour after the snow stops.
 - **Storm auto-plow**: pick a threshold (1–6"). When the NWS forecast crosses it, a plow is booked automatically for after the storm.
 - Upfront price based on driveway size, length, sidewalk and snow depth, with storm surge during NWS warnings and high demand
-- Live tracking on a map with ETA, a status timeline and a call-driver button
+- Live tracking on a map with ETA, a status timeline and in-app chat with the driver (no phone numbers shared)
 - Tip before or after the job (100% goes to the driver), plus 1–5★ ratings
 - Multiple driveways (home, cabin, rental…)
 
 **Drivers**
 - Online/offline toggle that streams GPS while online
 - Nearby job board with a map, payout, distance, depth and tip. Drivers can reserve scheduled jobs ahead of time.
-- Job flow: accept → start driving → start plowing → mark clear, with directions and call-customer buttons
+- Job flow: accept → start driving → start plowing → mark clear, with directions and in-app chat with the customer
 - Earnings for today, the last 7 days and all time (80% of each job plus 100% of tips)
 
 **Website**: a marketing landing page at `/` that also runs the full customer and driver app in the browser.
