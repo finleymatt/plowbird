@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plowbird driver poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=block" />
+<style>
+  /* Driver recruiting version of poster.html: same page setup, colors and type.
+     US Letter, edge to edge; everything stays 0.35in+ inside the edges. Cut the tabs on the dashed lines. */
+  @page { size: 8.5in 11in; margin: 0; }
+  :root {
+    --ink: #0b1b2e; --muted: #4a5d73; --orange: #ff5a1f; --blue: #1e6fd9; --ice: #e8f2fc; --sky: #cfe4fa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 8.5in; height: 11in; }
+  body {
+    font-family: Inter, system-ui, sans-serif; color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    background: #fff;
+  }
+  .page { width: 8.5in; height: 11in; display: flex; flex-direction: column; overflow: hidden; }
+
+  .top {
+    background: linear-gradient(#cfe4fa, #e8f2fc 70%, #fff);
+    padding: 0.45in 0.5in 0.15in;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 40px; height: 40px; border-radius: 11px; background: var(--orange); color: #fff; font-size: 24px; line-height: 40px; text-align: center; }
+  .name { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; }
+  .area { margin-left: auto; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--orange); }
+
+  h1 { margin-top: 0.22in; font-size: 60px; line-height: 1.0; font-weight: 900; letter-spacing: -2.6px; }
+  h1 span { color: var(--blue); }
+  .sub { margin-top: 14px; font-size: 19px; line-height: 1.4; color: var(--muted); max-width: 6.8in; }
+  .sub b { color: var(--ink); }
+
+  .middle { display: flex; gap: 0.3in; padding: 0.12in 0.5in 0; align-items: center; }
+  .middle img { width: 3.4in; height: auto; display: block; }
+  .steps { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .step { display: flex; gap: 12px; align-items: flex-start; }
+  .num { flex: none; width: 34px; height: 34px; border-radius: 17px; background: var(--ice); color: var(--blue); font-weight: 800; font-size: 17px; line-height: 34px; text-align: center; }
+  .step b { display: block; font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
+  .step span { font-size: 14px; color: var(--muted); line-height: 1.35; }
+
+  .pay {
+    margin: 0.16in 0.5in 0; padding: 0.16in 0.25in; border: 3px dashed var(--orange); border-radius: 22px;
+    display: flex; align-items: center; gap: 0.3in; background: #fff7f3;
+  }
+  .offer { flex: 1; }
+  .kicker { font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--orange); }
+  .big { font-size: 58px; font-weight: 900; letter-spacing: -2px; line-height: 1.02; margin-top: 4px; }
+  .big small { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+  .tips { display: inline-block; margin-top: 10px; padding: 7px 14px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 19px; font-weight: 800; letter-spacing: 0.5px; }
+  .perks { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; font-weight: 700; }
+  .perks span::before { content: '✓ '; color: var(--orange); }
+  .fine { margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .scan { text-align: center; }
+  .scan .qr { width: 1.75in; height: 1.75in; padding: 0.1in; background: #fff; border-radius: 14px; }
+  .scan .qr img { width: 100%; height: 100%; display: block; }
+  .scan div { margin-top: 6px; font-size: 15px; font-weight: 800; }
+  .scan div span { color: var(--orange); }
+
+  .needs { margin: 0.14in 0.5in 0; font-size: 13px; color: var(--muted); text-align: center; line-height: 1.4; }
+  .needs b { color: var(--ink); }
+
+  /* Kept 0.35in inside the edges: home printers can't print the outer ~0.25in. */
+  .tabs { margin: auto 0.35in 0.35in; display: flex; border-top: 2px dashed #9fb3c8; height: 1.4in; }
+  .tab { flex: 1; border-left: 2px dashed #9fb3c8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 2px; }
+  .tab:first-child { border-left: 0; }
+  .tab img { width: 0.8in; height: 0.8in; }
+  .tab b { font-size: 9.5px; font-weight: 800; letter-spacing: -0.2px; }
+  .tab span { font-size: 9px; font-weight: 800; color: var(--orange); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">❄</div>
+      <div class="name">plowbird</div>
+      <div class="area">Plow drivers wanted</div>
+    </div>
+    <h1>Got a plow truck?<br /><span>Get paid to plow.</span></h1>
+    <p class="sub">Paid driveway jobs near you in the Twin Cities this winter. <b>You pick the jobs.</b> We handle the customers and the billing.</p>
+  </div>
+
+  <div class="middle">
+    <img src="assets/snow-scene.svg" alt="" />
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div><b>See a job nearby</b><span>Address, driveway size and pay up front. Accept it or skip it.</span></div></div>
+      <div class="step"><div class="num">2</div><div><b>Plow the driveway</b><span>Go online when it suits you: between routes, after work, on storm nights.</span></div></div>
+      <div class="step"><div class="num">3</div><div><b>Get paid</b><span>Through Stripe to your bank after each job. No invoices, no chasing payment.</span></div></div>
+    </div>
+  </div>
+
+  <div class="pay">
+    <div class="offer">
+      <div class="kicker">Driver pay</div>
+      <div class="big">$36 <small>per 2-car driveway</small></div>
+      <div class="tips">+ 100% of tips</div>
+      <div class="perks"><span>Choose your jobs</span><span>Paid via Stripe</span><span>No invoices</span></div>
+      <div class="fine">Bigger driveways, deep snow and storms pay more. Independent contractors; approval required.</div>
+    </div>
+    <div class="scan">
+      <div class="qr"><img src="qr/driver-poster.svg" alt="QR code to plowbird.app/drive" /></div>
+      <div>Scan to apply · <span>plowbird.app/drive</span></div>
+    </div>
+  </div>
+
+  <p class="needs"><b>You need:</b> a plow truck, a driver’s license, commercial auto insurance with plow coverage, and liability insurance.<br />Signing up drivers now in Richfield, Edina, Bloomington, St. Louis Park, Roseville and Maplewood.</p>
+
+  <div class="tabs">
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+    <div class="tab"><img src="qr/driver-poster.svg" alt="" /><b>plowbird.app/drive</b><span>$36/driveway + tips</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -3,13 +3,15 @@
 | File | What it is |
 |---|---|
 | `print/plowbird-poster.pdf` | 8.5×11 poster with a $10-off coupon and 7 tear-off tabs (cut on the dashed lines). |
+| `print/plowbird-driver-poster.pdf` | 8.5×11 driver recruiting poster ($36 per driveway + tips) with 7 tear-off tabs. For plow dealers, farm-supply stores and hardware stores. |
 | `print/plowbird-coupon-cards.pdf` | Four 4.25×5.5 handout cards per sheet. Print on card stock (80–110 lb) and cut. |
 | `print/plowbird-email.zip` | The email, ready to import into Mailchimp (*Templates → Import template → zip*). |
 | `email/email.html` | The same email as plain HTML, for other email tools (upload `images/hero.png` with it). |
-| `preview/*.png` | Pictures of all three. |
+| `preview/*.png` | Pictures of each piece. |
+| `outreach/` | Contact lists (neighborhood groups, HOAs, plow and landscaping businesses), places to post, and ready-to-post driver and customer copy. Start with `outreach/README.md`. |
 | `build.py` | Rebuilds everything. Change the offer code or links there (`pip install segno`, then `python build.py`). |
 
-Each QR code goes to `plowbird.app/?promo=FIRSTPLOW&utm_source=…` (`poster`, `tab`, `card`), and email links use `utm_source=email`. That way you can tell which piece of paper each visit came from.
+Each QR code goes to `plowbird.app/?promo=FIRSTPLOW&utm_source=…` (`poster`, `tab`, `card`), and email links use `utm_source=email`. The driver poster's code goes to `plowbird.app/drive?utm_source=driver-poster`. That way you can tell which piece of paper each visit came from.
 
 ## Before anything goes out
 
@@ -59,7 +61,7 @@ Recruit before the customer push:
 - people with a plow-equipped truck on Facebook Marketplace and Craigslist
 - farm and ranch supply bulletin boards
 
-Pitch: "Fill gaps between your contract routes with paid jobs near you, and keep your share plus 100% of tips." A driver version of the poster can be made from `poster.html`.
+Pitch: "Fill gaps between your contract routes with paid jobs near you, and keep your share plus 100% of tips." The driver version of the poster is `print/plowbird-driver-poster.pdf`, and the ads and call scripts are in `outreach/`.
 
 ## Measuring it
 
