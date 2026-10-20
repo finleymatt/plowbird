@@ -23,7 +23,9 @@ import {
   updateDriverLocation,
 } from './jobs.js';
 import { advanceJob, DRIVER_FLOW } from './advance.js';
+import { isAdminEmail } from './admin.js';
 import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
+import { driverStatus, requireApprovedDriver } from './drivers.js';
 import { activePassFor, checkStormPasses, ELIGIBILITY, markEnding, passPrice, STORM_PASS, subscriptionRow } from './storm-pass.js';
 import {
   authorizeJob,
@@ -61,6 +63,8 @@ function publicUser(u) {
     lng: u.lng,
     rating: u.rating_count ? Math.round((u.rating_sum / u.rating_count) * 10) / 10 : null,
     ratingCount: u.rating_count,
+    driverStatus: driverStatus(u),
+    admin: isAdminEmail(u.email),
   };
 }
 
@@ -427,7 +431,8 @@ api.put('/storm-plans/:propertyId', requireAuth, requireRole('customer'), (req, 
 
 /* ---------------- driver ---------------- */
 
-api.post('/driver/status', requireAuth, requireRole('driver'), (req, res) => {
+// Going online needs an approved application; going offline never does.
+api.post('/driver/status', requireAuth, requireRole('driver'), (req, res, next) => (req.body?.online ? requireApprovedDriver(req, res, next) : next()), (req, res) => {
   const { online, lat, lng } = req.body ?? {};
   db.prepare('UPDATE users SET online = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), location_at = ? WHERE id = ?').run(
     online ? 1 : 0,
@@ -448,7 +453,7 @@ api.post('/driver/location', requireAuth, requireRole('driver'), (req, res) => {
 });
 
 
-api.get('/driver/available', requireAuth, requireRole('driver'), (req, res) => {
+api.get('/driver/available', requireAuth, requireApprovedDriver, (req, res) => {
   const me = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   const radius = Number(req.query.radius ?? 30);
   const jobs = listJobs("j.driver_id IS NULL AND j.status IN ('requested','scheduled')")
@@ -462,7 +467,7 @@ api.get('/driver/available', requireAuth, requireRole('driver'), (req, res) => {
   res.json(jobs);
 });
 
-api.post('/jobs/:id/accept', requireAuth, requireRole('driver'), (req, res) => {
+api.post('/jobs/:id/accept', requireAuth, requireApprovedDriver, (req, res) => {
   const job = getJob(req.params.id);
   if (!job) return bad(res, 'Job not found', 404);
   const next = job.status === 'scheduled' ? 'scheduled' : 'accepted';

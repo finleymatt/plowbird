@@ -193,7 +193,7 @@ server/   Node API: Express + Socket.IO + SQLite
   - refunds for disputes
 - **Notifications are in-app only** (live banners over the socket). Push notifications need `expo-notifications` plus an EAS project.
 - **Database** is a single SQLite file. Move to Postgres before real traffic.
-- **Driver onboarding**: no identity, insurance or vehicle verification yet.
+- **Driver onboarding**: drivers apply at `/drive` (truck, plow, insurance, area) and staff approve them at `/admin` (emails in `ADMIN_EMAILS` on the API) before they can go online or take jobs. Insurance and license are checked by phone; there's no document upload or background check yet. Demo accounts (`@plowbird.test`) are only seeded in demo mode and can never take jobs outside it.
 - **Location** is foreground-only. Background tracking while the app is minimized needs `expo-task-manager` and a development build.
 - **Native builds** have not been run yet. Use `npx eas-cli@latest build` to produce App Store and Play Store binaries. Android release builds need a Google Maps API key (see the `react-native-maps` config plugin).
 - Set a strong `JWT_SECRET` and `NODE_ENV=production` (which disables the dev endpoints) when deploying the API.

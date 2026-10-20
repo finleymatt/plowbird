@@ -42,8 +42,9 @@ export default function Terms() {
       <H>3. Drivers are independent contractors</H>
       <P>
         Drivers are independent businesses, not employees, agents or partners of Plowbird. Drivers choose when to go online and which jobs to accept,
-        provide their own truck, plow and equipment, and decide how to do the work, consistent with the Customer’s instructions and the law. By
-        accepting jobs, each Driver confirms that, at all times while online or on a job, they:
+        provide their own truck, plow and equipment, and decide how to do the work, consistent with the Customer’s instructions and the law. Drivers
+        apply at <A href="/drive">plowbird.app/drive</A> and must be approved by Plowbird before taking jobs; approval is not a guarantee of any
+        amount of work. By accepting jobs, each Driver confirms that, at all times while online or on a job, they:
       </P>
       <Bullets
         items={[

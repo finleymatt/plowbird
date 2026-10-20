@@ -1,13 +1,9 @@
-import type { Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { A, ContactBlock, EmailLink, H, LegalPage, P, PhoneLink, SUPPORT_PHONE } from '@/components/legal';
 import { Card, Icon, Row, T, type IconName } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-
-// /drive is the driver application page (built separately).
-const DRIVE = '/drive' as Href;
 
 export default function Contact() {
   return (
@@ -50,7 +46,7 @@ export default function Contact() {
       <H>How do I become a driver?</H>
       <P>
         You need a pickup or truck with a plow, a valid driver’s license, commercial auto coverage that includes plowing, and liability insurance.
-        Apply at <A href={DRIVE}>Drive with Plowbird</A>. Drivers set their own hours, pick the jobs they want and get paid through Stripe.
+        Apply at <A href="/drive">Drive with Plowbird</A>. Drivers set their own hours, pick the jobs they want and get paid through Stripe.
       </P>
 
       <H>Mailing address</H>

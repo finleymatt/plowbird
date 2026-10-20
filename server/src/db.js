@@ -135,9 +135,11 @@ CREATE INDEX IF NOT EXISTS subscriptions_property ON subscriptions(property_id, 
 `);
 
 // Columns added after the first release. SQLite has no ADD COLUMN IF NOT EXISTS.
+// Returns true when it added the column (so a one-time backfill can follow).
 function addColumn(table, column, type) {
-  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column))
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  if (db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column)) return false;
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  return true;
 }
 addColumn('users', 'stripe_customer_id', 'TEXT');
 addColumn('users', 'stripe_account_id', 'TEXT');
@@ -147,5 +149,12 @@ addColumn('jobs', 'covered', 'INTEGER NOT NULL DEFAULT 0'); // Storm Pass: no ch
 addColumn('jobs', 'card_label', 'TEXT');
 addColumn('jobs', 'promo_code', 'TEXT'); // see promos.js
 addColumn('jobs', 'discount_cents', 'INTEGER NOT NULL DEFAULT 0'); // already taken off price_cents
+// Driver applications (drivers.js): null = no application yet, then 'pending' → 'approved' | 'rejected'.
+// When this column arrives, only the demo drivers are approved; anyone else who signed up as a
+// driver before applications existed applies like everyone else.
+if (addColumn('users', 'driver_status', 'TEXT')) db.exec("UPDATE users SET driver_status = 'approved' WHERE role = 'driver' AND email LIKE '%@plowbird.test'");
+addColumn('users', 'driver_application', 'TEXT'); // JSON from the /drive form
+addColumn('users', 'driver_reviewed_at', 'TEXT');
+addColumn('users', 'driver_review_note', 'TEXT');
 
 export const nowIso = () => new Date().toISOString();

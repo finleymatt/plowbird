@@ -41,6 +41,10 @@ export default function Privacy() {
             <B>Orders:</B> what you requested, when, the price, tip, status and any Storm Pass subscription.
           </>,
           <>
+            <B>Driver applications:</B> if you apply to drive, your ZIP code and service radius, truck and plow details, plowing experience,
+            availability, insurance carrier, how you heard about us, any notes you add, and whether your application was approved.
+          </>,
+          <>
             <B>Driver location:</B> while a Driver is online in the app, we receive their device’s location. We keep only the most recent position,
             not a location history.
           </>,

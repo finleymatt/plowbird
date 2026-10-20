@@ -17,12 +17,12 @@ const startOrder = (p: Place, promo?: string) =>
     pathname: '/order',
     params: { address: p.address, lat: String(p.lat), lng: String(p.lng), c: p.confirmed ? '1' : '0', ...(promo ? { promo } : {}) },
   });
-const driverSignUp = () => router.push({ pathname: '/sign-up', params: { role: 'driver' } });
+const driverSignUp = () => router.push('/drive');
 const FOOTER_LINKS: [string, Href][] = [
   ['Terms', '/terms'],
   ['Privacy', '/privacy'],
   ['Contact', '/contact'],
-  ['Drive with Plowbird', '/drive' as Href],
+  ['Drive with Plowbird', '/drive'],
 ];
 
 // Icy sky fading to snow white, behind the hero.

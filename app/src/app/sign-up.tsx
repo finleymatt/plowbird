@@ -53,7 +53,7 @@ export default function SignUp() {
         vehicle: vehicle.trim() || undefined,
       });
       // Customers go straight to "where should we plow?", drivers to their job board.
-      router.replace(u.role === 'driver' ? '/driver' : '/order');
+      router.replace(u.role === 'driver' ? '/drive' : '/order');
     } catch (e: any) {
       setError(e instanceof ApiError && e.status === 409 ? 'That email already has an account. Sign in instead.' : e.message);
     } finally {
@@ -77,7 +77,7 @@ export default function SignUp() {
           <RoleCard icon="car" title="I drive a plow" sub="Earn on snow days" selected={driver} onPress={() => setRole('driver')} />
         </Row>
 
-        <SocialSignIn role={role} onDone={({ user }) => router.replace(user.role === 'driver' ? '/driver' : '/order')} />
+        <SocialSignIn role={role} onDone={({ user }) => router.replace(user.role !== 'driver' ? '/order' : user.driverStatus === 'approved' ? '/driver' : '/drive')} />
 
         <Input label="Name" value={name} onChangeText={setName} placeholder="First and last name" autoComplete="name" textContentType="name"
           invalid={touched && !name.trim()} />

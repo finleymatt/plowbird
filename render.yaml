@@ -10,7 +10,7 @@ services:
     plan: 0.5c-512mb
     rootDir: server
     buildCommand: npm ci
-    # The seed only adds the demo accounts if they're missing, so it's safe on every boot.
+    # The seed only adds the demo accounts if they're missing, and only in demo mode.
     startCommand: npm run seed && npm start
     healthCheckPath: /health
     domains:
@@ -35,6 +35,9 @@ services:
       - key: DEMO_MODE
         value: "1"
       # Payments stay simulated until you add STRIPE_SECRET_KEY in the dashboard (see README).
+      # Staff who can approve drivers and see /admin: comma-separated emails, set in the dashboard.
+      - key: ADMIN_EMAILS
+        sync: false
 
   # Expo web build, served as a single-page app.
   - type: web
