@@ -83,7 +83,7 @@ export default function SignUp() {
         <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress"
           invalid={touched && !validEmail(email)} hint={touched && !validEmail(email) ? 'Enter a valid email' : null} />
         <Input label={driver ? 'Mobile phone' : 'Mobile phone (optional)'} value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber"
-          placeholder={driver ? 'Customers can call you when you’re on the way' : 'So your driver can text you'} invalid={touched && driver && !phone.trim()} />
+          placeholder={driver ? 'So Plowbird can reach you. Customers never see it.' : 'For updates about your plow'} invalid={touched && driver && !phone.trim()} />
         {driver && <Input label="Truck & plow (optional)" value={vehicle} onChangeText={setVehicle} placeholder="e.g. 2020 Silverado 2500 · 8ft Fisher" />}
         <PasswordInput label="Create a password" value={password} onChangeText={setPassword} autoComplete="new-password" textContentType="newPassword"
           placeholder="At least 8 characters" onSubmitEditing={submit} invalid={touched && password.length < 8}

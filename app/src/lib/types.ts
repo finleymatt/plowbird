@@ -71,11 +71,11 @@ export type Job = {
   startedAt: string | null;
   completedAt: string | null;
   property: Property;
-  customer: { id: number; name: string; phone: string | null };
+  /** No phone numbers for either side: they talk through in-app chat. */
+  customer: { id: number; name: string };
   driver: {
     id: number;
     name: string;
-    phone: string | null;
     vehicle: string | null;
     lat: number | null;
     lng: number | null;
@@ -165,7 +165,13 @@ export type PayoutStatus =
       failedCents: number;
     };
 
-export type AppNotification = { id: number; title: string; body: string; jobId: number | null; createdAt: string };
+/** `kind` is only on live notifications: 'message' for a new chat message. */
+export type AppNotification = { id: number; title: string; body: string; jobId: number | null; createdAt: string; kind?: 'message' };
+
+/** A chat message between a job's customer and its driver. */
+export type ChatMessage = { id: number; jobId: number; senderId: number; body: string; createdAt: string; readAt: string | null };
+/** GET /jobs/:id/messages. `open` is false once sending has closed (24 hours after the job is done). */
+export type ChatThread = { messages: ChatMessage[]; open: boolean; unread: number };
 
 /** Road route from the driver to the driveway. `coords` are [lat, lng] pairs. */
 export type JobRoute = { coords: [number, number][]; miles: number; minutes: number; arriveAt: string };

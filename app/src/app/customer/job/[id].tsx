@@ -1,20 +1,23 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Linking, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ChatSheet, MessageButton } from '@/components/chat';
 import { QuoteLines, Stars, TipPicker } from '@/components/job-parts';
 import { LiveMap, type MapPin } from '@/components/live-map';
-import { Badge, Button, Card, Divider, elevation, ErrorText, Icon, Input, Loading, Row, Screen, T, type IconName } from '@/components/ui';
+import { Badge, Button, Card, Divider, elevation, ErrorText, Icon, Input, Loading, Row, Screen, T } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useSocketEvent } from '@/lib/auth';
+import { useChat } from '@/lib/chat';
 import { money, when } from '@/lib/format';
 import type { Job, JobRoute } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 import { useJobRoute } from '@/lib/use-route';
 
+const first = (name: string) => name.split(' ')[0];
 const clock = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 // Simulated payments leave cardLabel empty, so those jobs keep the "(demo)" wording.
@@ -76,13 +79,16 @@ const STEPS = ['requested', 'accepted', 'en_route', 'in_progress', 'completed'] 
 const STEP_LABEL = ['Requested', 'Assigned', 'On the way', 'Plowing', 'Clear'];
 
 export default function CustomerJob() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `chat=1` opens straight into the chat (from a new-message notification).
+  const { id, chat: openChat } = useLocalSearchParams<{ id: string; chat?: string }>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const wide = width >= 900;
   const { data: job, setData, error } = useApi<Job>(`/jobs/${id}`);
   const route = useJobRoute(job);
+  const chat = useChat(job);
+  const [chatOpen, setChatOpen] = useState(openChat === '1');
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [stars, setStars] = useState(0);
@@ -124,6 +130,7 @@ export default function CustomerJob() {
   // Once the card is charged, tips can go up (as a separate charge) but not down.
   const charged = job.paymentStatus === 'captured';
   const tipChanged = tip != null && tip !== job.tipCents && !(charged && tip < job.tipCents);
+  const chatSheet = job.driver && <ChatSheet job={job} chat={chat} visible={chatOpen && chat.available} onClose={() => setChatOpen(false)} />;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/customer'));
 
   const sheet = (
@@ -155,13 +162,10 @@ export default function CustomerJob() {
                 {job.driver.rating ? `★ ${job.driver.rating}` : 'New driver'} · {job.driver.vehicle ?? 'Plow truck'}
               </T>
             </View>
-            {job.driver.phone && job.status !== 'completed' && (
-              <>
-                <RoundButton icon="chatbubble" label="Text driver" onPress={() => Linking.openURL(`sms:${job.driver!.phone}`)} />
-                <RoundButton icon="call" label="Call driver" onPress={() => Linking.openURL(`tel:${job.driver!.phone}`)} />
-              </>
-            )}
           </Row>
+          {chat.available && (chat.open || chat.messages.length > 0) && (
+            <MessageButton title={chat.open ? `Message ${first(job.driver.name)}` : 'View messages'} unread={chat.unread} onPress={() => setChatOpen(true)} surface />
+          )}
         </Card>
       )}
 
@@ -286,6 +290,7 @@ export default function CustomerJob() {
           {sheet}
         </ScrollView>
         <View style={{ flex: 1 }}>{map}</View>
+        {chatSheet}
       </View>
     );
   }
@@ -304,6 +309,7 @@ export default function CustomerJob() {
         </SheetSurface>
       </View>
       {BackButton}
+      {chatSheet}
     </View>
   );
 }
@@ -331,16 +337,4 @@ function Progress({ step }: { step: number }) {
 
 function LiveDot() {
   return <Badge label="LIVE" tone="success" icon="radio-button-on" />;
-}
-
-function RoundButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={label}
-      style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-      <Icon name={icon} size={18} />
-    </Pressable>
-  );
 }

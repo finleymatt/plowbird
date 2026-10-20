@@ -263,7 +263,7 @@ export default function Order() {
           {!hasAccount && (
             <>
               <Input label="Name" value={name} onChangeText={setName} placeholder="First and last name" autoComplete="name" textContentType="name" invalid={touched && !name.trim()} />
-              <Input label="Mobile phone" value={phone} onChangeText={setPhone} placeholder="So your driver can text you" keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" />
+              <Input label="Mobile phone" value={phone} onChangeText={setPhone} placeholder="For updates about your plow" keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" />
             </>
           )}
           <Input label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress"

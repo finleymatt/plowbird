@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useEffectEvent, useR
 import { io, type Socket } from 'socket.io-client';
 
 import { api, API_URL, setApiToken } from './api';
+import { isChatOpen } from './chat-presence';
 import { storage } from './storage';
 import type { AppNotification, Role, User } from './types';
 
@@ -59,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     const s = io(API_URL, { auth: { token }, transports: ['websocket'] });
     s.on('notification', (n: AppNotification) => {
+      // Already looking at that chat: the message shows up there.
+      if (n.kind === 'message' && isChatOpen(n.jobId)) return;
       setToast(n);
       if (toastTimer.current) clearTimeout(toastTimer.current);
       toastTimer.current = setTimeout(() => setToast(null), 6000);

@@ -20,7 +20,10 @@ export function Toast() {
         onPress={() => {
           dismissToast();
           if (toast.jobId && user)
-            router.push({ pathname: user.role === 'driver' ? '/driver/job/[id]' : '/customer/job/[id]', params: { id: String(toast.jobId) } });
+            router.push({
+              pathname: user.role === 'driver' ? '/driver/job/[id]' : '/customer/job/[id]',
+              params: toast.kind === 'message' ? { id: String(toast.jobId), chat: '1' } : { id: String(toast.jobId) },
+            });
         }}
         style={{
           width: '100%',
@@ -37,7 +40,7 @@ export function Toast() {
           shadowOffset: { width: 0, height: 4 },
           elevation: 8,
         }}>
-        <Icon name="notifications" color="primary" />
+        <Icon name={toast.kind === 'message' ? 'chatbubble-ellipses' : 'notifications'} color="primary" />
         <View style={{ flex: 1 }}>
           <T variant="label" style={{ color: theme.background }}>
             {toast.title}
