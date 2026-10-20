@@ -71,6 +71,8 @@ function status(job: Job, route: JobRoute | null): { kicker: string; big: string
     case 'completed':
       return { kicker: 'Done', big: 'Driveway clear', sub: job.completedAt ? `Finished ${clock(new Date(job.completedAt))}` : null };
     case 'cancelled':
+      if (job.cancelReason === 'no_driver')
+        return { kicker: 'No drivers available', big: 'No plow coming', sub: 'Nobody nearby could take it in time. You weren’t charged.' };
       return { kicker: 'Cancelled', big: 'No plow coming', sub: 'You weren’t charged' };
   }
 }
@@ -176,6 +178,22 @@ export default function CustomerJob() {
             <T variant="label">Alerting nearby drivers</T>
           </Row>
           <T variant="caption" color="textSecondary">During storms it can take a little longer. A bigger tip helps your job get picked up sooner.</T>
+        </Card>
+      )}
+
+      {job.status === 'cancelled' && job.cancelReason === 'no_driver' && (
+        <Card style={{ gap: Spacing.two }}>
+          <Row>
+            <Icon name="snow-outline" color="accent" />
+            <T variant="label" style={{ flex: 1 }}>No drivers were free nearby</T>
+          </Row>
+          <T color="textSecondary">
+            {job.cardLabel && !job.covered
+              ? `We released the hold on ${job.cardLabel}. `
+              : 'We cancelled this request, so nothing was charged. '}
+            We’ll text you when we’re plowing your area.
+          </T>
+          <Button title="Try again" size="md" kind="secondary" icon="refresh" onPress={() => router.replace('/customer')} />
         </Card>
       )}
 

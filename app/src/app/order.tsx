@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AddressSearch } from '@/components/address-search';
 import { QuoteLines, TipPicker } from '@/components/job-parts';
 import { Brand } from '@/components/landing';
+import { WaitlistForm } from '@/components/waitlist';
 import { LiveMap } from '@/components/live-map';
 import { PaymentMethodCard } from '@/components/payment-method';
 import { PromoField } from '@/components/promo-field';
@@ -94,13 +95,26 @@ export default function Order() {
   const depth = forecastIn > 0 ? nearestDepth(forecastIn) : 4;
 
   const [quote, setQuote] = useState<Quote | null>(null);
+  // Outside the pilot ZIP codes the server won't quote: show the waitlist instead of checkout.
+  const [outside, setOutside] = useState(false);
   useEffect(() => {
     if (!place) return;
     let stale = false;
-    const withPromo = promo ? `&promo=${encodeURIComponent(promo)}&address=${encodeURIComponent(place.address)}` : '';
+    // The address carries the ZIP the server checks against the pilot area (and the promo's one-per-household rule).
+    const withPromo = `${promo ? `&promo=${encodeURIComponent(promo)}` : ''}&address=${encodeURIComponent(place.address)}`;
     api<Quote>(`/quote/preview?lat=${place.lat}&lng=${place.lng}&size=${size}&length=standard&sidewalk=${sidewalk ? 1 : 0}&depth=${depth}${withPromo}`)
-      .then((q) => !stale && setQuote(q))
-      .catch((e) => !stale && setError(e.message));
+      .then((q) => {
+        if (stale) return;
+        setQuote(q);
+        setOutside(false);
+      })
+      .catch((e) => {
+        if (stale) return;
+        if (e instanceof ApiError && e.code === 'outside_area') {
+          setQuote(null);
+          setOutside(true);
+        } else setError(e.message);
+      });
     return () => {
       stale = true;
     };
@@ -187,9 +201,9 @@ export default function Order() {
             <T variant="heading" numberOfLines={2}>{place.address}</T>
             {unconfirmed && <T variant="caption" color="warning">We couldn’t confirm the house number. Double-check it.</T>}
           </View>
-          <Button title="Change" size="sm" kind="secondary" onPress={() => { setPlace(null); setUnconfirmed(false); }} />
+          <Button title="Change" size="sm" kind="secondary" onPress={() => { setPlace(null); setUnconfirmed(false); setOutside(false); setQuote(null); setError(null); }} />
         </Row>
-        {forecastIn > 0 && (
+        {forecastIn > 0 && !outside && (
           <Row gap={Spacing.two} style={{ backgroundColor: theme.ice, borderRadius: Radius.md, padding: Spacing.three }}>
             <Icon name="snow" color="accent" />
             <T variant="label" style={{ flex: 1 }}>{`${forecastIn}" of snow forecast in the next 24 hours`}</T>
@@ -197,7 +211,7 @@ export default function Order() {
         )}
       </View>
 
-      <View style={{ gap: Spacing.three }}>
+      {!outside && <View style={{ gap: Spacing.three }}>
         <T variant="heading" style={{ fontSize: 20 }}>How big is your driveway?</T>
         <Row gap={Spacing.two} style={{ alignItems: 'stretch' }}>
           {SIZES.map((s) => (
@@ -220,7 +234,24 @@ export default function Order() {
             <T variant="label" color="accent">+ Add instructions for your driver</T>
           </Pressable>
         )}
-      </View>
+      </View>}
+    </View>
+  );
+
+  // ---- outside the pilot area: waitlist instead of checkout ----
+  const waitlist = place && (
+    <View style={{ gap: Spacing.four, flex: wide ? 1 : undefined }}>
+      <Card raised style={{ gap: Spacing.three, padding: Spacing.four }}>
+        <Row gap={Spacing.two}>
+          <Icon name="snow" color="accent" />
+          <T variant="heading" style={{ flex: 1 }}>We’re not plowing here yet</T>
+        </Row>
+        <T color="textSecondary">
+          Plowbird is starting with a few Twin Cities neighborhoods. Leave your email and we’ll let you know as soon as we’re plowing your area, with $10 off your first plow.
+        </T>
+        <WaitlistForm source="outside_area" address={place.address} lat={place.lat} lng={place.lng} withPhone cta="Join the waitlist"
+          done="You’re on the waitlist. We’ll reach out when we’re plowing your area." />
+      </Card>
     </View>
   );
 
@@ -305,7 +336,7 @@ export default function Order() {
                 <T variant="title" style={{ fontSize: wide ? 38 : 28, lineHeight: wide ? 42 : 32, letterSpacing: -1.1 }}>Get your driveway plowed</T>
                 <View style={{ flexDirection: wide ? 'row' : 'column', gap: wide ? Spacing.six : Spacing.five, alignItems: wide ? 'flex-start' : 'stretch' }}>
                   {details}
-                  {checkout}
+                  {outside ? waitlist : checkout}
                 </View>
               </>
             ) : (
@@ -316,7 +347,7 @@ export default function Order() {
             )}
           </View>
         </ScrollView>
-        {!wide && place && (
+        {!wide && place && !outside && (
           <View style={[{ paddingHorizontal: Spacing.three, paddingTop: Spacing.three, paddingBottom: Math.max(insets.bottom, Spacing.three), backgroundColor: theme.background }, elevation(2)]}>
             {ctaButton}
           </View>

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useEffectEvent, useR
 import { io, type Socket } from 'socket.io-client';
 
 import { api, API_URL, setApiToken } from './api';
+import { getAttribution } from './attribution';
 import { isChatOpen } from './chat-presence';
 import { storage } from './storage';
 import type { AppNotification, Role, User } from './types';
@@ -84,13 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (email: string, password: string) => api<{ token: string; user: User }>('/auth/login', { body: { email, password } }).then(accept),
     [accept],
   );
+  // New accounts carry where the visitor came from (utm params), for /admin/sources.
   const signUp = useCallback(
-    (input: SignUpInput) => api<{ token: string; user: User }>('/auth/register', { body: input }).then(accept),
+    async (input: SignUpInput) =>
+      accept(await api<{ token: string; user: User }>('/auth/register', { body: { ...input, attribution: await getAttribution() } })),
     [accept],
   );
   const socialSignIn = useCallback(
     async (input: SocialInput) => {
-      const res = await api<{ token: string; user: User; created: boolean }>('/auth/social', { body: input });
+      const res = await api<{ token: string; user: User; created: boolean }>('/auth/social', { body: { ...input, attribution: await getAttribution() } });
       return { user: await accept(res), created: res.created };
     },
     [accept],

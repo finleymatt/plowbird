@@ -10,6 +10,7 @@ import { AddressSearch, type Place } from './address-search';
 import { SnowScene } from './snow-scene';
 import { Snowfall } from './snowfall';
 import { Icon, Row, T, type IconName } from './ui';
+import { WaitlistForm } from './waitlist';
 import { WeatherTicker } from './weather-ticker';
 
 const startOrder = (p: Place, promo?: string) =>
@@ -111,6 +112,30 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
               </View>
             </Row>
           ))}
+        </View>
+      </Section>
+
+      <Section>
+        <View
+          style={{
+            flexDirection: wide ? 'row' : 'column',
+            alignItems: wide ? 'center' : 'stretch',
+            gap: wide ? Spacing.five : Spacing.three,
+            padding: wide ? Spacing.five : Spacing.four,
+            marginBottom: Spacing.four,
+            borderRadius: 28,
+            backgroundColor: theme.ice,
+          }}>
+          <View style={{ flex: wide ? 1 : undefined, gap: 4 }}>
+            <Row gap={Spacing.two}>
+              <Icon name="notifications" color="accent" />
+              <T style={[{ fontSize: wide ? 26 : 22, letterSpacing: -0.6 }, font('800')]}>Get storm alerts + $10 off your first plow</T>
+            </Row>
+            <T color="textSecondary">A heads-up before big snow hits your street, and FIRSTPLOW for $10 off. No spam.</T>
+          </View>
+          <View style={{ flex: wide ? 1 : undefined }}>
+            <WaitlistForm source="landing" inline cta="Get alerts" done="You’re on the list. Use FIRSTPLOW for $10 off your first plow." />
+          </View>
         </View>
       </Section>
 

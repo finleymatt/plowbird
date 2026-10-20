@@ -70,6 +70,9 @@ export type Job = {
   acceptedAt: string | null;
   startedAt: string | null;
   completedAt: string | null;
+  cancelledAt?: string | null;
+  /** 'no_driver': nobody accepted it in time, so it was cancelled and the hold released. */
+  cancelReason?: 'no_driver' | null;
   property: Property;
   /** No phone numbers for either side: they talk through in-app chat. */
   customer: { id: number; name: string };

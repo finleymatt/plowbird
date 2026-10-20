@@ -160,6 +160,17 @@ Customers can pay with Apple Pay, Google Pay or **Link** instead of typing a car
 
 Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OSRM_URL`). With `DEMO_MODE=1` on the API (already set in `render.yaml`), a driver's job screen shows **Demo: drive the route to this driveway**. The truck then follows the real road route for about 70 seconds, so you can show live tracking without a truck on the road. In demo mode, new ASAP orders are also **auto-accepted** by the demo driver (`DEMO_DRIVER_EMAIL`, default `driver@plowbird.test`) about 6 seconds after they're placed. That driver then drives the route automatically, so a customer can watch the whole flow alone. Remove `DEMO_MODE` once real drivers are online, or the demo driver will take every order.
 
+### Launch settings: pilot area, no-driver timeout, waitlist
+
+Set these on the API before turning `DEMO_MODE` off:
+
+- `SERVICE_ZIPS`: comma-separated ZIP codes for the pilot, e.g. `55406,55407,55417`. Empty means everywhere. Outside the area, `/quote/preview` and `POST /jobs` answer 400 with code `outside_area`, and the order page shows a waitlist form instead of the Request button. The ZIP comes from the end of the picked address, or from a Photon reverse lookup of its location.
+- `UNACCEPTED_TIMEOUT_MIN` (default 10): an order still waiting for a driver after this many minutes is cancelled, its card hold is released, and the customer is told in the app and added to the waitlist. For scheduled orders the clock starts when they open to drivers (45 minutes before the time).
+- `DEMO_AUTO_ACCEPT=0` keeps demo mode on but stops the demo driver from taking orders. Use it to try the timeout locally.
+- `ADMIN_EMAILS`: comma-separated emails of accounts that can read `GET /api/admin/leads.csv` (the waitlist) and `GET /api/admin/sources` (sign-ups, leads and jobs per `utm_source`, or `?by=medium` / `?by=campaign`).
+
+The landing page's "Get storm alerts" form and the outside-area waitlist post to `POST /api/leads` (5 per IP per 10 minutes). On first load, the website saves the link's `utm_source`, `utm_medium`, `utm_campaign` and `promo` params, then sends them with sign-up and waitlist signups. Tag flyer and ad links, e.g. `https://plowbird.app/?utm_source=flyer&utm_campaign=longfellow&promo=FIRSTPLOW`.
+
 ## Layout
 
 ```
