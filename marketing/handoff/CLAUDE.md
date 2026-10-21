@@ -24,7 +24,7 @@ Format: `https://plowbird.app/?utm_source=<channel>&utm_campaign=<area-or-push>&
 - No flyers in mailboxes, none stapled to utility poles. Mention city solicitor-permit checks when planning door drops.
 - Don't promise per-neighborhood codes, discounts beyond FIRSTPLOW, driver guarantees, or service outside the pilot unless the user confirms the founder approved it.
 - Don't post, send, buy or sign up for anything yourself. Draft it; the user publishes.
-- Don't edit files outside `marketing/` (the app and server belong to the founder). If a marketing need requires an app change (a new promo code, a landing-page tweak, a new report), write it up as a request for the founder instead.
+- Don't edit files outside `marketing/` and `business/` (the app and server belong to the founder). The wider business plan is in `business/PARTNER-PLAYBOOK.md`. If a marketing need requires an app change (a new promo code, a landing-page tweak, a new report), write it up as a request for the founder instead.
 
 ## Voice and brand
 
