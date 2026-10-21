@@ -21,7 +21,7 @@ import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { confirmPlace, type Place } from '@/lib/places';
 import { clearPendingPromo, usePromoCode } from '@/lib/promo';
-import type { Conditions, DrivewaySize, Job, PaymentMethods, Property, Quote } from '@/lib/types';
+import type { Conditions, DrivewaySize, Job, PaymentMethods, Property, Quote, ServiceArea } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
 const DEPTHS = [2, 4, 6, 8, 12, 18];
@@ -97,6 +97,7 @@ export default function Order() {
 
   const [quote, setQuote] = useState<Quote | null>(null);
   // Outside the pilot ZIP codes the server won't quote: show the waitlist instead of checkout.
+  const area = useApi<ServiceArea>('/service-area');
   const [outside, setOutside] = useState(false);
   useEffect(() => {
     if (!place) return;
@@ -245,10 +246,11 @@ export default function Order() {
       <Card raised style={{ gap: Spacing.three, padding: Spacing.four }}>
         <Row gap={Spacing.two}>
           <Icon name="snow" color="accent" />
-          <T variant="heading" style={{ flex: 1 }}>We’re not plowing here yet</T>
+          <T variant="heading" style={{ flex: 1 }}>Coming soon{cityOf(place.address) ? ` to ${cityOf(place.address)}` : ' to your area'}</T>
         </Row>
         <T color="textSecondary">
-          Plowbird is starting with a few Twin Cities neighborhoods. Leave your email and we’ll let you know as soon as we’re plowing your area, with $10 off your first plow.
+          {area.data?.label ? `We’re plowing in ${area.data.label} first. ` : 'Plowbird is starting with a few Twin Cities neighborhoods. '}
+          Add your email to the waitlist and we’ll let you know the moment we’re plowing your street, with $10 off your first plow.
         </T>
         <WaitlistForm source="outside_area" address={place.address} lat={place.lat} lng={place.lng} withPhone cta="Join the waitlist"
           done="You’re on the waitlist. We’ll reach out when we’re plowing your area." />
@@ -392,3 +394,9 @@ function SizeCard({ title, sub, cars, selected, onPress }: { title: string; sub:
 }
 
 
+
+// "123 Main St, Wayzata, MN 55391" → "Wayzata".
+const cityOf = (address: string) => {
+  const parts = address.split(',').map((p) => p.trim());
+  return parts.length >= 3 ? parts[parts.length - 2].replace(/\s+(MN|SD|Minnesota|South Dakota)(\s+\d{5})?$/i, '') || null : null;
+};

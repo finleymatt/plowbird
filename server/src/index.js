@@ -8,6 +8,7 @@ import { adminApi } from './admin.js';
 import { driversApi } from './drivers.js';
 import { messagesApi } from './messages.js';
 import { leadsApi } from './leads.js';
+import { dashboardApi } from './dashboard.js';
 import { verifyToken } from './auth.js';
 import { attachIo, updateDriverLocation } from './jobs.js';
 import { PaymentError, registerWalletDomains } from './payments.js';
@@ -28,6 +29,7 @@ app.use('/api', messagesApi);
 app.use('/api', leadsApi);
 app.use('/api', driversApi);
 app.use('/api', adminApi);
+app.use('/api', dashboardApi);
 app.use((err, req, res, next) => {
   if (err instanceof PaymentError) return res.status(402).json({ error: err.message, code: err.code });
   console.error(err);

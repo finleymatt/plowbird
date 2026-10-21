@@ -35,7 +35,19 @@ export type DriverApplicationForm = {
   shovel: boolean;
   notes: string | null;
   heardFrom: string | null;
+  licenseState: string;
+  licenseExpires: string;
+  over21: boolean;
+  liabilityInsured: boolean;
+  insuranceExpires: string | null;
+  coiAgreed: boolean;
+  businessName: string | null;
+  contractorAck: boolean;
+  smsConsent: boolean;
+  signature: string;
   submittedAt?: string;
+  signedAt?: string;
+  termsVersion?: string;
 };
 export type DriverApplication = { status: DriverStatus; application: DriverApplicationForm | null; note: string | null; reviewedAt: string | null };
 export type DriverForReview = {
@@ -251,4 +263,50 @@ export type StormPass = {
   endsAt: string | null;
   startedAt: string;
   billing: 'stripe' | 'demo';
+};
+
+export type Lead = {
+  id: number;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  zip: string | null;
+  source: string;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  promo: string | null;
+  created_at: string;
+  converted: boolean;
+  completed_jobs: number;
+  /** null when the ZIP is unknown. */
+  inArea: boolean | null;
+};
+export type ServiceArea = { limited: boolean; zips: string[]; label: string | null };
+export type Kpis = {
+  days: number;
+  serviceZips: string[];
+  waitlist: { total: number; thisWeek: number; converted: number; topZips: { zip: string; n: number; inArea: boolean }[]; sources: { source: string; n: number }[] };
+  orders: {
+    total: number;
+    completed: number;
+    timedOut: number;
+    customerCancelled: number;
+    fillRate: number | null;
+    medianMinutesToAccept: number | null;
+    medianMinutesToClear: number | null;
+    stormAuto: number;
+    scheduled: number;
+  };
+  money: {
+    gmvCents: number;
+    revenueCents: number;
+    driverEarningsCents: number;
+    tipsCents: number;
+    promoCostCents: number;
+    avgOrderCents: number | null;
+    stormPassMrrCents: number;
+  };
+  customers: { total: number; thisWeek: number; ordered: number; repeatRate: number | null; avgRating: number | null; ratings: number; stormPasses: number };
+  drivers: { approved: number; pending: number; online: number; activeThisWeek: number; top: { name: string; jobs: number; rating: number | null }[] };
+  daily: { day: string; leads: number; signups: number; orders: number }[];
 };

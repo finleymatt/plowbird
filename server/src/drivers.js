@@ -33,6 +33,9 @@ export function requireApprovedDriver(req, res, next) {
 
 /* ---------------- the application ---------------- */
 
+// Bump when the driver terms or the acknowledgments on /drive change, so we know what each driver signed.
+const TERMS_VERSION = '2026-10-21';
+
 const PLOWS = ['straight', 'v', 'wing', 'box', 'other'];
 const AVAILABILITY = ['overnight', 'early_morning', 'weekdays', 'weekends'];
 const str = (v, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -53,12 +56,32 @@ function readApplication(body = {}) {
     shovel: body.shovel === true, // can also clear walks by hand / snowblower
     notes: str(body.notes, 1000) || null,
     heardFrom: str(body.heardFrom, 80) || null,
+    // Legal: license, insurance, business and the signed acknowledgments. Documents (license,
+    // certificate of insurance) are checked on the approval call, not uploaded here.
+    licenseState: str(body.licenseState, 2).toUpperCase(),
+    licenseExpires: str(body.licenseExpires, 7), // YYYY-MM
+    over21: body.over21 === true,
+    liabilityInsured: body.liabilityInsured === true,
+    insuranceExpires: /^\d{4}-\d{2}$/.test(str(body.insuranceExpires, 7)) ? str(body.insuranceExpires, 7) : null,
+    coiAgreed: body.coiAgreed === true, // will send a certificate of insurance before the first job
+    businessName: str(body.businessName, 120) || null, // blank = working as an individual
+    contractorAck: body.contractorAck === true,
+    smsConsent: body.smsConsent === true,
+    signature: str(body.signature, 120),
   };
   if (a.phone.replace(/\D/g, '').length < 10) return [null, 'Enter a mobile number we can call you on'];
   if (!/^\d{5}$/.test(a.zip)) return [null, 'Enter the 5-digit ZIP code you’ll plow from'];
   if (a.truck.length < 3) return [null, 'Tell us about your truck (year, make, model)'];
   if (!a.insured) return [null, 'You need commercial auto insurance that covers plowing. Get that first, then apply.'];
   if (!a.availability.length) return [null, 'Pick at least one time you can plow'];
+  if (!/^[A-Z]{2}$/.test(a.licenseState)) return [null, 'Enter the state on your driver’s license (e.g. MN)'];
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(a.licenseExpires)) return [null, 'Enter when your driver’s license expires (MM/YYYY)'];
+  if (a.licenseExpires < nowIso().slice(0, 7)) return [null, 'Your driver’s license has expired'];
+  if (!a.over21) return [null, 'Drivers must be 21 or older'];
+  if (!a.liabilityInsured) return [null, 'You also need general liability insurance. Get that first, then apply.'];
+  if (!a.coiAgreed) return [null, 'Agree to send a certificate of insurance before your first job'];
+  if (!a.contractorAck) return [null, 'Read and confirm the independent contractor terms'];
+  if (a.signature.length < 3) return [null, 'Type your full legal name to sign'];
   return [a, null];
 }
 
@@ -90,7 +113,7 @@ driversApi.post('/driver/application', requireAuth, requireRole('driver'), (req,
   if (error) return res.status(400).json({ error });
   db.prepare(
     "UPDATE users SET driver_status = 'pending', driver_application = ?, phone = ?, vehicle = ?, driver_review_note = NULL WHERE id = ?",
-  ).run(JSON.stringify({ ...a, submittedAt: nowIso() }), a.phone, [a.truck, a.plowWidthFt && `${a.plowWidthFt}ft ${a.plowType} plow`].filter(Boolean).join(' · '), u.id);
+  ).run(JSON.stringify({ ...a, submittedAt: nowIso(), signedAt: nowIso(), signedIp: req.ip ?? null, termsVersion: TERMS_VERSION }), a.phone, [a.truck, a.plowWidthFt && `${a.plowWidthFt}ft ${a.plowType} plow`].filter(Boolean).join(' · '), u.id);
   for (const id of adminIds()) notify(id, 'New driver application', `${u.name} (${a.zip}) applied to drive. Review it at /admin.`);
   res.json({ status: 'pending' });
 });

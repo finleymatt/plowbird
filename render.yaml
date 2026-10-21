@@ -38,6 +38,12 @@ services:
       # Staff who can approve drivers and see /admin: comma-separated emails, set in the dashboard.
       - key: ADMIN_EMAILS
         sync: false
+      # Pilot area: comma-separated ZIPs that can order (empty = everywhere) and how the site names
+      # them, e.g. "Plymouth, Wayzata and Hopkins". Everyone else gets "coming soon" + the waitlist.
+      - key: SERVICE_ZIPS
+        sync: false
+      - key: SERVICE_AREA_LABEL
+        sync: false
 
   # Expo web build, served as a single-page app.
   - type: web

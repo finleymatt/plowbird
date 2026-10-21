@@ -8,6 +8,10 @@ On-demand driveway plowing in the Twin Cities, like DoorDash for plow trucks. Cu
 
 Launch goal: live for real orders before the first 2"+ snow (mid-to-late November 2026). Launch-ready target: **Nov 13, 2026**.
 
+Pilot area: the **west metro** (Plymouth, Wayzata, Hopkins, Minnetonka first; then Medina, Orono, Long Lake, Golden Valley, St. Louis Park, Maple Grove, Eden Prairie) so drivers stay central. Order of work: **drivers and the waitlist first**, then the LLC, insurance and live payments in Week 3, before any real paid order. West-metro lead lists are in `marketing/outreach/west-metro/`.
+
+Useful links: driver application `plowbird.app/apply` (tag it: `?utm_source=craigslist`), staff dashboard/waitlist/driver approvals `plowbird.app/admin`.
+
 ## How to help
 
 - **Draft, don't act.** Write the email, ad, script, spreadsheet, budget or checklist. Danny sends, posts, signs and pays. Never claim something was sent, filed or purchased.

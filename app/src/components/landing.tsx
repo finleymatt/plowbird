@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { ServiceArea } from '@/lib/types';
+import { useApi } from '@/lib/use-api';
 
 import { AddressSearch, type Place } from './address-search';
 import { SnowScene } from './snow-scene';
@@ -53,6 +55,8 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
   const wide = !compact && width >= 900;
   const sceneWidth = Math.max(240, wide ? Math.min(560, width * 0.42) : Math.min(width - Spacing.four * 2, 520));
 
+  const area = useApi<ServiceArea>('/service-area');
+
   const hero = (
     <View style={{ flex: wide ? 1 : undefined, gap: Spacing.four }}>
       <T style={[{ fontSize: wide ? 68 : 42, lineHeight: wide ? 70 : 46, letterSpacing: wide ? -2.6 : -1.6 }, font('800')]}>
@@ -64,6 +68,14 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
       </T>
       <View style={{ maxWidth: 580 }}>
         <AddressSearch large cta={wide ? 'Get a plow' : undefined} onPick={(p) => startOrder(p, promo)} placeholder="Enter your home address" />
+        {area.data?.limited && (
+          <Row gap={6} style={{ marginTop: Spacing.two }}>
+            <Icon name="location" size={16} color="primary" />
+            <T variant="caption" color="textSecondary" style={{ flex: 1 }}>
+              Now plowing in <T variant="caption" style={font('700')}>{area.data.label ?? 'select Twin Cities neighborhoods'}</T>. Coming soon everywhere else: enter your address to join the waitlist.
+            </T>
+          </Row>
+        )}
       </View>
       <Row gap={Spacing.four} style={{ flexWrap: 'wrap' }}>
         {['From $35', 'Pay after it’s plowed', 'Cancel free'].map((t) => (

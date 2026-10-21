@@ -10,7 +10,7 @@ You are helping run launch marketing for **Plowbird**, on-demand driveway plowin
 - **Storm Pass**: $79 / $99 / $129 per month (1-car / 2-car / 3+ car), +$15 sidewalks. Qualifies when 2"+ is forecast within 24 h or an NWS Winter Storm, Blizzard, Ice Storm or Heavy Snow Warning is issued. At most 2 plows a day.
 - Features: upfront price, plow now or schedule up to 7 days ahead, storm auto-plow, live map with ETA, in-app chat (no phone numbers shared), pay after it's plowed, tips go 100% to the driver, ratings.
 - Drivers: **$36** for a 2-car driveway + 100% of tips, paid through Stripe. They apply at `/drive` and are approved by staff (license, insurance, truck and plow, phone call). They need commercial auto insurance with plow coverage plus liability.
-- Pilot area: first-ring suburbs (Richfield, Edina, Bloomington, St. Louis Park, Roseville, Maplewood). The final ZIP list comes from the founder. Visitors outside it get a waitlist.
+- Pilot area: the west metro (Plymouth, Wayzata, Hopkins, Minnetonka first, then neighboring cities). The final ZIP list comes from the founder. Visitors outside it see "Coming soon" and a waitlist. Driver links go to `https://plowbird.app/apply`.
 
 If a fact you need isn't here or in `marketing/`, say so and ask. Don't guess prices, dates, guarantees or coverage areas.
 
