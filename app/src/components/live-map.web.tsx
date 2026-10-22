@@ -45,7 +45,7 @@ const TRUCK =
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M3 6h11v9H3zM14 9h4l3 3.5V15h-7zM6.5 19a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6zm11 0a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6zM2 15h20v1.6H2z"/></svg>';
 const SNOW = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M11 2h2v20h-2zM2 11h20v2H2zM4.2 5.6l1.4-1.4 14.2 14.2-1.4 1.4zM18.4 4.2l1.4 1.4L5.6 19.8l-1.4-1.4z"/></svg>';
 
-function markerElement(kind: MapPin['kind'], dark: boolean, title?: string) {
+function markerElement(kind: MapPin['kind'], dark: boolean, title?: string, label?: string, accent?: boolean) {
   const el = document.createElement('div');
   if (title) el.title = title;
   el.style.cursor = 'pointer';
@@ -53,6 +53,8 @@ function markerElement(kind: MapPin['kind'], dark: boolean, title?: string) {
     el.innerHTML = `<div style="position:relative;width:44px;height:44px"><div class="pb-halo"></div><div style="position:absolute;inset:4px;border-radius:50%;background:#FF4F12;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center">${TRUCK}</div></div>`;
   else if (kind === 'home')
     el.innerHTML = `<div style="width:38px;height:38px;border-radius:10px;background:${dark ? '#fff' : '#0A0A0A'};color:${dark ? '#0A0A0A' : '#fff'};border:3px solid ${dark ? '#0A0A0A' : '#fff'};box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center">${HOUSE}</div>`;
+  else if (label)
+    el.innerHTML = `<div style="width:30px;height:30px;border-radius:50%;background:${accent ? '#FF5A1F' : '#0A0A0A'};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font:800 12px Inter,system-ui,sans-serif">${label.replace(/[^\w$.-]/g, '')}</div>`;
   else
     el.innerHTML = `<div style="width:32px;height:32px;border-radius:50%;background:#0A0A0A;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center">${SNOW}</div>`;
   return el;
@@ -85,7 +87,7 @@ function sync(state: MapState, props: LiveMapProps) {
       glide(existing, [p.lat, p.lng]);
       continue;
     }
-    const el = markerElement(p.kind, state.dark, p.title);
+    const el = markerElement(p.kind, state.dark, p.title, p.label, p.accent);
     el.addEventListener('click', () => onPinPress?.(p.id));
     state.markers.set(p.id, new lib.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map));
   }

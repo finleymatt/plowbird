@@ -10,6 +10,7 @@ import { messagesApi } from './messages.js';
 import { leadsApi } from './leads.js';
 import { dashboardApi } from './dashboard.js';
 import { outreachApi, seedOutreach } from './outreach.js';
+import { driverDemoApi } from './driver-demo.js';
 import { verifyToken } from './auth.js';
 import { attachIo, updateDriverLocation } from './jobs.js';
 import { PaymentError, registerWalletDomains } from './payments.js';
@@ -32,6 +33,7 @@ app.use('/api', driversApi);
 app.use('/api', adminApi);
 app.use('/api', dashboardApi);
 app.use('/api', outreachApi);
+app.use('/api', driverDemoApi);
 app.use((err, req, res, next) => {
   if (err instanceof PaymentError) return res.status(402).json({ error: err.message, code: err.code });
   console.error(err);
