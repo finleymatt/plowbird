@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/lib/auth';
 import type { ServiceArea } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
@@ -12,8 +13,18 @@ import { AddressSearch, type Place } from './address-search';
 import { SnowScene } from './snow-scene';
 import { Snowfall } from './snowfall';
 import { Icon, Row, T, type IconName } from './ui';
+import { Leaderboard } from './referrals';
 import { WaitlistForm } from './waitlist';
 import { WeatherTicker } from './weather-ticker';
+
+const FAQ: { q: string; a: string }[] = [
+  { q: 'When am I charged?', a: 'We hold the price on your card when you order and charge it only after your driver marks the driveway clear. Cancel free until your driver is on the way.' },
+  { q: 'How fast does a plow come?', a: 'ASAP orders go straight to nearby drivers. Once one accepts you see their ETA and the truck on the map. If nobody accepts within 10 minutes, the order is cancelled and you’re not charged.' },
+  { q: 'Who are the drivers?', a: 'Local plow operators with their own trucks and commercial insurance. We check every driver before they can take jobs, and you rate each plow.' },
+  { q: 'What if something gets damaged?', a: 'Tell us within 48 hours with photos. Drivers carry their own insurance, and we help you reach them and their insurer.' },
+  { q: 'Can I schedule ahead or automate it?', a: 'Yes. Schedule any hour in the next 7 days, set storm auto-plow to book when snow passes your threshold, or get Storm Pass for unlimited storm plows.' },
+  { q: 'Do you plow my area?', a: 'Enter your address. If we’re not there yet, join the waitlist and we’ll tell you the moment we are, with $10 off your first plow.' },
+];
 
 const startOrder = (p: Place, promo?: string) =>
   router.push({
@@ -55,7 +66,10 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
   const wide = !compact && width >= 900;
   const sceneWidth = Math.max(240, wide ? Math.min(560, width * 0.42) : Math.min(width - Spacing.four * 2, 520));
 
+  const { user } = useAuth();
   const area = useApi<ServiceArea>('/service-area');
+  // Arrived on a neighbor's share link: say who sent the discount.
+  const referral = useApi<{ label: string }>(promo && promo.toUpperCase() !== 'FIRSTPLOW' ? `/referrals/code/${encodeURIComponent(promo)}` : null);
 
   const hero = (
     <View style={{ flex: wide ? 1 : undefined, gap: Spacing.four }}>
@@ -64,8 +78,14 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
         <T style={[{ fontSize: wide ? 68 : 42, lineHeight: wide ? 70 : 46, letterSpacing: wide ? -2.6 : -1.6, color: theme.accent }, font('800')]}>We’ll plow you out.</T>
       </T>
       <T color="textSecondary" style={{ fontSize: wide ? 20 : 17, lineHeight: wide ? 29 : 25, maxWidth: 520 }}>
-        A local plow truck at your driveway in minutes. Minnesota & South Dakota.
+        A local plow truck at your driveway in minutes.{area.data?.limited ? '' : ' Minnesota & South Dakota.'}
       </T>
+      {referral.data && (
+        <Row gap={Spacing.two} style={{ alignSelf: 'flex-start', backgroundColor: `${theme.primary}1A`, borderRadius: Radius.pill, paddingVertical: 8, paddingHorizontal: 14 }}>
+          <Icon name="gift" size={18} color="primary" />
+          <T variant="label">{referral.data.label.replace(/^(\$\d+ off) from (.+)$/, '$2 sent you $1 your first plow')}. It’s applied at checkout.</T>
+        </Row>
+      )}
       <View style={{ maxWidth: 580 }}>
         <AddressSearch large cta={wide ? 'Get a plow' : undefined} onPick={(p) => startOrder(p, promo)} placeholder="Enter your home address" />
         {area.data?.limited && (
@@ -174,6 +194,51 @@ export function Landing({ compact, promo }: { compact?: boolean; promo?: string 
             </View>
           </View>
         </Pressable>
+      </Section>
+
+      <Section>
+        <View style={{ flexDirection: wide ? 'row' : 'column', gap: Spacing.four, marginBottom: Spacing.five, alignItems: wide ? 'flex-start' : 'stretch' }}>
+          <View style={{ flex: wide ? 1.2 : undefined, gap: Spacing.three }}>
+            <Row gap={Spacing.two}>
+              <Icon name="gift" color="primary" />
+              <T variant="caption" color="primary" style={[{ letterSpacing: 1 }, font('700')]}>GIVE $10, GET $10</T>
+            </Row>
+            <T style={[{ fontSize: wide ? 30 : 24, letterSpacing: -0.8 }, font('800')]}>Plowed out? Bring the block.</T>
+            <T color="textSecondary" style={{ fontSize: 16, lineHeight: 23 }}>
+              Every customer gets a code. Neighbors get $10 off their first plow, and you get $10 when they book. Keep going to climb the Snow Ranks:
+            </T>
+            {[
+              ['3 neighbors', 'Snowplow Scout: +$15 bonus credit'],
+              ['5 neighbors', 'Storm Chaser: a free month of Storm Pass'],
+              ['10 neighbors', 'Blizzard Boss: another free month'],
+            ].map(([n, perk]) => (
+              <Row key={n} style={{ alignItems: 'flex-start' }}>
+                <Icon name="trophy" size={18} color="accent" />
+                <T style={{ flex: 1 }}><T style={font('700')}>{n}</T>  {perk}</T>
+              </Row>
+            ))}
+            <Pressable onPress={() => router.push((user?.role === 'customer' ? '/customer/invite' : '/sign-up') as Href)} accessibilityRole="link">
+              <T variant="label" color="accent">{user?.role === 'customer' ? 'Get your code →' : 'Create an account to get your code →'}</T>
+            </Pressable>
+          </View>
+          <View style={{ flex: wide ? 1 : undefined }}>
+            <Leaderboard />
+          </View>
+        </View>
+      </Section>
+
+      <Section>
+        <View style={{ gap: Spacing.three, marginBottom: Spacing.five }}>
+          <T style={[{ fontSize: wide ? 30 : 24, letterSpacing: -0.8 }, font('800')]}>Questions</T>
+          <View style={{ flexDirection: wide ? 'row' : 'column', flexWrap: 'wrap', gap: Spacing.four }}>
+            {FAQ.map((f) => (
+              <View key={f.q} style={{ flexBasis: wide ? '45%' : undefined, flexGrow: 1, gap: 4 }}>
+                <T variant="label">{f.q}</T>
+                <T color="textSecondary" style={{ lineHeight: 22 }}>{f.a}</T>
+              </View>
+            ))}
+          </View>
+        </View>
       </Section>
 
       <View style={{ width: '100%', alignItems: 'center', borderTopWidth: 1, borderColor: theme.border }}>

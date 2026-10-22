@@ -305,8 +305,57 @@ export type Kpis = {
     promoCostCents: number;
     avgOrderCents: number | null;
     stormPassMrrCents: number;
+    creditSpentCents: number;
+    creditOutstandingCents: number;
   };
+  referrals: { total: number; qualified: number; qualifiedInWindow: number };
   customers: { total: number; thisWeek: number; ordered: number; repeatRate: number | null; avgRating: number | null; ratings: number; stormPasses: number };
   drivers: { approved: number; pending: number; online: number; activeThisWeek: number; top: { name: string; jobs: number; rating: number | null }[] };
   daily: { day: string; leads: number; signups: number; orders: number }[];
+};
+
+export type ReferralRank = { at: number; name: string; perk: string };
+export type Referrals = {
+  code: string;
+  friendCents: number;
+  referrerCents: number;
+  creditCents: number;
+  earnedCents: number;
+  qualified: number;
+  pending: number;
+  rank: { name: string; at: number };
+  next: { name: string; at: number; perk: string; remaining: number } | null;
+  ranks: ReferralRank[];
+  neighbors: { name: string; status: 'signed_up' | 'qualified'; at: string }[];
+  rewards: { id: number; kind: 'storm_pass_month'; milestone: number; status: 'available' | 'redeemed'; redeemedAt: string | null; note: string | null }[];
+};
+
+export type OutreachListKey = 'driver' | 'partner' | 'flyer' | 'commercial';
+export type OutreachMeta = {
+  today: string;
+  lists: { key: OutreachListKey; label: string; hint: string; statuses: string[]; total: number; byStatus: Record<string, number>; due: number }[];
+};
+export type OutreachRow = {
+  id: number;
+  list: OutreachListKey;
+  name: string;
+  category: string | null;
+  city: string | null;
+  area: string | null;
+  address: string | null;
+  contact: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  status: string;
+  owner: string | null;
+  followUp: string | null;
+  lastContactedAt: string | null;
+  notes: string | null;
+  details: Record<string, string>;
+  source: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  activityCount: number;
 };

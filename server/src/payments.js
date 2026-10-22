@@ -418,6 +418,14 @@ export async function stopStormPassBilling(sub) {
   return end ? new Date(end * 1000).toISOString() : sub.renews_at;
 }
 
+// A free month for a customer who already pays for Storm Pass: a credit on their Stripe balance,
+// which Stripe takes off the next invoice. Returns false without Stripe (the caller extends instead).
+export async function creditNextStormPassInvoice(userId, cents, description) {
+  if (!stripe) return false;
+  await stripe.customers.createBalanceTransaction(await customerIdFor(userId), { amount: -cents, currency: 'usd', description });
+  return true;
+}
+
 /* ---------------- Apple Pay / Google Pay on the web ---------------- */
 
 // Wallet buttons only appear on domains registered with Stripe (Stripe does Apple's merchant

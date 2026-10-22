@@ -42,3 +42,29 @@ Built Oct 21, 2026 for the November launch. Nothing here has been contacted, pos
 - Searches by city and by trade ("lawn and snow", "snow plowing", Craigslist, Thumbtack), plus targeted lookups for each business, event, library, district policy and chamber.
 - Leads in the main `../driver-leads.csv` were skipped unless they serve the west metro.
 - **Privacy**: only contact details a business or organization published to advertise itself or reach the public. That means no personal social profiles, no home addresses and no private posts. Where a page listed a staff member's personal-looking email, the general line was used instead.
+
+## Commercial prospects (`commercial-prospects.csv`)
+
+Built Oct 21, 2026. **70 small-lot commercial prospects**, none contacted.
+
+- **By city**: Hopkins 13, Minnetonka 12, Plymouth 11, Wayzata 10, Long Lake 6, Golden Valley 5, Medina 4, Maple Grove 3, Orono 2, St. Louis Park 2, Eden Prairie 2. The four pilot cities have 46 rows.
+- **By category**: dental/medical/chiro/vet 20, daycare/preschool 13, church 12, auto 8, restaurant 6, other (funeral homes, dance studio) 4, apartment 4, office 2, strip center 1.
+- **Contact coverage**: 49 rows have a phone and only 1 has an email. Most businesses publish a web form, not an address.
+
+**How it was built.** Searches by city and category (dentist, vet, chiro, daycare/Montessori, church, auto repair, funeral home, cafe, apartments/property managers, strip centers, CPA/law), then follow-up lookups for addresses and phones. Sources are directories (City of Hopkins faith page, Wayzata chamber, MNCPA, AMI, LCMS/UMC locators, CareLuLu, childcarecenter.us, PetsBest, WebMD, Checkbook, AAA). **Web fetch was blocked in this session**, so every row was checked against search-engine extracts of the cited page, not the live page. Phones come from directory listings and were not always seen on the business's own site. Where sources disagreed, the notes give both values.
+
+**Left out on purpose**: chains and corporate operators (Banfield, KinderCare, HealthPartners, Midas/Jiffy Lube), large grocery-anchored centers (Colonial Square, Glen Lake Village, Shops of Plymouth Town Center, Waterford Park), large churches (Wayzata Community Church), and big apartment complexes.
+
+**Caveats**
+- `est_lot_size` is mostly `unknown`. "Small" and "medium" come only from listing details (licensed capacity, unit count, square feet, "seats 40"). Check satellite view before quoting.
+- **Many medical and office prospects are tenants** (rows with a suite number). The landlord usually holds the snow contract. Use the tenant as a way in and ask who manages the lot. Rows where this applies say so.
+- Strip centers and apartments are thin: only 1 strip center and 4 apartment rows. Listing sites name brokers, not property managers. For better leads, use Hennepin County property records or the cities' rental-license lists to find owners and managers of 8–40 unit buildings.
+- Several "Hopkins" and "Wayzata" mailing addresses are physically in Minnetonka or Orono. The notes flag the ones we noticed.
+- Broker and staff names from listings were not copied. Decision-maker hints are roles only.
+
+**How to pitch small commercial lots**
+- **Price per push, with a clear trigger** (e.g. 2" or more), and say up front what a typical season costs. Small offices and churches don't want a seasonal contract sized for a big lot. Offer a monthly cap or seasonal option for those who budget.
+- **Guarantee a time the lot is clear.** Daycares (many open at 6:30 am), clinics, vets (7:30 am), cafes and auto shops all need the lot open *before* opening. Churches need Sunday morning, plus any midweek programs (e.g. Gethsemane's Wednesday meal). Funeral homes need on-call service. Promise a clear-by time and send a photo when the push is done.
+- **Have insurance documents ready.** Expect requests for a **certificate of insurance** (general liability, often $1M/$2M), naming the property owner or manager as **additional insured**, plus proof of auto liability for the truck. Property managers may also ask for a W-9, a signed service agreement, and hold-harmless language. Sort out whether Plowbird's policy or each driver's covers this before the first call.
+- **Salting and ice control.** Commercial customers, especially medical offices, daycares and anything with slip-and-fall exposure, will ask about salt and sand. Plowbird doesn't offer it yet. Say so plainly, suggest they keep their current salting arrangement or do it themselves, and make sure the agreement says plowing only. A salting partner or add-on is probably needed to win many of these.
+- **Cluster routes.** Next-door neighbors make efficient routes: Long Lake Dental, Lakeside Family Dentistry and Long Lake Vet sit at 1854–1880 W Wayzata Blvd, and the Hopkins churches are close together.

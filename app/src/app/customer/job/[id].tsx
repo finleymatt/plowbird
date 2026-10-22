@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatSheet, MessageButton } from '@/components/chat';
 import { QuoteLines, Stars, TipPicker } from '@/components/job-parts';
 import { LiveMap, type MapPin } from '@/components/live-map';
+import { ShareNudge } from '@/components/referrals';
 import { Badge, Button, Card, Divider, elevation, ErrorText, Icon, Input, Loading, Row, Screen, T } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -216,6 +217,9 @@ export default function CustomerJob() {
           )}
         </Card>
       )}
+
+      {/* Referral nudge: right after a good plow is the best time to ask. */}
+      {job.status === 'completed' && !job.covered && <ShareNudge />}
 
       {/* Tip: set at checkout; offered again once the driveway is clear. */}
       {job.status === 'completed' && (

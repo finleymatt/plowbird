@@ -3,7 +3,8 @@
 import { Router } from 'express';
 import { requireAdmin } from './admin.js';
 import { requireAuth } from './auth.js';
-import { db } from './db.js';
+import { db, nowIso } from './db.js';
+import './referrals.js'; // its tables (credits, referrals) must exist before the KPIs query them
 import { SERVICE_ZIPS, serviceAreaLimited } from './service-area.js';
 
 export const dashboardApi = Router();
@@ -64,7 +65,7 @@ dashboardApi.get('/admin/kpis', requireAuth, requireAdmin, (req, res) => {
 
   // ---- orders in the window ----
   const jobs = all(
-    `SELECT id, customer_id, driver_id, status, kind, price_cents, tip_cents, discount_cents, quote_json, cancel_reason,
+    `SELECT id, customer_id, driver_id, status, kind, price_cents, tip_cents, discount_cents, credit_cents, quote_json, cancel_reason,
        created_at, COALESCE(requested_at, created_at) opened_at, accepted_at, started_at, completed_at
      FROM jobs WHERE created_at >= ?`,
     since,
@@ -99,7 +100,15 @@ dashboardApi.get('/admin/kpis', requireAuth, requireAdmin, (req, res) => {
   );
 
   // ---- subscriptions ----
-  const passes = one("SELECT COUNT(*) n, COALESCE(SUM(price_cents), 0) mrr FROM subscriptions WHERE status = 'active'");
+  const passes = one("SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN comp = 0 AND ends_at IS NULL THEN price_cents ELSE 0 END), 0) mrr FROM subscriptions WHERE status = 'active' AND (ends_at IS NULL OR ends_at > ?)", nowIso());
+
+  // ---- referrals ----
+  const refs = one(
+    `SELECT COUNT(*) total, SUM(status = 'qualified') qualified, SUM(status = 'qualified' AND qualified_at >= ?) qualifiedInWindow FROM referrals`,
+    since,
+  );
+  const creditOutstanding = one('SELECT COALESCE(SUM(amount_cents), 0) n FROM credits').n;
+  const creditSpent = done.reduce((s, j) => s + (j.credit_cents ?? 0), 0);
 
   // ---- last 14 days, per day ----
   const daily = [];
@@ -136,7 +145,10 @@ dashboardApi.get('/admin/kpis', requireAuth, requireAdmin, (req, res) => {
       promoCostCents: done.reduce((s, j) => s + (j.discount_cents ?? 0), 0),
       avgOrderCents: done.length ? Math.round(done.reduce((s, j) => s + j.price_cents, 0) / done.length) : null,
       stormPassMrrCents: passes.mrr,
+      creditSpentCents: creditSpent,
+      creditOutstandingCents: creditOutstanding,
     },
+    referrals: { total: refs.total ?? 0, qualified: refs.qualified ?? 0, qualifiedInWindow: refs.qualifiedInWindow ?? 0 },
     customers: {
       total: customers,
       thisWeek: customersWeek,

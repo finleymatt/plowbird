@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { db, nowIso } from './db.js';
 import { requireAdmin } from './admin.js';
 import { optionalAuth, requireAuth } from './auth.js';
+import { linkReferral } from './referrals.js';
 import { SERVICE_AREA_LABEL, SERVICE_ZIPS, serviceAreaLimited, zipFromText } from './service-area.js';
 
 db.exec(`
@@ -67,6 +68,9 @@ export function recordSignupSource(userId, attribution) {
     'UPDATE users SET utm_source = COALESCE(utm_source, ?), utm_medium = COALESCE(utm_medium, ?), utm_campaign = COALESCE(utm_campaign, ?), promo = COALESCE(promo, ?) WHERE id = ?',
   ).run(pick('utm_source'), pick('utm_medium'), pick('utm_campaign'), pick('promo'), userId);
   if (lead) db.prepare('UPDATE leads SET user_id = COALESCE(user_id, ?) WHERE id = ?').run(userId, lead.id);
+  // Arrived on a neighbor's share link (?promo=THEIRCODE): count them as that neighbor's referral.
+  const promo = pick('promo');
+  if (promo) linkReferral(userId, promo);
 }
 
 export const validEmail = (e) => typeof e === 'string' && e.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim());

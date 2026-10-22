@@ -177,6 +177,22 @@ Set these on the API before turning `DEMO_MODE` off:
 
 The landing page's "Get storm alerts" form and the outside-area waitlist post to `POST /api/leads` (5 per IP per 10 minutes). On first load, the website saves the link's `utm_source`, `utm_medium`, `utm_campaign` and `promo` params, then sends them with sign-up and waitlist signups. Tag flyer and ad links, e.g. `https://plowbird.app/?utm_source=flyer&utm_campaign=longfellow&promo=FIRSTPLOW`.
 
+### Referrals and Snow Ranks
+
+Every customer has a referral code (Invite tab). Share links look like `plowbird.app/?promo=CODE&utm_source=referral`, so the code is applied at checkout automatically and the landing page says who sent it.
+
+- **The neighbor** gets $10 off their first plow. New customers and homes only, one per household; a code can't be used by its owner.
+- **The referrer** gets $10 in Plowbird credit when that first paid plow is completed (not Storm Pass plows or free demo orders). Credit comes off their next plow automatically, never below $1; the driver is paid in full, as with promos. A cancelled plow gives its credit back.
+- **Snow Ranks**: Flurry (1), Snowplow Scout (3, +$15 credit), Storm Chaser (5, a free month of Storm Pass), Blizzard Boss (10, another free month). A free month on a driveway with a paid pass becomes a Stripe balance credit on the next invoice; otherwise it's a 30-day pass with no billing.
+- Capped at 25 rewarded referrals a year. A public "Which town is winning?" board shows referrals by city.
+- Amounts and ranks live in `server/src/referrals.js`. The dashboard's Referrals row shows referred sign-ups, booked referrals and credit used or outstanding.
+
+### Outreach tracker
+
+`/admin` → **Outreach** holds the people and places we're working: **Drivers** to recruit, **Partners** (HOAs, neighborhood groups, chambers), **Flyers & events** and **Commercial lots**, each with its own status pipeline, an owner, a follow-up date, notes and an activity log. Every change saves to the API.
+
+It's seeded from the CSVs in `marketing/outreach/`. After adding CSV rows, run `node scripts/build-outreach-seed.js` in `server/` and commit `server/seed-data/outreach.json`. On the next boot only new rows (by list + name) are added; edits made in `/admin` are never overwritten.
+
 ## Layout
 
 ```

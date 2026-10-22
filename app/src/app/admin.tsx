@@ -9,16 +9,18 @@ import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { Outreach } from '@/components/outreach-admin';
 import { money } from '@/lib/format';
 import type { AdminSummary, DriverForReview, DriverStatus, Kpis, Lead } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 
 // Staff page: launch KPIs, the waitlist, and driver applications to approve. Only for ADMIN_EMAILS.
 
-type Section = 'dashboard' | 'waitlist' | 'drivers';
+type Section = 'dashboard' | 'waitlist' | 'outreach' | 'drivers';
 const SECTIONS: { key: Section; label: string; icon: IconName }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'stats-chart' },
   { key: 'waitlist', label: 'Waitlist', icon: 'mail' },
+  { key: 'outreach', label: 'Outreach', icon: 'people' },
   { key: 'drivers', label: 'Drivers', icon: 'car' },
 ];
 
@@ -81,6 +83,7 @@ export default function AdminScreen() {
             </Row>
             {section === 'dashboard' && <Dashboard wide={wide} />}
             {section === 'waitlist' && <Waitlist wide={wide} />}
+            {section === 'outreach' && <Outreach wide={wide} />}
             {section === 'drivers' && (<>
             <T variant="heading" style={{ fontSize: 22 }}>Drivers</T>
             <Row gap={Spacing.two} style={{ flexWrap: 'wrap' }}>
@@ -269,6 +272,16 @@ function Dashboard({ wide }: { wide: boolean }) {
         { label: 'Avg rating', value: k.customers.avgRating ?? '–', sub: `${k.customers.ratings} ratings` },
         { label: 'Storm Passes', value: k.customers.stormPasses },
         { label: 'Storm Pass MRR', value: money(k.money.stormPassMrrCents), sub: 'monthly recurring' },
+      ],
+    },
+    {
+      title: 'Referrals',
+      hint: 'Is word of mouth working?',
+      stats: [
+        { label: 'Referred sign-ups', value: k.referrals.total, sub: 'all time' },
+        { label: 'Referrals booked', value: k.referrals.qualifiedInWindow, sub: `${k.referrals.qualified} all time` },
+        { label: 'Credit used', value: money(k.money.creditSpentCents), sub: `last ${days} days` },
+        { label: 'Credit outstanding', value: money(k.money.creditOutstandingCents), sub: 'owed on future plows' },
       ],
     },
   ];
