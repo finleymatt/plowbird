@@ -187,6 +187,7 @@ function DriverCard({ d, onChange }: { d: DriverForReview; onChange: () => void 
       ) : (
         <T variant="caption" color="textSecondary">Created an account but hasn’t applied yet.</T>
       )}
+      {d.status === 'approved' && <Onboarding d={d} onChange={onChange} />}
       {d.note && (
         <Row style={{ backgroundColor: theme.backgroundElement, padding: Spacing.two, borderRadius: Radius.md }}>
           <Icon name="document-text" size={16} color="textSecondary" />
@@ -455,6 +456,76 @@ function Waitlist({ wide }: { wide: boolean }) {
           </View>
         ))}
       </Card>
+    </View>
+  );
+}
+
+/* ---------------- driver onboarding (agreement + COI) ---------------- */
+
+function Onboarding({ d, onChange }: { d: DriverForReview; onChange: () => void }) {
+  const theme = useTheme();
+  const o = d.onboarding;
+  const [expires, setExpires] = useState(o.coi.expires ?? '');
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const signed = useApi<{ text: string | null; hash: string | null; ip: string | null }>(show ? `/admin/drivers/${d.id}/agreement` : null);
+
+  const saveCoi = async (body: object) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/admin/drivers/${d.id}/coi`, { body });
+      onChange();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={{ gap: Spacing.two, padding: Spacing.three, borderRadius: Radius.md, backgroundColor: theme.background }}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <T variant="label">Onboarding</T>
+        <Badge label={o.ready ? 'READY TO DRIVE' : 'PAPERWORK PENDING'} tone={o.ready ? 'success' : 'warning'} />
+      </Row>
+      <Row gap={6} style={{ flexWrap: 'wrap' }}>
+        {o.steps.map((s) => (
+          <Badge key={s.key} label={`${s.done ? '✓' : '○'} ${s.label}`.toUpperCase()} tone={s.done ? 'success' : s.optional ? 'neutral' : 'warning'} />
+        ))}
+      </Row>
+      <T variant="caption" color="textSecondary">
+        Agreement:{' '}
+        {o.agreement.signedAt
+          ? `signed ${day(o.agreement.signedAt)} (v${o.agreement.signedVersion})${o.agreement.current ? '' : ' — outdated, asked to re-sign'}`
+          : 'sent at approval, not signed yet'}
+        {o.agreement.signedAt && (
+          <T variant="caption" color="accent" onPress={() => setShow((v) => !v)}>
+            {'  '}
+            {show ? 'Hide' : 'View signed copy'}
+          </T>
+        )}
+      </T>
+      {show && signed.data?.text && (
+        <View style={{ maxHeight: 260, borderWidth: 1, borderColor: theme.border, borderRadius: Radius.md, padding: Spacing.two }}>
+          <ScrollView>
+            <T variant="caption" selectable style={{ fontFamily: Platform.OS === 'web' ? 'ui-monospace, monospace' : undefined }}>{signed.data.text}</T>
+            <T variant="caption" color="textSecondary">SHA-256: {signed.data.hash}</T>
+          </ScrollView>
+        </View>
+      )}
+      <T variant="caption" color="textSecondary">
+        Certificate of insurance: {o.coi.receivedAt ? `received ${day(o.coi.receivedAt)}, expires ${o.coi.expires ?? '?'}${o.coi.ok ? '' : ' — EXPIRED'}` : 'not received yet'}
+      </T>
+      <Row gap={Spacing.two} style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <View style={{ flexGrow: 1, flexBasis: 180 }}>
+          <Input label="Policy expires (YYYY-MM-DD)" value={expires} onChangeText={setExpires} placeholder="2027-06-30" autoCapitalize="none" />
+        </View>
+        <Button title={o.coi.receivedAt ? 'Update COI' : 'Mark COI received'} icon="shield-checkmark" size="sm" onPress={() => saveCoi({ expires: expires.trim() })} loading={busy} />
+        {o.coi.receivedAt && <Button title="Clear" kind="secondary" size="sm" onPress={() => saveCoi({ clear: true })} />}
+      </Row>
+      <ErrorText>{error}</ErrorText>
     </View>
   );
 }

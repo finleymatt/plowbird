@@ -230,3 +230,20 @@ outreachApi.post('/admin/outreach/:id/activity', requireAuth, requireAdmin, (req
   db.prepare('UPDATE outreach SET last_contacted_at = ?, updated_at = ?, updated_by = ? WHERE id = ?').run(nowIso(), nowIso(), who, row.id);
   res.json({ ok: true });
 });
+
+// Public "recommend a driver" form (/driver-demo, /drive): lands in the Drivers list as new.
+export function addRecommendedDriver({ driverName, phone, email, area, notes, byName, byContact }) {
+  const info = db
+    .prepare(
+      `INSERT INTO outreach (list, name, category, area, phone, email, status, notes, source, updated_at, updated_by)
+       VALUES ('driver', ?, 'recommended', ?, ?, ?, 'new', ?, 'recommended on site', ?, 'Website')`,
+    )
+    .run(driverName, area, phone, email, notes, nowIso());
+  const id = Number(info.lastInsertRowid);
+  db.prepare('INSERT INTO outreach_activity (outreach_id, author, body) VALUES (?, ?, ?)').run(
+    id,
+    'Website',
+    `Recommended by ${byName || 'someone who didn’t leave a name'}${byContact ? ` (${byContact})` : ''}`,
+  );
+  return id;
+}
