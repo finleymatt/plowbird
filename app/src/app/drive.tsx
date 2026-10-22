@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -129,6 +129,10 @@ export default function DriveScreen() {
                       1-car {money(pay.single)} · 2-car {money(pay.double)} · 3-car {money(pay.triple)} at standard rates, more during heavy storms.
                     </T>
                   )}
+                  <Pressable onPress={() => router.push('/driver-demo' as Href)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Icon name="map" color="accent" size={18} />
+                    <T variant="label" color="accent">See a sample storm day: route, miles and pay →</T>
+                  </Pressable>
                   {wide && <SnowScene width={460} />}
                 </View>
                 <View style={{ flex: wide ? 1 : undefined }}>

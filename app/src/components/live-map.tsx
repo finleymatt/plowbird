@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useRef } from 'react';
-import { View, type DimensionValue } from 'react-native';
+import { Text, View, type DimensionValue } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { Radius } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
-export type MapPin = { id: string; lat: number; lng: number; kind: 'home' | 'driver' | 'job'; title?: string };
+/** `label` (e.g. "3") draws a numbered stop instead of the snowflake; `accent` colors it orange. */
+export type MapPin = { id: string; lat: number; lng: number; kind: 'home' | 'driver' | 'job'; title?: string; label?: string; accent?: boolean };
 
 export type LiveMapProps = {
   pins: MapPin[];
@@ -73,13 +74,17 @@ export function LiveMap({ pins, route, height = 240, rounded = true, fitPadding,
                   width: p.kind === 'driver' ? 38 : 30,
                   height: p.kind === 'driver' ? 38 : 30,
                   borderRadius: 19,
-                  backgroundColor: p.kind === 'driver' ? theme.primary : '#0A0A0A',
+                  backgroundColor: p.kind === 'driver' ? theme.primary : p.accent ? '#FF5A1F' : '#0A0A0A',
                   borderWidth: 3,
                   borderColor: '#fff',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                <Ionicons name={p.kind === 'driver' ? 'car' : 'snow'} size={p.kind === 'driver' ? 18 : 14} color="#fff" />
+                {p.label && p.kind === 'job' ? (
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>{p.label}</Text>
+                ) : (
+                  <Ionicons name={p.kind === 'driver' ? 'car' : 'snow'} size={p.kind === 'driver' ? 18 : 14} color="#fff" />
+                )}
               </View>
             )}
           </Marker>
