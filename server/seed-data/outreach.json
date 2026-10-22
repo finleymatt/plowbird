@@ -4123,5 +4123,1041 @@
    "best_timing": "Early Nov",
    "source_url": "https://wayzatacommunitychurch.org/contact-us/"
   }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Cataldo Family Dentistry",
+  "category": "dental_medical",
+  "city": "Plymouth",
+  "address": "10100 6th Ave N, Ste 102B, Plymouth, MN 55441",
+  "phone": "763-544-7856",
+  "website": "https://my.officite.com/0067653",
+  "contact": "office manager (suite in multi-tenant building; ask who contracts the lot)",
+  "notes": "Independent family practice, Mon-Thu 8-5. One aggregator shows an older address (1025 Evergreen Ln N); practice site shows 6th Ave N.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://my.officite.com/0067653 ; https://local.newpatientsinc.com/dental/brent-cataldo-dds-pa-plymouth-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Rockford Road Animal Hospital",
+  "category": "dental_medical",
+  "city": "Plymouth",
+  "address": "3900 Vinewood Ln N, Ste 16, Plymouth, MN 55441",
+  "phone": "763-559-7554",
+  "contact": "practice manager; likely a strip-center tenant, so landlord may control plowing",
+  "notes": "Vet, opens 7:30 am weekdays and Sat mornings. Honest Yoga (#21) is in the same 3900 Vinewood strip; the strip's owner/manager is a second lead.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.petsbest.com/veterinarians/MN/Saint%20Paul/rockford-road-animal-hosp-14743"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Cats Preferred Veterinary Hospital",
+  "category": "dental_medical",
+  "city": "Plymouth",
+  "address": "16795 County Road 24, Ste 4, Plymouth, MN 55447",
+  "phone": "763-383-8865",
+  "contact": "practice manager / building landlord",
+  "notes": "Cat-only vet in a multi-suite building.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://vets.greatpetcare.com/plymouth/cats-preferred-vet-hospital/25889"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Oakwood Pet Clinic",
+  "category": "dental_medical",
+  "city": "Plymouth",
+  "address": "1441 County Rd 101, Plymouth, MN 55447",
+  "phone": "763-473-7030",
+  "contact": "practice manager",
+  "notes": "Vet clinic; directory listing only.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://vets.greatpetcare.com/minnesota/plymouth"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Little Flowers Montessori School",
+  "category": "daycare",
+  "city": "Plymouth",
+  "address": "4155 Zachary Lane, Plymouth, MN 55441",
+  "phone": "763-559-5843",
+  "email": "info@littleflowersmn.org",
+  "contact": "school director / administrator",
+  "notes": "AMI school locator lists ages 0-3 and 3-6. Drop-off lot needs to be clear before morning arrivals.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.amiusa.org/school-locator1/little-flowers-montessori-school"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Foundation Hill Montessori & Childcare",
+  "category": "daycare",
+  "city": "Plymouth",
+  "address": "15855 61st Ave N, Plymouth, MN",
+  "phone": "763-557-9300",
+  "contact": "center director",
+  "notes": "Listed as FHMC Plymouth Inc. Licensed capacity about 148 per directory, so the lot is probably bigger than one truck's sweet spot. Early-morning (6:30-ish) opening is likely.",
+  "details": {
+   "lot_size": "medium",
+   "source_url": "https://daycarescan.com/state/minnesota/plymouth"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Gearty-Delmore Funeral Chapel (Plymouth)",
+  "category": "other",
+  "city": "Plymouth",
+  "address": "15800 37th Ave N, Plymouth, MN 55446",
+  "phone": "763-553-1411",
+  "contact": "funeral director / owner",
+  "notes": "Funeral home; services and visitations run on short notice, so it needs on-call clearing. Phone from Tribute Archive, not the business site.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.tributearchive.com/funeral-homes/us/minnesota/plymouth/gearty-delmore-funeral-chapel/fh-2062645"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Messiah United Methodist Church",
+  "category": "church",
+  "city": "Plymouth",
+  "address": "17805 County Road 6, Plymouth, MN",
+  "website": "https://messiahchurchmn.org",
+  "contact": "church office / trustees or facilities committee",
+  "notes": "Size not verified; it may be larger than our target. Sunday-morning window.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.idealist.org/en/nonprofit/7f4a5e0e535e41b28d7b4a07fe98a1e7-messiah-united-methodist-church-plymouth"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Stellar Autoworks",
+  "category": "auto",
+  "city": "Plymouth",
+  "address": "9855 13th Ave N, Plymouth, MN",
+  "contact": "owner / shop manager",
+  "notes": "Independent repair shop per directory. No phone in the extract.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.datanyze.com/companies/stellar-autoworks/348096791"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Plymouth Pointe Plaza",
+  "category": "strip_center",
+  "city": "Plymouth",
+  "address": "2700 Annapolis Circle N, Plymouth, MN 55441",
+  "contact": "property manager / leasing: CSM Corporation (per listing contact domain csmcorp.net)",
+  "notes": "21,222 SF strip on Hwy 55. Listing names a broker contact (not copied here). The owner may already have a plow contract; ask about backup or overflow pushes.",
+  "details": {
+   "lot_size": "medium",
+   "source_url": "https://images.loopnet.ca/d2/LJC8iD7WlB9HVflH7qe11IQJdY3F_rj2pqsl4MEyGWQ/PlymouthPointePlazaMarketing.pdf ; https://www.showcase.com/2700-annapolis-cir-n-plymouth-mn-55441/40697068/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "SOUL Ballroom",
+  "category": "other",
+  "city": "Plymouth",
+  "address": "76 Nathan Lane N, Plymouth, MN 55441",
+  "phone": "763-496-5553",
+  "website": "https://soulballroom.com",
+  "contact": "studio owner / building landlord",
+  "notes": "Dance studio. ClassPass lists parking among its amenities. Probably a tenant in a multi-tenant building.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://classpass.com/studios/soul-ballroom-plymouth"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Westside Family Dentistry",
+  "category": "dental_medical",
+  "city": "Wayzata",
+  "address": "101 W Lake St, Ste 220, Wayzata, MN 55391",
+  "phone": "952-475-2464",
+  "website": "https://westsidedentistrymn.com",
+  "contact": "office manager (multi-tenant building at 101 W Lake St)",
+  "notes": "Wayzata chamber member. Also listed as Fligge and Larson PA (same phone). The building also has another dental office (Ste 200).",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://wayzatachamber.com/?p=32137 ; https://local.newpatientsinc.com/dental/fligge-and-larson-pa-wayzata-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Shoreline Dentistry of Wayzata",
+  "category": "dental_medical",
+  "city": "Wayzata",
+  "address": "445 Lake St E, Ste 216, Wayzata, MN 55391",
+  "phone": "952-473-4124",
+  "contact": "office manager / building manager",
+  "notes": "Name is from the directory listing. Metro Dentalcare (a group) is also listed at this suite, so ownership is unclear.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://local.newpatientsinc.com/dental/dr-katrina-binstock-dds-wayzata-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Wayzata Pet Hospital",
+  "category": "dental_medical",
+  "city": "Wayzata",
+  "address": "15712 Wayzata Blvd, Wayzata, MN 55391",
+  "phone": "952-473-4631",
+  "contact": "practice manager",
+  "notes": "Vet, weekdays plus Sat mornings.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.petsbest.com/veterinarians/MN/Wayzata/wayzata-pet-hospital-14881"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Golden Veterinary Care",
+  "category": "dental_medical",
+  "city": "Wayzata",
+  "address": "1131-A Wayzata Blvd, Wayzata, MN 55391",
+  "phone": "952-767-0746",
+  "contact": "practice manager; landlord may control lot",
+  "notes": "Downtown Wayzata. The address is near Colonial Square (Regency Centers, 1151 Wayzata Blvd); if it's inside that center, the landlord handles snow. Verify.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.petsbest.com/veterinarians/MN/Wayzata/golden-veterinary-care-13052581 ; https://archive.plymouthmag.com/node/46958"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Redeemer Lutheran Preschool",
+  "category": "daycare",
+  "city": "Wayzata",
+  "address": "115 W Wayzata Blvd, Wayzata, MN 55391",
+  "contact": "preschool director / church office (Redeemer Lutheran)",
+  "notes": "Small center, 8:30-2:45, on a church lot. One pitch could cover both the preschool and Sunday services.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://www.carelulu.com/childcare-in-wayzata-mn-55391/redeemer-lutheran-preschool/61815"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Step By Step Montessori School of Wayzata",
+  "category": "daycare",
+  "city": "Wayzata",
+  "address": "15300 Wayzata Blvd, Wayzata, MN 55391",
+  "phone": "952-476-0240",
+  "contact": "school director",
+  "notes": "Capacity 111 and opens at 6:30 am, so the lot has to be clear very early. Part of a small multi-site Montessori group.",
+  "details": {
+   "lot_size": "medium",
+   "source_url": "https://carelulu.com/childcare-in-wayzata-mn-55391/step-by-step-montessori-school-of-wayzata/62015 ; https://archive.lakeminnetonkamag.com/node/46929"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Grace Preschool and Early Childhood Program",
+  "category": "daycare",
+  "city": "Wayzata",
+  "address": "18360 Minnetonka Blvd, Wayzata, MN 55391",
+  "contact": "director / Grace Lutheran church office",
+  "notes": "Medium-size center, 7:30-5, on a church site (Deephaven area, Wayzata mailing address).",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://carelulu.com/childcare-in-wayzata-mn-55391/grace-preschool-and-early-childhood-program/61084"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "David Lee Funeral Home & Cremation Services",
+  "category": "other",
+  "city": "Wayzata",
+  "address": "1220 Wayzata Blvd E, Wayzata, MN 55391",
+  "contact": "funeral director / owner",
+  "notes": "On-site chapel. No phone in any extract; get it from Google Maps.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://find.partingstone.com/partner/david-lee-funeral-home-MN-55391 ; https://www.legacy.com/funeral-homes/listing/minnesota/wayzata"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Sanford, Pierson, Thone & Strean, PLC",
+  "category": "office",
+  "city": "Wayzata",
+  "address": "1905 E Wayzata Blvd, Ste 220, Wayzata, MN 55391",
+  "phone": "952-404-2100",
+  "contact": "building manager (Wayzata Executive Park); firm office administrator as intro",
+  "notes": "Law firm, Wayzata chamber member. It is a tenant, so ask the firm who manages the building's lot; that manager is the real buyer.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://wayzatachamber.com/?p=3030"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Apartments at 415 Lake St E (DM Companies)",
+  "category": "apartment",
+  "city": "Wayzata",
+  "address": "415 Lake St E, Wayzata, MN 55391",
+  "contact": "property manager: DM Companies",
+  "notes": "Small downtown rental building per listing; unit count not confirmed. No DM Companies phone found.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://edge.apartmentiq.io/wayzata-mn/dmc-management-inc"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Lake Minnetonka Animal Hospital (Westonka Animal Hospital)",
+  "category": "dental_medical",
+  "city": "Orono",
+  "address": "3572 Shoreline Dr, Wayzata, MN 55391",
+  "phone": "952-471-0911",
+  "contact": "practice manager",
+  "notes": "Listed with a Wayzata mailing address. The Shoreline Dr 3500 block is in the Orono/Navarre area, but the city wasn't verified.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.pawlicy.com/vets-near-me/mn/wayzata/lake-minnetonka-animal-hospital-15026/ ; https://local.hometownsource.com/places/view/356662/lake_minnetonka_pet_wellness_center_westonka_animal_hospital.html"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Shoreline Early Childhood Development Center",
+  "category": "daycare",
+  "city": "Orono",
+  "address": "3745 Shoreline Dr, Wayzata, MN 55391",
+  "contact": "center director",
+  "notes": "Capacity 66, infants to age 12. Wayzata mailing address; Orono/Navarre area not verified.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.carelulu.com/childcare-in-wayzata-mn-55391/shoreline-early-childhood-development-center/61897"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Gethsemane Lutheran Church",
+  "category": "church",
+  "city": "Hopkins",
+  "address": "715 Minnetonka Mills Rd, Hopkins, MN",
+  "phone": "952-935-1753",
+  "contact": "church office / property committee",
+  "notes": "Listed on the City of Hopkins faith page. Runs a Wednesday free-meal program (5:15-6:30 pm), so it needs a midweek window as well as Sunday.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://hopkinsmn.com/480/Faith-Community"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Shepherd of the Hills Lutheran Church",
+  "category": "church",
+  "city": "Hopkins",
+  "address": "500 Blake Rd S, Hopkins, MN",
+  "phone": "952-935-3457",
+  "contact": "church office / property committee",
+  "notes": "City faith page listing.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://hopkinsmn.com/480/Faith-Community ; https://www.disciplepair.com/browse/church/shepherd-of-the-hills-lutheran-hopkins-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Zion Lutheran Church & Zion Early Childhood Center",
+  "category": "church",
+  "city": "Hopkins",
+  "address": "241 Fifth Ave N, Hopkins, MN 55343",
+  "phone": "952-938-7661",
+  "contact": "church office / property committee; ECC director",
+  "notes": "Has both a church and an early childhood center, so it needs weekday-morning and Sunday windows.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.givemn.org/organization/Zion-Lutheran-Church-233 ; https://www.carelulu.com/childcare-in-hopkins-mn-55343/zion-early-childhood-center/62223"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Korean Evangelical United Methodist Church",
+  "category": "church",
+  "city": "Hopkins",
+  "address": "717 Highway 7, Hopkins, MN",
+  "phone": "952-938-2142",
+  "contact": "church office",
+  "notes": "City faith page listing.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://hopkinsmn.com/480/Faith-Community"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Dr. Jonathan Steele, D.C. (chiropractic)",
+  "category": "dental_medical",
+  "city": "Hopkins",
+  "address": "1593 Highway 7, Hopkins, MN 55305",
+  "phone": "952-933-6235",
+  "contact": "office manager",
+  "notes": "Small two-chiropractor practice per directory. Highway 7 frontage, which may mean its own lot (verify).",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://practicefinder.newpatientsinc.com/chiro/dr-jonathan-steele-dc-hopkins-mn/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Dr. Peter L'Allier, D.C. (chiropractic, 15 8th Ave N)",
+  "category": "dental_medical",
+  "city": "Hopkins",
+  "address": "15 8th Ave N, Hopkins, MN 55343",
+  "phone": "952-933-5085",
+  "contact": "office manager",
+  "notes": "Directory lists 8 chiropractors. DMR Methods (Ste 2) shares the building.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://practicefinder.newpatientsinc.com/chiro/dr-peter-lallier-dc-hopkins-mn/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "CSN Hopkins (collision & repair)",
+  "category": "auto",
+  "city": "Hopkins",
+  "address": "10889 Excelsior Blvd, Hopkins, MN 55343",
+  "phone": "952-935-7556",
+  "website": "https://csncollision.com/en/locations/csn-hopkins-repair-center-in-hopkins",
+  "contact": "owner / shop manager",
+  "notes": "Family-owned since 1962 (part of the CSN network). Opens 7:30 am weekdays.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://csncollision.com/en/locations/csn-hopkins-repair-center-in-hopkins"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Smith Nielsen Automotive",
+  "category": "auto",
+  "city": "Hopkins",
+  "address": "10450 Excelsior Blvd, Hopkins, MN 55343",
+  "contact": "owner / shop manager",
+  "notes": "Independent shop per BBB category listing. No phone in the extract.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://wwwwww.bbb.org/us/mn/hopkins/category/auto-repair"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Blake Early Learning Center",
+  "category": "daycare",
+  "city": "Hopkins",
+  "address": "110 Blake Rd S, Hopkins, MN 55343",
+  "phone": "952-988-3400",
+  "contact": "center director",
+  "notes": "Licensed capacity 183, so the lot may be larger than our target. License dates from 2023.",
+  "details": {
+   "lot_size": "medium",
+   "source_url": "https://childcarecenter.us/provider_detail/blake-early-learning-center-hopkins-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Holmquist Ltd. (CPA)",
+  "category": "office",
+  "city": "Hopkins",
+  "address": "32 10th Ave S, Ste 102, Hopkins, MN 55343",
+  "phone": "952-476-7440",
+  "contact": "owner; building manager for the lot",
+  "notes": "One-owner CPA firm. Tax season overlaps winter. Tenant, so it's an intro to the building owner.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.mncpa.org/find-a-cpa/directories/cpa-yellow-pages/?c=Hopkins"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Raspberry Ridge Apartments",
+  "category": "apartment",
+  "city": "Hopkins",
+  "address": "27 14th Ave N, Hopkins, MN",
+  "phone": "612-371-0766",
+  "contact": "property manager: Trellis Management Co.",
+  "notes": "Affordable housing. Directories also list 612-215-6832 and 952-933-3260. Trellis also manages Hopkins Village Apts (9 7th Ave S) and The Burnes Building (650 Mainstreet, 43 units).",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://helpmeconnect.web.health.state.mn.us/HelpMeConnect/Providers/Trellis_Management_Co./Privately_Owned_Affordable_Housing/5"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "The Loon (12-unit apartment building)",
+  "category": "apartment",
+  "city": "Hopkins",
+  "address": "57 6th Ave S, Hopkins, MN 55343",
+  "contact": "owner (building listed for sale; new owner may need a vendor)",
+  "notes": "12 units, built 1961, 21,000 SF. Listed for sale at $1.35M, owner/manager not named. Recheck after a sale and approach the new owner.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://www.crexi.com/properties/2621608/minnesota-the-loon ; https://www.commercialcafe.com/commercial-property/us/mn/hopkins/the-loon/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Continental Property Group",
+  "category": "apartment",
+  "city": "Hopkins",
+  "address": "10400 Yellow Circle Dr, Hopkins, MN",
+  "contact": "property management company (portfolio unknown)",
+  "notes": "Local property manager. Could be a channel to several small buildings. Portfolio and phone not found.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.simplifyem.com/property-management-companies/company/continental-property-group-hopkins-minnesota"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Glen Lake Animal Hospital",
+  "category": "dental_medical",
+  "city": "Minnetonka",
+  "address": "14805 Excelsior Blvd, Minnetonka, MN",
+  "phone": "952-935-1232",
+  "contact": "practice manager",
+  "notes": "Independent vet, opens 7:30 am weekdays.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.petsbest.com/veterinarians/MN/Minnetonka/glen-lake-animal-hospital-14847"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Village Animal Hospital",
+  "category": "dental_medical",
+  "city": "Minnetonka",
+  "address": "17660 Highway 7, Minnetonka, MN",
+  "phone": "952-474-4194",
+  "contact": "practice manager",
+  "notes": "Independent vet with Saturday 8-noon hours.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.pawlicy.com/vets-near-me/mn/minnetonka/village-animal-hospital-15270/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Minnetonka Animal Hospital",
+  "category": "dental_medical",
+  "city": "Minnetonka",
+  "address": "17408 Minnetonka Blvd, Minnetonka, MN 55345",
+  "phone": "952-473-1239",
+  "contact": "practice manager",
+  "notes": "Phone is from Checkbook only. Hours M-F 8-6, Sat 8-12.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.checkbook.org/mn/minnetonka/dog-groomers/minnetonka-animal-hospital/72k52"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Glen Lake Dental Associates",
+  "category": "dental_medical",
+  "city": "Minnetonka",
+  "address": "14421 Excelsior Blvd, Minnetonka, MN 55345",
+  "phone": "952-935-5212",
+  "contact": "office manager",
+  "notes": "Another source gives 14418 Excelsior Blvd (same phone).",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://doctor.webmd.com/practice/glen-lake-dental-associates-cc41cff6-868c-4132-a07d-0a1984421748 ; https://local.newpatientsinc.com/dental/dr-kent-cassidy-d-d-s-minnetonka-mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Blue Ridge Dental Center (Minnetonka)",
+  "category": "dental_medical",
+  "city": "Minnetonka",
+  "address": "11601 Minnetonka Mills Rd, Minnetonka, MN 55305",
+  "phone": "952-938-8858",
+  "website": "https://www.blueridgedental.com",
+  "contact": "office manager",
+  "notes": "Small local group with a Maple Grove office too (13800 83rd Way N, Ste 100; 763-424-2877). One relationship could cover two lots.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.blueridgedental.com/pediatric-oral-hygiene-how-to-prevent-sugar-bugs/fb_img_1477414593784/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "All Saints Preschool",
+  "category": "daycare",
+  "city": "Minnetonka",
+  "address": "15915 Excelsior Blvd, Minnetonka, MN",
+  "contact": "preschool director / church office",
+  "notes": "Licensed capacity 67 (other sources say 57-60). Church-site preschool.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://childcarecenter.us/provider_detail/all_saints_preschool_minnetonka_mn"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Small World School for Young Children",
+  "category": "daycare",
+  "city": "Minnetonka",
+  "address": "13215 Minnetonka Dr, Hopkins, MN 55305",
+  "contact": "director",
+  "notes": "Capacity 20. Hopkins 55305 mailing address, Minnetonka area.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://www.carelulu.com/amp/childcare-in-hopkins-mn-55305/small-world-school-for-young-children/61905"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Shalom Yeladim Preschool",
+  "category": "daycare",
+  "city": "Minnetonka",
+  "address": "13613 Orchard Rd, Hopkins, MN 55305",
+  "contact": "director",
+  "notes": "Capacity 43, ages 12 months-5. Hopkins 55305 mailing address, Minnetonka area. Probably sits on a congregation's site.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://carelulu.com/childcare-in-hopkins-mn-55305/shalom-yeladim-preschool/61888"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Redeemer Bible Church",
+  "category": "church",
+  "city": "Minnetonka",
+  "address": "16205 Highway 7, Minnetonka, MN 55345",
+  "contact": "church office / elders",
+  "notes": "No phone in the extract. One directory's denomination label looks wrong.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.devout.org/churches/mn/minnetonka/redeemer-bible-church"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Baker Road Automotive",
+  "category": "auto",
+  "city": "Minnetonka",
+  "address": "13125 Excelsior Blvd, Minnetonka, MN 55343",
+  "phone": "952-935-9777",
+  "contact": "owner / shop manager",
+  "notes": "Independent repair shop with positive Checkbook comment.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.checkbook.org/mn/minnetonka/auto-repair-shops/ratings"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "General Store of Minnetonka Cafe & Bistro",
+  "category": "restaurant",
+  "city": "Minnetonka",
+  "address": "14401 Hwy 7, Minnetonka, MN 55345",
+  "phone": "952-953-7131",
+  "contact": "owner / general manager",
+  "notes": "Breakfast and lunch cafe inside a retail store; needs clearing before morning. Lot ownership not verified.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.minnesotamonthly.com/directory/dining/general-store-of-minnetonka-cafe-bistro/"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "BLVD Kitchen & Bar",
+  "category": "restaurant",
+  "city": "Minnetonka",
+  "address": "11544 Wayzata Blvd, Minnetonka, MN",
+  "contact": "general manager",
+  "notes": "AAA lists on-site parking. No phone in the extract.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://ww1.aaa.com/tripcanvas/restaurant/blvd-kitchen-%26-bar-AA46239"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Long Lake Dental",
+  "category": "dental_medical",
+  "city": "Long Lake",
+  "address": "1870 W Wayzata Blvd, Long Lake, MN 55356",
+  "phone": "952-473-7151",
+  "contact": "office manager",
+  "notes": "Has operated for 50+ years. Next door to Lakeside Family Dentistry (1880) and Long Lake Vet (1854), so one route can cover three neighbors.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://doctor.webmd.com/practice/long-lake-dental-be63ee28-cf34-4320-9222-854f4e8060f7 ; https://local.brainerddispatch.com/long-lake-mn/long-lake-dental-952-473-7151"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Lakeside Family Dentistry",
+  "category": "dental_medical",
+  "city": "Long Lake",
+  "address": "1880 W Wayzata Blvd, Long Lake, MN 55356",
+  "phone": "952-475-0989",
+  "contact": "office manager",
+  "notes": "Early weekday hours. Healthline calls this address Water's Edge Dental, so the name may have changed.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://doctor.webmd.com/practice/lakeside-family-dentistry-e60fd7ed-299d-4803-bed7-75b8e19e33a7"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Long Lake Veterinary Clinic",
+  "category": "dental_medical",
+  "city": "Long Lake",
+  "address": "1854 Wayzata Blvd, Long Lake, MN 55356",
+  "phone": "952-473-2260",
+  "contact": "practice manager",
+  "notes": "Weekdays 9-5:30, Sat to noon.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.petsbest.com/veterinarians/MN/Long%20Lake/long-lake-veterinary-clinic-3831337"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Rettinger Funeral Home",
+  "category": "other",
+  "city": "Long Lake",
+  "address": "425 Lake St, Long Lake, MN 55356",
+  "contact": "funeral director / owner",
+  "notes": "No phone found.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.legacy.com/funeral-homes/listing/minnesota/wayzata"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Children's Workshop Montessori School",
+  "category": "daycare",
+  "city": "Long Lake",
+  "address": "2190 Wayzata Blvd, Long Lake, MN 55356",
+  "phone": "763-577-4244",
+  "contact": "school director",
+  "notes": "Ages 0-6+ per the AMI locator.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.amiusa.org/school-locator1/childrens-workshop-montessori-school"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Birch's on the Lake Brewhouse & Supperclub",
+  "category": "restaurant",
+  "city": "Long Lake",
+  "address": "1310 Wayzata Blvd, Long Lake, MN 55356",
+  "phone": "952-473-7373",
+  "contact": "general manager / owner",
+  "notes": "Off-street parking, lakeside. The lot may be larger than our target.",
+  "details": {
+   "lot_size": "medium",
+   "source_url": "https://beerdabbler.com/?p=58021"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Church of St. Anne (Hamel)",
+  "category": "church",
+  "city": "Medina",
+  "address": "200 Hamel Rd, Hamel, MN 55340",
+  "phone": "763-478-6644",
+  "contact": "parish business administrator / facilities",
+  "notes": "Catholic parish in Medina's Hamel neighborhood. Lot size unknown.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://gcatholic.org/churches/usa-08/27029"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Countryside Cafe",
+  "category": "restaurant",
+  "city": "Medina",
+  "address": "842 Highway 55, Hamel, MN 55340",
+  "phone": "763-478-6869",
+  "contact": "owner / manager",
+  "notes": "Full-service breakfast/lunch spot on Hwy 55; needs an early window.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.city-data.com/local/Restaurants/Hamel-MN.html"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Mama G's",
+  "category": "restaurant",
+  "city": "Medina",
+  "address": "9705 County Road 101, Hamel, MN 55340",
+  "phone": "763-420-2588",
+  "contact": "owner / manager",
+  "notes": "Hamel mailing address; the exact city (Medina, Plymouth or Maple Grove) at County Rd 101 is unverified.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.city-data.com/local/Restaurants/Hamel-MN.html"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Montessori School of Wayzata Bay",
+  "category": "daycare",
+  "city": "Medina",
+  "address": "1500 County Rd 24, Long Lake, MN 55356",
+  "contact": "school director",
+  "notes": "Small center. Long Lake mailing address; the listing describes it as being in Medina.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://www.carelulu.com/childcare-in-long-lake-mn-55356/montessori-school-of-wayzata-bay/61567"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Good Day Cafe",
+  "category": "restaurant",
+  "city": "Golden Valley",
+  "address": "5410 Wayzata Blvd, Golden Valley, MN",
+  "phone": "763-544-0205",
+  "contact": "owner / manager",
+  "notes": "Breakfast spot with its own parking lot per the listing. The lot must be clear before opening.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://ww1.aaa.com/tripcanvas/restaurant/good-day-cafe-AA21044 ; https://patch.com/minnesota/goldenvalley/top-ten-breakfast-joints-golden-valley"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Golden Valley Lutheran Church",
+  "category": "church",
+  "city": "Golden Valley",
+  "address": "5501 Glenwood Ave, Golden Valley, MN 55422",
+  "phone": "763-544-2810",
+  "contact": "church office / trustees",
+  "notes": "LCMS reports about 110 average weekly attendance, a good small-church fit.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://locator.lcms.org/church/C/362863"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Midland Auto Service",
+  "category": "auto",
+  "city": "Golden Valley",
+  "address": "2550 Winnetka Ave N, Golden Valley, MN 55427",
+  "phone": "763-545-5754",
+  "contact": "owner / shop manager",
+  "notes": "Independent shop. The Checkbook review is from 2018.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://checkbook.org/mn/golden-valley/auto-repair-shops/midland-auto-service/c3fh7"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Golden Valley Tire & Service",
+  "category": "auto",
+  "city": "Golden Valley",
+  "address": "600 Decatur Ave N, Golden Valley, MN 55427",
+  "phone": "763-541-0569",
+  "contact": "owner / shop manager",
+  "notes": "Independent tire and repair shop.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.checkbook.org/mn/golden-valley/auto-repair-shops/ratings"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Boulevard Automotive",
+  "category": "auto",
+  "city": "Golden Valley",
+  "address": "904 Pennsylvania Ave S, Golden Valley, MN",
+  "phone": "763-544-6867",
+  "contact": "owner / shop manager",
+  "notes": "40+ years in business. One listing gives a Minneapolis mailing address.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.mylocalservices.com/Boulevard+Automotive-Minneapolis-Minnesota-22488189.html"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Spirit of Christ Community Lutheran Church",
+  "category": "church",
+  "city": "St. Louis Park",
+  "address": "5801 Minnetonka Blvd, St. Louis Park, MN",
+  "phone": "952-929-6465",
+  "contact": "church office / property committee",
+  "notes": "Formed by a 2009 merger, on the former First Lutheran site.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.givemn.org/organization/Spirit-Of-Christ-Community-Lutheran-Church"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Vista Lutheran Church",
+  "category": "church",
+  "city": "St. Louis Park",
+  "address": "4003 Wooddale Ave S, St. Louis Park, MN",
+  "contact": "church office",
+  "notes": "Sunday worship 10 am. No phone in the extract.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://learnofchrist.com/churches/minnesota/st-louis-park"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Christ's Community Church (Moravian)",
+  "category": "church",
+  "city": "Maple Grove",
+  "address": "13250 93rd Ave N, Maple Grove, MN 55369",
+  "phone": "763-420-7187",
+  "contact": "church office / board of trustees",
+  "notes": "Small congregation: sanctuary seats about 40, 95 members (Carleton profile, may be dated).",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://religionsmn.carleton.edu/exhibits/show/suburban-religious-world-of-ma/christ-community-church"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Cross Winds United Methodist Church",
+  "category": "church",
+  "city": "Maple Grove",
+  "address": "15051 Weaver Lake Rd, Maple Grove, MN 55311",
+  "phone": "763-494-9463",
+  "contact": "church office / trustees",
+  "notes": "Attendance about 160. Phone is from GriefShare; the UMC directory's version (634-946-9463) looks like a typo.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://umc.org/en/find-a-church/church?id=56406 ; https://griefshare.org/countries/us/states/mn/cities/maple_grove"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Brook West Family Dentistry",
+  "category": "dental_medical",
+  "city": "Maple Grove",
+  "address": "7950 Main St N, Ste 205, Maple Grove, MN 55369",
+  "phone": "763-561-2273",
+  "contact": "office manager / building manager",
+  "notes": "Solo practice, but a suite in the Arbor Lakes area, so the landlord probably controls snow. Low priority.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://doctor.webmd.com/practice/brook-west-family-dentistry-2e73610d-7379-47d8-a957-bb8e0e3ded76"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Hagen Automotive Inc",
+  "category": "auto",
+  "city": "Eden Prairie",
+  "address": "7965 Wallace Rd, Eden Prairie, MN 55344",
+  "contact": "owner",
+  "notes": "Family-owned independent since 2006. No phone in the extract.",
+  "details": {
+   "lot_size": "unknown",
+   "source_url": "https://www.repairshopwebsites.com/?p=8436"
+  }
+ },
+ {
+  "list": "commercial",
+  "source": "west-metro/commercial-prospects.csv",
+  "name": "Glory Kids Preschool",
+  "category": "daycare",
+  "city": "Eden Prairie",
+  "address": "16397 Glory Lane, Eden Prairie, MN 55344",
+  "contact": "director",
+  "notes": "Small center, ages 24 months-5. Licensing not verified by CareLuLu.",
+  "details": {
+   "lot_size": "small",
+   "source_url": "https://www.carelulu.com/childcare-in-eden-prairie-mn-55344/glory-kids-preschool/61069"
+  }
  }
 ]
