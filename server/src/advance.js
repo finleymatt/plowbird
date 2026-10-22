@@ -3,6 +3,7 @@
 import { db, nowIso } from './db.js';
 import { broadcastJob, notify } from './jobs.js';
 import { settleJob } from './payments.js';
+import { onJobCompleted } from './referrals.js';
 
 export const DRIVER_FLOW = { accepted: 'en_route', en_route: 'in_progress', in_progress: 'completed' };
 const STATUS_COPY = {
@@ -21,6 +22,7 @@ export async function advanceJob(job) {
     .run(...(stamp ? [next, nowIso(), job.id, job.status] : [next, job.id, job.status]));
   if (!moved.changes) return null;
   const paid = next === 'completed' ? await settleJob(job.id) : true;
+  if (next === 'completed' && paid) onJobCompleted(job.id);
   const updated = broadcastJob(job.id);
   const [title, body] = STATUS_COPY[next](updated);
   notify(job.customer.id, title, body, job.id);

@@ -6,6 +6,7 @@ import { db, nowIso } from './db.js';
 import { broadcastJob, notify } from './jobs.js';
 import { addLead } from './leads.js';
 import { voidJob } from './payments.js';
+import { refundCredit } from './referrals.js';
 
 // db.js has the same helper; kept local so this module stays self-contained.
 function addColumn(table, column, type) {
@@ -36,6 +37,7 @@ export async function expireUnacceptedJobs() {
       .prepare("UPDATE jobs SET status = 'cancelled', cancelled_at = ?, cancel_reason = 'no_driver' WHERE id = ? AND status = 'requested' AND driver_id IS NULL")
       .run(nowIso(), j.id);
     if (!done.changes) continue;
+    refundCredit(j.id);
     await voidJob(j.id).catch((e) => console.error(`timeout void for job #${j.id} failed`, e.message));
     const hold = j.payment_status === 'authorized' && j.card_label && !j.covered;
     notify(

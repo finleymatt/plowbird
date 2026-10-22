@@ -5,6 +5,7 @@
 // new customers only (no earlier completed or open job), one per customer and one per household
 // (address), until the end of March 31, 2027 in Minnesota. Cancelled jobs don't use up the code.
 import { db } from './db.js';
+import { referralPromo } from './referrals.js';
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS promo_codes (
@@ -35,7 +36,15 @@ export const normalizeCode = (code) => String(code ?? '').trim().toUpperCase();
 // Without a customer (a visitor pricing a plow) only the code itself and the address are checked.
 export function checkPromo(code, { customerId = null, address = null } = {}) {
   const c = normalizeCode(code);
-  const promo = c && db.prepare('SELECT * FROM promo_codes WHERE code = ?').get(c);
+  let promo = c && db.prepare('SELECT * FROM promo_codes WHERE code = ?').get(c);
+  // Not a promo code: maybe a neighbor's referral code (referrals.js).
+  if (!promo && c) {
+    try {
+      promo = referralPromo(c, customerId);
+    } catch (e) {
+      throw new PromoError(e.message);
+    }
+  }
   if (!promo || !promo.active) throw new PromoError(`${c || 'That'} isn't a valid promo code`);
   if (promo.expires_at && Date.parse(promo.expires_at) <= Date.now()) throw new PromoError(`${promo.code} has expired`);
   if (customerId != null) {
@@ -55,6 +64,16 @@ export function checkPromo(code, { customerId = null, address = null } = {}) {
       )
       .get(promo.code, address, customerId, customerId);
     if (household) throw new PromoError(`${promo.code} was already used at this address (one per household)`);
+    // Referral discounts are for households new to Plowbird, whichever account plowed there before.
+    if (promo.referrerId) {
+      const plowedHere = db
+        .prepare(
+          `SELECT 1 FROM jobs j JOIN properties p ON p.id = j.property_id
+           WHERE j.status != 'cancelled' AND lower(trim(p.address)) = lower(trim(?)) AND (? IS NULL OR j.customer_id != ?)`,
+        )
+        .get(address, customerId, customerId);
+      if (plowedHere) throw new PromoError('Referral discounts are for homes new to Plowbird');
+    }
   }
   return promo;
 }
@@ -64,7 +83,7 @@ export function applyPromo(quote, promo) {
   const cents = Math.min(promo.amount_cents, quote.total);
   return {
     ...quote,
-    lines: [...quote.lines, { label: `Promo ${promo.code}`, cents: -cents }],
+    lines: [...quote.lines, { label: promo.referrerId ? `Neighbor referral (${promo.label.replace(/^\$\d+ off from /, '')})` : `Promo ${promo.code}`, cents: -cents }],
     totalBeforeDiscount: quote.total,
     total: quote.total - cents,
     promo: { code: promo.code, label: promo.label, cents },

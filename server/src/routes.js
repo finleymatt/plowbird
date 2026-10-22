@@ -4,6 +4,7 @@ import { db, nowIso } from './db.js';
 import { hashPassword, verifyPassword, signToken, optionalAuth, requireAuth, requireRole } from './auth.js';
 import { quote, surgeMultiplier } from './pricing.js';
 import { applyPromo, checkPromo, normalizeCode, PromoError, quoteWithPromo } from './promos.js';
+import { applyCredit, cityLeaderboard, referralPromo, refundCredit, referralSummary, spendCredit } from './referrals.js';
 import { getConditions, getAlertsSafe, geocode, setDemoStorm, isDemoStorm } from './weather.js';
 import { checkStormPlans } from './scheduler.js';
 import { resolveAddress, suggestAddresses } from './geo.js';
@@ -40,6 +41,7 @@ import {
   payoutOnboardingLink,
   payoutStatus,
   savedCard,
+  creditNextStormPassInvoice,
   startStormPassBilling,
   stopStormPassBilling,
   voidJob,
@@ -207,7 +209,8 @@ api.get('/quote/preview', optionalAuth, wrap(async (req, res) => {
   const outside = await outsideArea({ address, lat: property.lat, lng: property.lng });
   if (outside) return sendOutsideArea(res, outside);
   const customerId = req.user?.role === 'customer' ? req.user.id : null;
-  res.json(quoteWithPromo(await priceFor(property, Number(depth)), promo, { customerId, address: address ? String(address) : null }));
+  const q = quoteWithPromo(await priceFor(property, Number(depth)), promo, { customerId, address: address ? String(address) : null });
+  res.json(customerId ? applyCredit(q, customerId) : q);
 }));
 
 // Stock-ticker style weather across the service area (served from memory, refreshed every 10 min).
@@ -267,7 +270,7 @@ api.get('/quote', requireAuth, wrap(async (req, res) => {
   if (!p) return bad(res, 'Property not found', 404);
   const outside = await outsideArea(p);
   if (outside) return sendOutsideArea(res, outside);
-  res.json(quoteWithPromo(await priceFor(p, Number(req.query.depth ?? 4)), req.query.promo, { customerId: req.user.id, address: p.address }));
+  res.json(applyCredit(quoteWithPromo(await priceFor(p, Number(req.query.depth ?? 4)), req.query.promo, { customerId: req.user.id, address: p.address }), req.user.id));
 }));
 
 api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) => {
@@ -301,19 +304,23 @@ api.post('/jobs', requireAuth, requireRole('customer'), wrap(async (req, res) =>
       throw e;
     }
   }
+  // Referral credit comes off automatically (referrals.js), after any promo.
+  q = applyCredit(q, req.user.id);
   const info = db
     .prepare(
-      'INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents, tip_cents, notes, promo_code, discount_cents) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO jobs (customer_id, property_id, status, kind, scheduled_for, snow_depth_in, quote_json, price_cents, tip_cents, notes, promo_code, discount_cents, credit_cents) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
     )
     .run(
       req.user.id, p.id, status, kind, scheduledFor ? new Date(scheduledFor).toISOString() : null, Number(depthIn), JSON.stringify(q),
-      q.total, Math.max(0, Math.round(tipCents)), notes ?? null, q.promo?.code ?? null, q.promo?.cents ?? 0,
+      q.total, Math.max(0, Math.round(tipCents)), notes ?? null, q.promo?.code ?? null, q.promo?.cents ?? 0, q.credit?.cents ?? 0,
     );
   const jobId = Number(info.lastInsertRowid);
+  spendCredit(req.user.id, jobId, q.credit?.cents ?? 0);
   try {
     await authorizeJob(jobId);
   } catch (e) {
-    // No hold, no job: drivers never saw it, so just drop the row.
+    // No hold, no job: drivers never saw it, so just drop the row (and give the credit back).
+    db.prepare("DELETE FROM credits WHERE job_id = ? AND reason = 'plow'").run(jobId);
     db.prepare('DELETE FROM jobs WHERE id = ?').run(jobId);
     throw e;
   }
@@ -364,6 +371,7 @@ api.post('/jobs/:id/cancel', requireAuth, wrap(async (req, res) => {
     if (!['scheduled', 'requested', 'accepted'].includes(job.status))
       return bad(res, 'Your driver is already on the way — message them to cancel');
     db.prepare("UPDATE jobs SET status='cancelled', cancelled_at=? WHERE id=?").run(nowIso(), job.id);
+    refundCredit(job.id);
     await voidJob(job.id);
     if (job.driver) notify(job.driver.id, 'Job cancelled', `${job.property.address} was cancelled by the customer.`, job.id);
   } else if (job.driver?.id === req.user.id) {
@@ -617,6 +625,52 @@ api.post('/storm-pass/:id/cancel', requireAuth, requireRole('customer'), wrap(as
   if (sub.ends_at) return res.json(subscriptionRow(sub));
   markEnding(sub.id, await stopStormPassBilling(sub));
   res.json(subscriptionRow(passRows(req.user.id).find((s) => s.id === sub.id)));
+}));
+
+/* ---------------- referrals ---------------- */
+
+api.get('/referrals', requireAuth, requireRole('customer'), (req, res) => res.json(referralSummary(req.user.id)));
+
+// Public: is this a neighbor's code? For the "Matt sent you $10 off" banner. First name only.
+api.get('/referrals/code/:code', (req, res) => {
+  try {
+    const promo = referralPromo(req.params.code, null);
+    if (!promo) return bad(res, 'Not a referral code', 404);
+    res.json({ code: promo.code, label: promo.label, cents: promo.amount_cents });
+  } catch {
+    bad(res, 'Not a referral code', 404);
+  }
+});
+
+api.get('/referrals/leaderboard', (req, res) => res.json(cityLeaderboard()));
+
+// Claim a free month of Storm Pass on one of your driveways. Already on a pass: the next month is
+// free (a Stripe balance credit, or a month added to a simulated pass). Otherwise: 30 days, no card.
+api.post('/referrals/rewards/:id/redeem', requireAuth, requireRole('customer'), wrap(async (req, res) => {
+  const reward = db.prepare("SELECT * FROM rewards WHERE id = ? AND user_id = ? AND status = 'available'").get(req.params.id, req.user.id);
+  if (!reward) return bad(res, 'Reward not found or already used', 404);
+  const p = db.prepare('SELECT * FROM properties WHERE id = ? AND user_id = ?').get(req.body?.propertyId, req.user.id);
+  if (!p) return bad(res, 'Pick one of your driveways', 404);
+  const price = passPrice(p);
+  const sub = activePassFor(p.id);
+  let note;
+  if (sub && !sub.comp && !sub.ends_at && (await creditNextStormPassInvoice(req.user.id, sub.price_cents, `Free Storm Pass month (referral reward) · ${p.label}`))) {
+    note = `Your next Storm Pass month for ${p.label} is free.`;
+  } else if (sub) {
+    const field = sub.ends_at ? 'ends_at' : 'renews_at';
+    const from = Math.max(Date.now(), Date.parse(sub[field] ?? '') || Date.now());
+    db.prepare(`UPDATE subscriptions SET ${field} = ? WHERE id = ?`).run(new Date(from + 30 * 86400_000).toISOString(), sub.id);
+    note = `Added a free month to the Storm Pass for ${p.label}.`;
+  } else {
+    db.prepare(
+      'INSERT INTO subscriptions (user_id, property_id, price_cents, stripe_subscription_id, renews_at, ends_at, comp) VALUES (?, ?, ?, NULL, NULL, ?, 1)',
+    ).run(req.user.id, p.id, price, new Date(Date.now() + 30 * 86400_000).toISOString());
+    note = `${p.label} has a free month of Storm Pass. It ends on its own; no card needed.`;
+  }
+  const claimed = db.prepare("UPDATE rewards SET status = 'redeemed', redeemed_at = ?, note = ? WHERE id = ? AND status = 'available'").run(nowIso(), note, reward.id);
+  if (!claimed.changes) return bad(res, 'Reward already used', 409);
+  notify(req.user.id, 'Free Storm Pass month ❄️', note);
+  res.json(referralSummary(req.user.id));
 }));
 
 /* ---------------- demo drive ---------------- */

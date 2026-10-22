@@ -1,4 +1,5 @@
-// Pilot service area: SERVICE_ZIPS="55406,55407,55417" limits orders to those ZIP codes.
+// Pilot service area: SERVICE_ZIPS="55406,55407,55417" limits orders to those ZIP codes, and
+// SERVICE_AREA_LABEL names them for customers ("Plymouth, Wayzata and Hopkins").
 // Empty (the default) means everywhere. Outside the area, quotes and new orders get a
 // 400 with code 'outside_area' and the app offers the waitlist instead (leads.js).
 const UA = process.env.NWS_USER_AGENT ?? 'Plowbird/1.0 (dev)';
@@ -10,6 +11,8 @@ export const SERVICE_ZIPS = new Set(
     .filter((z) => /^\d{5}$/.test(z)),
 );
 export const serviceAreaLimited = () => SERVICE_ZIPS.size > 0;
+// How the app names the pilot area, e.g. "Plymouth, Wayzata, Hopkins and Minnetonka". Optional.
+export const SERVICE_AREA_LABEL = String(process.env.SERVICE_AREA_LABEL ?? '').trim().slice(0, 120) || null;
 
 export const OUTSIDE_AREA = "We're not plowing here yet. Join the waitlist and we'll let you know when we are.";
 

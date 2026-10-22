@@ -35,7 +35,19 @@ export type DriverApplicationForm = {
   shovel: boolean;
   notes: string | null;
   heardFrom: string | null;
+  licenseState: string;
+  licenseExpires: string;
+  over21: boolean;
+  liabilityInsured: boolean;
+  insuranceExpires: string | null;
+  coiAgreed: boolean;
+  businessName: string | null;
+  contractorAck: boolean;
+  smsConsent: boolean;
+  signature: string;
   submittedAt?: string;
+  signedAt?: string;
+  termsVersion?: string;
 };
 export type DriverApplication = { status: DriverStatus; application: DriverApplicationForm | null; note: string | null; reviewedAt: string | null };
 export type DriverForReview = {
@@ -251,4 +263,99 @@ export type StormPass = {
   endsAt: string | null;
   startedAt: string;
   billing: 'stripe' | 'demo';
+};
+
+export type Lead = {
+  id: number;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  zip: string | null;
+  source: string;
+  utm_source: string | null;
+  utm_campaign: string | null;
+  promo: string | null;
+  created_at: string;
+  converted: boolean;
+  completed_jobs: number;
+  /** null when the ZIP is unknown. */
+  inArea: boolean | null;
+};
+export type ServiceArea = { limited: boolean; zips: string[]; label: string | null };
+export type Kpis = {
+  days: number;
+  serviceZips: string[];
+  waitlist: { total: number; thisWeek: number; converted: number; topZips: { zip: string; n: number; inArea: boolean }[]; sources: { source: string; n: number }[] };
+  orders: {
+    total: number;
+    completed: number;
+    timedOut: number;
+    customerCancelled: number;
+    fillRate: number | null;
+    medianMinutesToAccept: number | null;
+    medianMinutesToClear: number | null;
+    stormAuto: number;
+    scheduled: number;
+  };
+  money: {
+    gmvCents: number;
+    revenueCents: number;
+    driverEarningsCents: number;
+    tipsCents: number;
+    promoCostCents: number;
+    avgOrderCents: number | null;
+    stormPassMrrCents: number;
+    creditSpentCents: number;
+    creditOutstandingCents: number;
+  };
+  referrals: { total: number; qualified: number; qualifiedInWindow: number };
+  customers: { total: number; thisWeek: number; ordered: number; repeatRate: number | null; avgRating: number | null; ratings: number; stormPasses: number };
+  drivers: { approved: number; pending: number; online: number; activeThisWeek: number; top: { name: string; jobs: number; rating: number | null }[] };
+  daily: { day: string; leads: number; signups: number; orders: number }[];
+};
+
+export type ReferralRank = { at: number; name: string; perk: string };
+export type Referrals = {
+  code: string;
+  friendCents: number;
+  referrerCents: number;
+  creditCents: number;
+  earnedCents: number;
+  qualified: number;
+  pending: number;
+  rank: { name: string; at: number };
+  next: { name: string; at: number; perk: string; remaining: number } | null;
+  ranks: ReferralRank[];
+  neighbors: { name: string; status: 'signed_up' | 'qualified'; at: string }[];
+  rewards: { id: number; kind: 'storm_pass_month'; milestone: number; status: 'available' | 'redeemed'; redeemedAt: string | null; note: string | null }[];
+};
+
+export type OutreachListKey = 'driver' | 'partner' | 'flyer' | 'commercial';
+export type OutreachMeta = {
+  today: string;
+  lists: { key: OutreachListKey; label: string; hint: string; statuses: string[]; total: number; byStatus: Record<string, number>; due: number }[];
+};
+export type OutreachRow = {
+  id: number;
+  list: OutreachListKey;
+  name: string;
+  category: string | null;
+  city: string | null;
+  area: string | null;
+  address: string | null;
+  contact: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  status: string;
+  owner: string | null;
+  followUp: string | null;
+  lastContactedAt: string | null;
+  notes: string | null;
+  details: Record<string, string>;
+  source: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  activityCount: number;
 };

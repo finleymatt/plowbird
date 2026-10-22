@@ -35,8 +35,14 @@ services:
       - key: DEMO_MODE
         value: "1"
       # Payments stay simulated until you add STRIPE_SECRET_KEY in the dashboard (see README).
-      # Staff who can approve drivers and see /admin: comma-separated emails, set in the dashboard.
+      # Staff who can see /admin (dashboard, waitlist, driver approvals). Only these accounts.
       - key: ADMIN_EMAILS
+        value: finley.matthewt@gmail.com,dannykovack.23@gmail.com
+      # Pilot area: comma-separated ZIPs that can order (empty = everywhere) and how the site names
+      # them, e.g. "Plymouth, Wayzata and Hopkins". Everyone else gets "coming soon" + the waitlist.
+      - key: SERVICE_ZIPS
+        sync: false
+      - key: SERVICE_AREA_LABEL
         sync: false
 
   # Expo web build, served as a single-page app.

@@ -105,7 +105,7 @@ export const subscriptionRow = (sub) => ({
   renewsAt: sub.ends_at ? null : sub.renews_at,
   endsAt: sub.ends_at,
   startedAt: sub.created_at,
-  billing: sub.stripe_subscription_id ? 'stripe' : 'demo',
+  billing: sub.comp ? 'reward' : sub.stripe_subscription_id ? 'stripe' : 'demo',
 });
 
 export const markEnding = (subId, endsAt) =>

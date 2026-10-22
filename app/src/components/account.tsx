@@ -118,6 +118,9 @@ export function AccountScreen() {
         </>
       )}
 
+      {user?.admin && (
+        <Button title="Admin dashboard" icon="stats-chart" kind="dark" style={{ marginTop: Spacing.four }} onPress={() => router.push('/admin')} />
+      )}
       <ErrorText>{error}</ErrorText>
       <Button
         title="Sign out"

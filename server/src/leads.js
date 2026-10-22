@@ -9,7 +9,8 @@ import { Router } from 'express';
 import { db, nowIso } from './db.js';
 import { requireAdmin } from './admin.js';
 import { optionalAuth, requireAuth } from './auth.js';
-import { zipFromText } from './service-area.js';
+import { linkReferral } from './referrals.js';
+import { SERVICE_AREA_LABEL, SERVICE_ZIPS, serviceAreaLimited, zipFromText } from './service-area.js';
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS leads (
@@ -67,6 +68,9 @@ export function recordSignupSource(userId, attribution) {
     'UPDATE users SET utm_source = COALESCE(utm_source, ?), utm_medium = COALESCE(utm_medium, ?), utm_campaign = COALESCE(utm_campaign, ?), promo = COALESCE(promo, ?) WHERE id = ?',
   ).run(pick('utm_source'), pick('utm_medium'), pick('utm_campaign'), pick('promo'), userId);
   if (lead) db.prepare('UPDATE leads SET user_id = COALESCE(user_id, ?) WHERE id = ?').run(userId, lead.id);
+  // Arrived on a neighbor's share link (?promo=THEIRCODE): count them as that neighbor's referral.
+  const promo = pick('promo');
+  if (promo) linkReferral(userId, promo);
 }
 
 export const validEmail = (e) => typeof e === 'string' && e.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim());
@@ -119,6 +123,11 @@ const cell = (v) => {
 };
 
 export const leadsApi = Router();
+
+// Where we plow, for the landing page and the "coming soon" waitlist. limited: false = everywhere.
+leadsApi.get('/service-area', (req, res) => {
+  res.json({ limited: serviceAreaLimited(), zips: [...SERVICE_ZIPS], label: SERVICE_AREA_LABEL });
+});
 
 leadsApi.post('/leads', optionalAuth, (req, res) => {
   if (rateLimited(req.ip ?? 'unknown')) return res.status(429).json({ error: 'Too many signups from here. Try again in a few minutes.' });

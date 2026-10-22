@@ -39,7 +39,7 @@ The driver poster is `../driver-poster.html`, printed as `../print/plowbird-driv
 
 ## Check before you post
 
-- **plowbird.app/drive must be live.** Every driver ad points there, and it's being built in parallel.
+- **plowbird.app/drive** is live. Every driver ad points there.
 - **Per-neighborhood promo codes** (e.g. `FERNHILL10`) don't exist yet. Only FIRSTPLOW works. Add codes to the promo system before an association publishes one, or use FIRSTPLOW plus a `utm_source` link (shown in the partner email).
 - **Driver pay ($36 for a 2-car driveway plus 100% of tips)** and **customer prices (from $35, Storm Pass from $79/mo)** come from the gameplan. If pricing changes, search this folder for `$36`, `$35` and `$79`.
 - **Insurance wording:** the ads say drivers must carry commercial auto insurance with plow coverage, plus liability. Ask your broker whether Plowbird should also require a minimum limit (e.g. $1M general liability). If so, add it to the ads and the `/drive` form.

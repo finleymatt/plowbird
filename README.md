@@ -164,12 +164,34 @@ Routes and ETAs come from OSRM (`router.project-osrm.org` by default, or set `OS
 
 Set these on the API before turning `DEMO_MODE` off:
 
-- `SERVICE_ZIPS`: comma-separated ZIP codes for the pilot, e.g. `55406,55407,55417`. Empty means everywhere. Outside the area, `/quote/preview` and `POST /jobs` answer 400 with code `outside_area`, and the order page shows a waitlist form instead of the Request button. The ZIP comes from the end of the picked address, or from a Photon reverse lookup of its location.
+- `SERVICE_ZIPS`: comma-separated ZIP codes for the pilot, e.g. `55391,55441,55343`. Empty means everywhere. Outside the area, `/quote/preview` and `POST /jobs` answer 400 with code `outside_area`, and the order page shows a waitlist form instead of the Request button. The ZIP comes from the end of the picked address, or from a Photon reverse lookup of its location.
+- `SERVICE_AREA_LABEL`: how the site names the pilot area, e.g. `Plymouth, Wayzata and Hopkins`. When `SERVICE_ZIPS` is set, the landing page shows "Now plowing in …" under the address search, and addresses outside the area get "Coming soon to <city>" with the waitlist form. `GET /api/service-area` returns both.
 - `UNACCEPTED_TIMEOUT_MIN` (default 10): an order still waiting for a driver after this many minutes is cancelled, its card hold is released, and the customer is told in the app and added to the waitlist. For scheduled orders the clock starts when they open to drivers (45 minutes before the time).
 - `DEMO_AUTO_ACCEPT=0` keeps demo mode on but stops the demo driver from taking orders. Use it to try the timeout locally.
-- `ADMIN_EMAILS`: comma-separated emails of accounts that can read `GET /api/admin/leads.csv` (the waitlist) and `GET /api/admin/sources` (sign-ups, leads and jobs per `utm_source`, or `?by=medium` / `?by=campaign`).
+- `ADMIN_EMAILS`: comma-separated emails of staff accounts. They get `/admin` in the app:
+  - **Dashboard**: KPIs for the last 7, 30 or 90 days. Demand (waitlist, waitlist-to-customer conversion, customers, orders), reliability (fill rate, orders that timed out with no driver, median time to accept and to clear), supply (approved, online and active drivers, orders per driver), money (gross bookings, Plowbird revenue, driver pay, tips, promo cost, average order, Storm Pass MRR) and retention (repeat customers, average rating, Storm Passes). Also a 14-day chart and the waitlist by ZIP and by source, plus the top drivers.
+  - **Waitlist**: everyone who left an email, searchable, filterable by in-area or outside (coming soon), with a CSV download.
+  - **Drivers**: applications to approve, including the license, insurance and signed contractor acknowledgments from `/drive`.
+
+  The same data is in `GET /api/admin/kpis?days=30`, `GET /api/admin/leads`, `GET /api/admin/leads.csv` and `GET /api/admin/sources` (sign-ups, leads and jobs per `utm_source`, or `?by=medium` / `?by=campaign`).
 
 The landing page's "Get storm alerts" form and the outside-area waitlist post to `POST /api/leads` (5 per IP per 10 minutes). On first load, the website saves the link's `utm_source`, `utm_medium`, `utm_campaign` and `promo` params, then sends them with sign-up and waitlist signups. Tag flyer and ad links, e.g. `https://plowbird.app/?utm_source=flyer&utm_campaign=longfellow&promo=FIRSTPLOW`.
+
+### Referrals and Snow Ranks
+
+Every customer has a referral code (Invite tab). Share links look like `plowbird.app/?promo=CODE&utm_source=referral`, so the code is applied at checkout automatically and the landing page says who sent it.
+
+- **The neighbor** gets $10 off their first plow. New customers and homes only, one per household; a code can't be used by its owner.
+- **The referrer** gets $10 in Plowbird credit when that first paid plow is completed (not Storm Pass plows or free demo orders). Credit comes off their next plow automatically, never below $1; the driver is paid in full, as with promos. A cancelled plow gives its credit back.
+- **Snow Ranks**: Flurry (1), Snowplow Scout (3, +$15 credit), Storm Chaser (5, a free month of Storm Pass), Blizzard Boss (10, another free month). A free month on a driveway with a paid pass becomes a Stripe balance credit on the next invoice; otherwise it's a 30-day pass with no billing.
+- Capped at 25 rewarded referrals a year. A public "Which town is winning?" board shows referrals by city.
+- Amounts and ranks live in `server/src/referrals.js`. The dashboard's Referrals row shows referred sign-ups, booked referrals and credit used or outstanding.
+
+### Outreach tracker
+
+`/admin` → **Outreach** holds the people and places we're working: **Drivers** to recruit, **Partners** (HOAs, neighborhood groups, chambers), **Flyers & events** and **Commercial lots**, each with its own status pipeline, an owner, a follow-up date, notes and an activity log. Every change saves to the API.
+
+It's seeded from the CSVs in `marketing/outreach/`. After adding CSV rows, run `node scripts/build-outreach-seed.js` in `server/` and commit `server/seed-data/outreach.json`. On the next boot only new rows (by list + name) are added; edits made in `/admin` are never overwritten.
 
 ## Layout
 
@@ -204,7 +226,7 @@ server/   Node API: Express + Socket.IO + SQLite
   - refunds for disputes
 - **Notifications are in-app only** (live banners over the socket). Push notifications need `expo-notifications` plus an EAS project.
 - **Database** is a single SQLite file. Move to Postgres before real traffic.
-- **Driver onboarding**: drivers apply at `/drive` (truck, plow, insurance, area) and staff approve them at `/admin` (emails in `ADMIN_EMAILS` on the API) before they can go online or take jobs. Insurance and license are checked by phone; there's no document upload or background check yet. Demo accounts (`@plowbird.test`) are only seeded in demo mode and can never take jobs outside it.
+- **Driver onboarding**: drivers apply at `/drive` (or the short link `/apply`): truck, plow, area, auto and liability insurance, license state and expiry, 21+, business name, and an e-signed independent-contractor acknowledgment (typed name, time, IP and terms version are stored). Staff approve them at `/admin` (emails in `ADMIN_EMAILS` on the API) before they can go online or take jobs. Insurance and license are checked by phone; there's no document upload or background check yet. Demo accounts (`@plowbird.test`) are only seeded in demo mode and can never take jobs outside it.
 - **Location** is foreground-only. Background tracking while the app is minimized needs `expo-task-manager` and a development build.
 - **Native builds** have not been run yet. Use `npx eas-cli@latest build` to produce App Store and Play Store binaries. Android release builds need a Google Maps API key (see the `react-native-maps` config plugin).
 - Set a strong `JWT_SECRET` and `NODE_ENV=production` (which disables the dev endpoints) when deploying the API.

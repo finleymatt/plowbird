@@ -15,7 +15,7 @@ Each QR code goes to `plowbird.app/?promo=FIRSTPLOW&utm_source=…` (`poster`, `
 
 ## Before anything goes out
 
-1. **Make the code work.** The app doesn't accept promo codes yet, so FIRSTPLOW must be built into checkout before you print. The QR links already carry `?promo=FIRSTPLOW`, so checkout can apply it automatically.
+1. **FIRSTPLOW works.** Checkout accepts it, and the QR links carry `?promo=FIRSTPLOW` so it's applied automatically.
 2. **Turn off demo mode.** `DEMO_MODE=1` (Render → plowbird-api → Environment) makes the demo driver take every order, and card-less orders are free. Set it to `0` once real drivers are signed up.
 3. **Switch Stripe to live keys.** Test keys never charge real cards. Live keys mean finishing Stripe's business verification and turning on Connect so drivers get paid.
 4. **Line up drivers first.** A flyer that brings in orders nobody accepts burns the customer. Recruit a few plow operators before the first push (ideas below).

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,9 +30,24 @@ const HOW: { icon: IconName; title: string; body: string }[] = [
 ];
 const NEED = [
   'A pickup or truck with a working plow (any blade type)',
-  'Commercial auto insurance that covers plowing, plus liability coverage',
+  'Commercial auto insurance that covers plowing, plus general liability insurance',
   'A valid driver’s license and a smartphone',
   '21 or older',
+];
+// What we check on the approval call, so drivers can have it ready.
+const HAVE_READY = [
+  'Your driver’s license',
+  'Your insurance declarations page or card (auto with plow coverage, and general liability)',
+  'A photo of your truck with the plow on',
+  'A certificate of insurance (COI) before your first job. Ask your agent; it’s free.',
+  'Your SSN or EIN for payouts and your 1099. You enter it with Stripe, never with us.',
+];
+const CONTRACTOR_TERMS = [
+  'I’m an independent contractor, not an employee of Plowbird. I choose when to go online and which jobs to take, and I can plow for anyone else.',
+  'I use my own truck, plow and equipment, and pay my own expenses, taxes and any business licenses.',
+  'I’ll keep my license, registration and insurance current, and tell Plowbird right away if any of it lapses or changes.',
+  'I’m responsible for damage or injury I cause while plowing, and my insurance covers it.',
+  'I’ll follow traffic laws and local snow rules, and never drive impaired.',
 ];
 const FAQ: { q: string; a: string }[] = [
   { q: 'Do I have to take every job?', a: 'No. Go online when you want work and pick the jobs that fit your route. Nothing is assigned to you.' },
@@ -152,6 +167,17 @@ export default function DriveScreen() {
                   </Row>
                 ))}
               </View>
+              <View style={{ flex: 1, gap: Spacing.three }}>
+                <T variant="heading" style={{ fontSize: 22 }}>Have these ready</T>
+                {HAVE_READY.map((n) => (
+                  <Row key={n} style={{ alignItems: 'flex-start' }}>
+                    <Icon name="document-text" color="accent" />
+                    <T style={{ flex: 1, lineHeight: 23 }}>{n}</T>
+                  </Row>
+                ))}
+              </View>
+            </View>
+            <View style={{ flexDirection: wide ? 'row' : 'column', gap: Spacing.five }}>
               <View style={{ flex: 1, gap: Spacing.three }}>
                 <T variant="heading" style={{ fontSize: 22 }}>Questions</T>
                 {FAQ.map((f) => (
@@ -283,6 +309,16 @@ function ApplicationForm({ user, previous, note, onDone }: { user: User; previou
   const [carrier, setCarrier] = useState(previous?.insuranceCarrier ?? '');
   const [heard, setHeard] = useState(previous?.heardFrom ?? '');
   const [notes, setNotes] = useState(previous?.notes ?? '');
+  const [licenseState, setLicenseState] = useState(previous?.licenseState ?? 'MN');
+  const [licenseExpires, setLicenseExpires] = useState(monthToInput(previous?.licenseExpires));
+  const [over21, setOver21] = useState(previous?.over21 ?? false);
+  const [liability, setLiability] = useState(previous?.liabilityInsured ?? false);
+  const [insuranceExpires, setInsuranceExpires] = useState(monthToInput(previous?.insuranceExpires));
+  const [coi, setCoi] = useState(previous?.coiAgreed ?? false);
+  const [business, setBusiness] = useState(previous?.businessName ?? '');
+  const [contractor, setContractor] = useState(false);
+  const [sms, setSms] = useState(previous?.smsConsent ?? false);
+  const [signature, setSignature] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -314,6 +350,16 @@ function ApplicationForm({ user, previous, note, onDone }: { user: User; previou
           insuranceCarrier: carrier || null,
           heardFrom: heard || null,
           notes: notes || null,
+          licenseState: licenseState.trim(),
+          licenseExpires: inputToMonth(licenseExpires) ?? '',
+          over21,
+          liabilityInsured: liability,
+          insuranceExpires: inputToMonth(insuranceExpires),
+          coiAgreed: coi,
+          businessName: business.trim() || null,
+          contractorAck: contractor,
+          smsConsent: sms,
+          signature: signature.trim(),
         },
       });
       setUser(await api<User>('/me'));
@@ -400,11 +446,90 @@ function ApplicationForm({ user, previous, note, onDone }: { user: User; previou
         </View>
         <Switch accessibilityLabel="I have commercial auto insurance that covers plowing" value={insured} onValueChange={setInsured} trackColor={{ true: theme.accent, false: theme.backgroundSelected }} thumbColor="#fff" />
       </Row>
-      {insured && <Input label="Insurance company (optional)" value={carrier} onChangeText={setCarrier} placeholder="e.g. Progressive Commercial" />}
+      {insured && (
+        <Row gap={Spacing.three} style={{ alignItems: 'flex-start' }}>
+          <View style={{ flex: 1.4 }}>
+            <Input label="Insurance company (optional)" value={carrier} onChangeText={setCarrier} placeholder="e.g. Progressive Commercial" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Input label="Renews (optional)" value={insuranceExpires} onChangeText={(t) => setInsuranceExpires(maskMonth(t))} keyboardType="number-pad" placeholder="MM/YYYY" />
+          </View>
+        </Row>
+      )}
+      <Toggle label="I have general liability insurance" hint="Required. Covers damage to property and injuries while you plow." value={liability} onChange={setLiability} />
+      <Toggle label="I’ll send a certificate of insurance before my first job" hint="Your agent can email it to us. It’s free." value={coi} onChange={setCoi} />
+
+      <View style={{ gap: 4, marginTop: Spacing.two }}>
+        <T variant="heading" style={{ fontSize: 17 }}>License and business</T>
+      </View>
+      <Row gap={Spacing.three} style={{ alignItems: 'flex-start' }}>
+        <View style={{ flex: 1 }}>
+          <Input label="License state" value={licenseState} onChangeText={(t) => setLicenseState(t.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase())} autoCapitalize="characters" placeholder="MN" />
+        </View>
+        <View style={{ flex: 1.4 }}>
+          <Input label="License expires" value={licenseExpires} onChangeText={(t) => setLicenseExpires(maskMonth(t))} keyboardType="number-pad" placeholder="MM/YYYY" />
+        </View>
+      </Row>
+      <Toggle label="I’m 21 or older" value={over21} onChange={setOver21} />
+      <Input label="Business name (optional)" value={business} onChangeText={setBusiness} placeholder="Leave blank if you work as an individual" />
       <Input label="How did you hear about us? (optional)" value={heard} onChangeText={setHeard} placeholder="Flyer, Facebook, a friend…" />
       <Input label="Anything else? (optional)" value={notes} onChangeText={setNotes} placeholder="Other equipment, areas you know well…" multiline style={{ minHeight: 70, paddingTop: 12 }} />
+
+      <View style={{ gap: Spacing.two, marginTop: Spacing.two }}>
+        <T variant="heading" style={{ fontSize: 17 }}>Independent contractor agreement</T>
+        <Card style={{ backgroundColor: theme.backgroundElement, gap: Spacing.two }}>
+          {CONTRACTOR_TERMS.map((t) => (
+            <Row key={t} style={{ alignItems: 'flex-start' }}>
+              <Icon name="checkmark-circle" color="accent" size={16} />
+              <T variant="caption" style={{ flex: 1, lineHeight: 19 }}>{t}</T>
+            </Row>
+          ))}
+          <T variant="caption" color="textSecondary" style={{ lineHeight: 19 }}>
+            Before approval, we may ask your separate written permission to check your driving record. We’ll never run a check without it.
+          </T>
+        </Card>
+        <Toggle
+          label="I agree to the statements above and the Terms of Service"
+          value={contractor}
+          onChange={setContractor}
+          hint={
+            <T variant="caption" color="textSecondary">
+              Read the{' '}
+              <T variant="caption" color="accent" onPress={() => router.push('/terms')}>Terms of Service</T> and{' '}
+              <T variant="caption" color="accent" onPress={() => router.push('/privacy')}>Privacy Policy</T>.
+            </T>
+          }
+        />
+        <Toggle label="Text me about my application and nearby jobs (optional)" hint="Msg & data rates may apply. Reply STOP to opt out." value={sms} onChange={setSms} />
+        <Input label="Sign with your full legal name" value={signature} onChangeText={setSignature} placeholder={user.name} autoComplete="name" />
+        <T variant="caption" color="textSecondary">Typing your name is your electronic signature. Everything above is true to the best of my knowledge.</T>
+      </View>
       <ErrorText>{error}</ErrorText>
       <Button title="Submit application" onPress={submit} loading={busy} />
     </>
+  );
+}
+
+// MM/YYYY in the form, YYYY-MM on the wire.
+const maskMonth = (t: string) => {
+  const d = t.replace(/\D/g, '').slice(0, 6);
+  return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+};
+const inputToMonth = (t: string) => {
+  const m = /^(\d{2})\/(\d{4})$/.exec(t.trim());
+  return m ? `${m[2]}-${m[1]}` : null;
+};
+const monthToInput = (ym?: string | null) => (ym && /^\d{4}-\d{2}$/.test(ym) ? `${ym.slice(5)}/${ym.slice(0, 4)}` : '');
+
+function Toggle({ label, hint, value, onChange }: { label: string; hint?: ReactNode; value: boolean; onChange: (v: boolean) => void }) {
+  const theme = useTheme();
+  return (
+    <Row style={{ justifyContent: 'space-between' }}>
+      <View style={{ flex: 1 }}>
+        <T variant="label">{label}</T>
+        {typeof hint === 'string' ? <T variant="caption" color="textSecondary">{hint}</T> : hint}
+      </View>
+      <Switch accessibilityLabel={label} value={value} onValueChange={onChange} trackColor={{ true: theme.accent, false: theme.backgroundSelected }} thumbColor="#fff" />
+    </Row>
   );
 }
