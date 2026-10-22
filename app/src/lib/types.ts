@@ -14,6 +14,8 @@ export type User = {
   ratingCount: number;
   /** Drivers only: where their application stands (see /drive). */
   driverStatus?: DriverStatus | null;
+  /** Approved, agreement signed and insurance on file: can go online. */
+  driverReady?: boolean | null;
   /** Plowbird staff (ADMIN_EMAILS on the server). */
   admin?: boolean;
 };
@@ -62,6 +64,7 @@ export type DriverForReview = {
   createdAt: string;
   completedJobs: number;
   rating: number | null;
+  onboarding: DriverOnboarding;
 };
 export type AdminSummary = {
   customers: number;
@@ -358,4 +361,17 @@ export type OutreachRow = {
   updatedAt: string | null;
   updatedBy: string | null;
   activityCount: number;
+};
+
+export type DriverOnboarding = {
+  steps: { key: 'apply' | 'call' | 'agreement' | 'coi' | 'payouts'; label: string; done: boolean; optional?: boolean }[];
+  ready: boolean;
+  agreement: { version: string; signedVersion: string | null; signedAt: string | null; current: boolean };
+  coi: { receivedAt: string | null; expires: string | null; ok: boolean };
+};
+export type DriverAgreement = {
+  version: string;
+  sections: { title: string; paragraphs: string[] }[];
+  onboarding: DriverOnboarding;
+  signed: { at: string; version: string; signature: string; text: string } | null;
 };

@@ -106,7 +106,7 @@ export function addLead({ email, phone, address, zip, lat, lng, source = 'landin
 
 // Per-IP limit for the public signup form: 5 per 10 minutes.
 const hits = new Map();
-function rateLimited(ip, max = 5, windowMs = 10 * 60_000) {
+export function rateLimited(ip, max = 5, windowMs = 10 * 60_000) {
   const now = Date.now();
   const recent = (hits.get(ip) ?? []).filter((t) => t > now - windowMs);
   recent.push(now);

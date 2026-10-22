@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Brand } from '@/components/landing';
 import { LiveMap, type MapPin } from '@/components/live-map';
+import { RecommendDriver } from '@/components/recommend-driver';
 import { Badge, Button, Card, Icon, Row, T, type IconName } from '@/components/ui';
 import { font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -111,6 +112,8 @@ export default function DriverDemo() {
         ) : (
           <Earnings d={d} accepted={accepted} />
         )}
+
+        <RecommendDriver />
 
         <Card style={{ gap: Spacing.three, flexDirection: wide ? 'row' : 'column', alignItems: wide ? 'center' : 'stretch', backgroundColor: theme.inverse, padding: Spacing.four }}>
           <View style={{ flex: 1, gap: 4 }}>

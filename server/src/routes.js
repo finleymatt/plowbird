@@ -29,7 +29,7 @@ import { outsideArea, sendOutsideArea } from './service-area.js';
 import { markRequested } from './timeouts.js';
 import { isAdminEmail } from './admin.js';
 import { autoAcceptForDemo, DEMO, startDemoDrive } from './demo.js';
-import { driverStatus, requireApprovedDriver } from './drivers.js';
+import { driverReady, driverStatus, requireApprovedDriver } from './drivers.js';
 import { activePassFor, checkStormPasses, ELIGIBILITY, markEnding, passPrice, STORM_PASS, subscriptionRow } from './storm-pass.js';
 import {
   authorizeJob,
@@ -69,6 +69,7 @@ function publicUser(u) {
     rating: u.rating_count ? Math.round((u.rating_sum / u.rating_count) * 10) / 10 : null,
     ratingCount: u.rating_count,
     driverStatus: driverStatus(u),
+    driverReady: u.role === 'driver' ? driverReady(u) : null,
     admin: isAdminEmail(u.email),
   };
 }

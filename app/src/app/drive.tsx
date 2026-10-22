@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, View, us
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Brand } from '@/components/landing';
+import { RecommendDriver } from '@/components/recommend-driver';
 import { SnowScene } from '@/components/snow-scene';
 import { Snowfall } from '@/components/snowfall';
 import { SocialSignIn } from '@/components/social-sign-in';
@@ -192,6 +193,7 @@ export default function DriveScreen() {
                 ))}
               </View>
             </View>
+            <RecommendDriver />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -277,7 +279,15 @@ function SignedInAsCustomer() {
 }
 
 function StatusView({ status, phone }: { status: 'pending' | 'approved'; phone: string | null }) {
-  return status === 'approved' ? (
+  const { user } = useAuth();
+  return status === 'approved' && user?.driverReady === false ? (
+    <View style={{ gap: Spacing.two, alignItems: 'flex-start' }}>
+      <Icon name="create" size={40} color="accent" />
+      <T variant="title">You’re approved. One more step</T>
+      <T color="textSecondary">Sign your contractor agreement and send us your certificate of insurance, then you can take jobs.</T>
+      <Button title="Sign my agreement" onPress={() => router.push('/driver-agreement' as Href)} />
+    </View>
+  ) : status === 'approved' ? (
     <View style={{ gap: Spacing.two, alignItems: 'flex-start' }}>
       <Icon name="checkmark-circle" size={40} color="success" />
       <T variant="title">You’re approved ❄️</T>

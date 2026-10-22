@@ -6,6 +6,10 @@
 //   service, falling back to nearest-neighbor) and total up pay, miles and hours.
 // - Open jobs: ad hoc orders a driver could accept right now, on a normal snowy evening.
 import { Router } from 'express';
+import { adminIds } from './admin.js';
+import { notify } from './jobs.js';
+import { rateLimited } from './leads.js';
+import { addRecommendedDriver } from './outreach.js';
 import { quote, SIZE_LABELS, surgeMultiplier } from './pricing.js';
 
 const OSRM = (process.env.OSRM_URL ?? 'https://router.project-osrm.org').replace(/\/$/, '');
@@ -195,4 +199,29 @@ driverDemoApi.get('/drive/demo', async (req, res, next) => {
   } catch (e) {
     next(e);
   }
+});
+
+const field = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : '') || null;
+
+// Someone recommends a plow driver. Staff follow up from /admin → Outreach → Drivers.
+driverDemoApi.post('/drive/recommend', (req, res) => {
+  if (rateLimited(req.ip ?? 'unknown')) return res.status(429).json({ error: 'Too many from here. Try again in a few minutes.' });
+  const b = req.body ?? {};
+  const driverName = field(b.driverName, 120);
+  const phone = field(b.phone, 40);
+  const email = field(b.email, 200);
+  if (!driverName) return res.status(400).json({ error: 'Enter the driver’s name or business' });
+  if (!phone && !email) return res.status(400).json({ error: 'Add a phone number or email so we can reach them' });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'That email doesn’t look right' });
+  addRecommendedDriver({
+    driverName,
+    phone,
+    email,
+    area: field(b.area, 120),
+    notes: field(b.notes, 1000),
+    byName: field(b.yourName, 120),
+    byContact: field(b.yourContact, 200),
+  });
+  for (const id of adminIds()) notify(id, 'Driver recommended', `${driverName} was recommended as a driver. See /admin → Outreach → Drivers.`);
+  res.json({ ok: true });
 });

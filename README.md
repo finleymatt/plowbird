@@ -177,6 +177,18 @@ Set these on the API before turning `DEMO_MODE` off:
 
 The landing page's "Get storm alerts" form and the outside-area waitlist post to `POST /api/leads` (5 per IP per 10 minutes). On first load, the website saves the link's `utm_source`, `utm_medium`, `utm_campaign` and `promo` params, then sends them with sign-up and waitlist signups. Tag flyer and ad links, e.g. `https://plowbird.app/?utm_source=flyer&utm_campaign=longfellow&promo=FIRSTPLOW`.
 
+### Driver onboarding and the contractor agreement
+
+After staff approve a driver at `/admin`, the driver is sent (in the app, and by email when `RESEND_API_KEY` is set) to `/driver-agreement`: a checklist and the Independent Contractor Agreement (`server/src/agreement.js`) to sign. It covers independent-contractor status, pay, taxes, insurance, **confidentiality (NDA)** and **customer non-solicitation** for 12 months after the last job. There is deliberately **no non-compete**: Minnesota voids them for independent contractors (Minn. Stat. § 181.988), but allows nondisclosure and customer non-solicitation.
+
+- Signing stores the typed name, time, IP, the exact text and its SHA-256, and emails the driver a copy. Staff can read it on the driver's card.
+- Staff record the certificate of insurance (COI) and its expiry date on the driver's card.
+- A driver can go online or accept jobs only when approved **and** the current agreement version is signed **and** a COI is on file and not expired (`driverReady`). Demo accounts in demo mode skip this.
+- Changing the text? Bump `AGREEMENT_VERSION`; drivers are asked to sign again.
+- Set `LEGAL_ENTITY`, `MAILING_ADDRESS` and `DRIVER_INSURANCE_MINIMUMS` on the API so the agreement names the right company and limits. **Have a Minnesota attorney review the agreement before signing up real drivers.**
+
+The public `/driver-demo` page and `/drive` have a "Know someone with a plow truck?" form (`POST /api/drive/recommend`). Recommendations land in `/admin` → Outreach → Drivers with who sent them.
+
 ### Referrals and Snow Ranks
 
 Every customer has a referral code (Invite tab). Share links look like `plowbird.app/?promo=CODE&utm_source=referral`, so the code is applied at checkout automatically and the landing page says who sent it.

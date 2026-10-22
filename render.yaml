@@ -44,6 +44,19 @@ services:
         sync: false
       - key: SERVICE_AREA_LABEL
         sync: false
+      # Driver contractor agreement (server/src/agreement.js): the legal entity and address it names,
+      # and the insurance minimums it requires, e.g. "Plowbird LLC" / "123 Main St, Wayzata, MN 55391".
+      - key: LEGAL_ENTITY
+        sync: false
+      - key: MAILING_ADDRESS
+        sync: false
+      - key: DRIVER_INSURANCE_MINIMUMS
+        sync: false
+      # Optional email (approval + signed-agreement emails) through Resend; in-app only without it.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
 
   # Expo web build, served as a single-page app.
   - type: web

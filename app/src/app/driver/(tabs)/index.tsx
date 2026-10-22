@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Switch, View } from 'react-native';
 
@@ -71,6 +71,8 @@ export default function DriverHome() {
 
   // Not approved yet: no job board, just where the application stands.
   if (user?.driverStatus && user.driverStatus !== 'approved') return <ApplicationStatus status={user.driverStatus} />;
+  // Approved, but the agreement or certificate of insurance is still outstanding.
+  if (user?.driverStatus === 'approved' && user.driverReady === false) return <OnboardingStatus />;
 
   return (
     <Screen
@@ -179,6 +181,21 @@ function ApplicationStatus({ status }: { status: 'none' | 'pending' | 'rejected'
         <T variant="title">{copy.title}</T>
         <T color="textSecondary">{copy.body}</T>
         <Button title={copy.cta} onPress={() => router.push('/drive')} />
+      </Card>
+    </Screen>
+  );
+}
+
+function OnboardingStatus() {
+  return (
+    <Screen contentStyle={{ gap: Spacing.three }}>
+      <Card style={{ gap: Spacing.three, alignItems: 'flex-start' }}>
+        <Icon name="create" size={36} color="accent" />
+        <T variant="title">You’re approved. Finish your paperwork</T>
+        <T color="textSecondary">
+          Sign your contractor agreement and send us your certificate of insurance. Then your job board opens up and you can go online when it snows.
+        </T>
+        <Button title="Open my checklist" onPress={() => router.push('/driver-agreement' as Href)} />
       </Card>
     </Screen>
   );
